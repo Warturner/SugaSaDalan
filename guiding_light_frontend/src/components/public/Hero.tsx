@@ -9,10 +9,10 @@ import { Heart, Shield, Users, ArrowRight } from 'lucide-react';
 import { PublicPage } from '../../types';
 
 interface HeroProps {
-  onDonate: () => void;
+  setActivePage: (page: PublicPage) => void;
 }
 
-export default function Hero({ onDonate }: HeroProps) {
+export default function Hero({ setActivePage }: HeroProps) {
   return (
     <section className="relative pt-32 pb-20 overflow-hidden bg-[#f7f5f2]">
       {/* Background decoration */}
@@ -44,7 +44,7 @@ export default function Hero({ onDonate }: HeroProps) {
             transition={{ delay: 0.2 }}
             className="text-lg text-stone-600 mb-10 leading-relaxed max-w-2xl mx-auto"
           >
-            Streetlight provides trauma counseling, education, and legal assistance to children and families in Cebu. Join us in bridging the trust gap through radical transparency.
+            For those who have fallen through the cracks, Streetlight is here. We don't judge the shadows; we simply offer the light, building trust step-by-step and walking alongside toward a safer, brighter future.
           </motion.p>
           
           <motion.div
@@ -54,14 +54,20 @@ export default function Hero({ onDonate }: HeroProps) {
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <button
-              onClick={onDonate}
-              className="w-full sm:w-auto bg-[#4b5e52] text-white px-12 py-5 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#3a4740] transition-all shadow-xl shadow-stone-200 flex items-center justify-center group"
+              onClick={() => setActivePage('Contact')}
+              className="w-full sm:w-auto bg-[#3a4740] text-[#d4c5b3] px-12 py-5 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#4b5e52] transition-all shadow-xl shadow-stone-200 flex items-center justify-center group"
             >
-              Donate Now
+              Need help?
               <ArrowRight className="ml-3 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
-            <button className="w-full sm:w-auto px-10 py-5 rounded-full font-bold text-stone-500 hover:text-stone-800 transition-all flex items-center justify-center text-xs uppercase tracking-widest">
-              Our Mission
+            <button 
+              onClick={() => {
+                const element = document.getElementById('about-section');
+                element?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="w-full sm:w-auto px-10 py-5 rounded-full font-bold text-stone-500 hover:text-stone-800 transition-all flex items-center justify-center text-xs uppercase tracking-widest bg-stone-100 hover:bg-stone-200"
+            >
+              About us
             </button>
           </motion.div>
         </div>
@@ -72,28 +78,28 @@ export default function Hero({ onDonate }: HeroProps) {
           transition={{ delay: 0.4, duration: 0.8 }}
           className="mt-20 relative"
         >
-          <div className="relative rounded-[48px] overflow-hidden shadow-2xl border-[12px] border-white">
+          <div className="relative rounded-[32px] md:rounded-[48px] overflow-hidden shadow-2xl border-[6px] md:border-[12px] border-white">
             <img 
               src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1200" 
               alt="Community" 
-              className="w-full h-[600px] object-cover"
+              className="w-full h-[300px] sm:h-[450px] md:h-[600px] object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 to-transparent"></div>
           </div>
           
           {/* Stats overlap */}
-          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4">
-            <div className="bg-white rounded-[32px] shadow-sm p-10 grid grid-cols-1 md:grid-cols-3 gap-10 border border-stone-100">
-              <div className="text-center md:border-r border-stone-100 last:border-0">
-                <p className="text-4xl font-serif italic text-stone-800 mb-2">500+</p>
+          <div className="md:absolute -bottom-10 left-1/2 md:-translate-x-1/2 w-full max-w-4xl px-4 mt-8 md:mt-0">
+            <div className="bg-white rounded-[24px] md:rounded-[32px] shadow-sm p-8 md:p-10 grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-10 border border-stone-100">
+              <div className="text-center sm:border-r border-stone-100 last:border-0">
+                <p className="text-3xl md:text-4xl font-serif italic text-stone-800 mb-2">500+</p>
                 <p className="text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">Children Helped</p>
               </div>
-              <div className="text-center md:border-r border-stone-100 last:border-0">
-                <p className="text-4xl font-serif italic text-stone-800 mb-2">100%</p>
+              <div className="text-center sm:border-r border-stone-100 last:border-0">
+                <p className="text-3xl md:text-4xl font-serif italic text-stone-800 mb-2">100%</p>
                 <p className="text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">Transparency</p>
               </div>
               <div className="text-center">
-                <p className="text-4xl font-serif italic text-stone-800 mb-2">₱2M+</p>
+                <p className="text-3xl md:text-4xl font-serif italic text-stone-800 mb-2">₱2M+</p>
                 <p className="text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">Funds Allocated</p>
               </div>
             </div>

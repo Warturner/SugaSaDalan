@@ -30,7 +30,7 @@ export type ServiceCategory =
   | 'Community Outreach' 
   | 'Legal Assistance';
 
-export type PaymentMethod = 'GCash' | 'Maya' | 'Bank Card';
+export type PaymentMethod = 'E-wallet' | 'Manual Bank Transfer' | 'Bank Card';
 
 export type AdminTab = 'CMS' | 'Donations' | 'Reconciliation';
-export type PublicPage = 'Home' | 'Stories' | 'Transparency' | 'Donate';
+export type PublicPage = 'Home' | 'Stories' | 'Donate' | 'Mission' | 'Services' | 'Contact';

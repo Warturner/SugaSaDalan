@@ -13,6 +13,10 @@ import Hero from './components/public/Hero';
 import SuccessStories from './components/public/SuccessStories';
 import TransparencyTracker from './components/public/TransparencyTracker';
 import DonationForm from './components/public/DonationForm';
+import Mission from './components/public/Mission';
+import Services from './components/public/Services';
+import ContactUs from './components/public/ContactUs';
+import HomeAbout from './components/public/HomeAbout';
 import Footer from './components/public/Footer';
 
 // Admin Components
@@ -25,12 +29,6 @@ export default function App() {
   const [isAdmin, setIsAdmin] = React.useState(false);
   const [activePage, setActivePage] = React.useState<PublicPage>('Home');
   const [activeAdminTab, setActiveAdminTab] = React.useState<AdminTab>('CMS');
-
-  // Handle donation button click from hero
-  const handleDonateClick = () => {
-    setActivePage('Donate');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   const toggleAdmin = () => {
     setIsAdmin(!isAdmin);
@@ -49,18 +47,18 @@ export default function App() {
           setActiveTab={setActiveAdminTab} 
           onLogout={toggleAdmin} 
         />
-        <main className="flex-1 ml-64 p-10">
-          <header className="mb-12 flex justify-between items-center bg-white p-8 rounded-[32px] border border-stone-100 shadow-sm">
+        <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-10">
+          <header className="mb-8 lg:mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 sm:p-8 rounded-[24px] sm:rounded-[32px] border border-stone-100 shadow-sm gap-4">
             <div>
-              <h1 className="text-3xl font-serif italic text-stone-800">System Management Overview</h1>
-              <p className="text-stone-400 text-sm">Bridging the Trust Gap through Radical Transparency</p>
+              <h1 className="text-2xl sm:text-3xl font-serif italic text-stone-800">System Management Overview</h1>
+              <p className="text-stone-400 text-xs sm:text-sm">Bridging the Trust Gap through Radical Transparency</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right mr-4">
+            <div className="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-start">
+              <div className="text-left sm:text-right">
                 <p className="text-sm font-bold text-stone-800">Maria Clara Santos</p>
                 <p className="text-xs text-stone-400">System Administrator</p>
               </div>
-              <div className="w-12 h-12 bg-[#d4c5b3] rounded-full flex items-center justify-center text-[#3a4740] font-bold border-2 border-white shadow-sm">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#d4c5b3] rounded-full flex items-center justify-center text-[#3a4740] font-bold border-2 border-white shadow-sm">
                 MS
               </div>
             </div>
@@ -102,10 +100,19 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Hero onDonate={handleDonateClick} />
-              <SuccessStories />
-              <TransparencyTracker />
-              <DonationForm />
+              <Hero setActivePage={setActivePage} />
+              <HomeAbout setActivePage={setActivePage} />
+            </motion.div>
+          )}
+
+          {activePage === 'Mission' && (
+            <motion.div
+              key="mission"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Mission />
             </motion.div>
           )}
 
@@ -116,30 +123,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <div className="bg-[#ede9e3] pt-20 pb-10">
-                <div className="max-w-7xl mx-auto px-4 text-center">
-                  <h1 className="text-5xl font-serif italic text-stone-800 mb-4 tracking-tight">Our Stories</h1>
-                  <p className="text-stone-600 text-lg">Voices of resilience and hope from our community.</p>
-                </div>
-              </div>
               <SuccessStories />
-            </motion.div>
-          )}
-
-          {activePage === 'Transparency' && (
-            <motion.div
-              key="transparency"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <div className="bg-[#3a4740] pt-32 pb-10">
-                <div className="max-w-7xl mx-auto px-4 text-center">
-                  <h1 className="text-5xl font-serif italic text-[#d4c5b3] mb-4 tracking-tight">Transparency Tracker</h1>
-                  <p className="text-white/60 text-lg">Real-time verification of your contributions.</p>
-                </div>
-              </div>
-              <TransparencyTracker />
             </motion.div>
           )}
 
@@ -150,13 +134,32 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <div className="bg-[#ede9e3] pt-32 pb-10">
-                <div className="max-w-7xl mx-auto px-4 text-center">
-                  <h1 className="text-5xl font-serif italic text-stone-800 mb-4 tracking-tight">Make a Donation</h1>
-                  <p className="text-stone-600 text-lg">Choose a category and help us light the way.</p>
-                </div>
-              </div>
               <DonationForm />
+              <div className="pb-20">
+                <TransparencyTracker />
+              </div>
+            </motion.div>
+          )}
+
+          {activePage === 'Services' && (
+            <motion.div
+              key="services"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Services />
+            </motion.div>
+          )}
+
+          {activePage === 'Contact' && (
+            <motion.div
+              key="contact"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <ContactUs />
             </motion.div>
           )}
         </AnimatePresence>

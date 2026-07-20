@@ -38,7 +38,7 @@ export default function Footer() {
               <li>
                 <div className="flex items-start text-stone-300">
                   <MapPin className="w-4 h-4 mr-4 text-[#d4c5b3] mt-0.5 shrink-0" />
-                  <span className="text-xs font-bold uppercase tracking-widest">Cebu City, Philippines</span>
+                  <span className="text-xs font-bold uppercase tracking-widest">Philippines</span>
                 </div>
               </li>
             </ul>

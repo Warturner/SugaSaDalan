@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Story, Donation } from './types';
+import { Story, Donation } from '../types';
 
 export const MOCK_STORIES: Story[] = [
   {
@@ -81,4 +81,20 @@ export const MOCK_DONATIONS: Donation[] = [
     status: 'Pending',
     gateway: 'Maya',
   },
+];
+
+export const TOP_INDIVIDUAL_DONORS = [
+  { name: 'Juan Dela Cruz', amount: 50000 },
+  { name: 'Dr. Maria Santos', amount: 35000 },
+  { name: 'Elena Guerrero', amount: 25000 },
+  { name: 'Roberto Tan', amount: 20000 },
+  { name: 'Anonymous', amount: 15000 },
+];
+
+export const TOP_ORG_DONORS = [
+  { name: 'Cebu Tech Solutions Inc.', amount: 250000 },
+  { name: 'Rotary Club of Metro Cebu', amount: 180000 },
+  { name: 'Global Relief Foundation', amount: 150000 },
+  { name: 'Local Gov Unit - CDO', amount: 100000 },
+  { name: 'Sunshine Logistics', amount: 75000 },
 ];
