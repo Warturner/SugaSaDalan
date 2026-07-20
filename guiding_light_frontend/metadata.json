@@ -1,0 +1,8 @@
+{
+  "name": "Guiding Light",
+  "description": "Management system for Streetlight: Suga sa Dalan Organization Inc., featuring a public donor interface and a secure admin dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
