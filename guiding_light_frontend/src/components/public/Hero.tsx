@@ -92,7 +92,7 @@ export default function Hero({ setActivePage }: HeroProps) {
             <div className="bg-white rounded-[24px] md:rounded-[32px] shadow-sm p-8 md:p-10 grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-10 border border-stone-100">
               <div className="text-center sm:border-r border-stone-100 last:border-0">
                 <p className="text-3xl md:text-4xl font-serif italic text-stone-800 mb-2">500+</p>
-                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">Children Helped</p>
+                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">Victims Helped</p>
               </div>
               <div className="text-center sm:border-r border-stone-100 last:border-0">
                 <p className="text-3xl md:text-4xl font-serif italic text-stone-800 mb-2">100%</p>

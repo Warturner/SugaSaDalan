@@ -25,8 +25,8 @@ interface SidebarProps {
 export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const menuItems = [
-    { id: 'CMS' as AdminTab, icon: FileText, label: 'CMS' },
+const menuItems = [
+    { id: 'Stories' as AdminTab, icon: FileText, label: 'Stories' },
     { id: 'Donations' as AdminTab, icon: LayoutDashboard, label: 'Donations' },
     { id: 'Reconciliation' as AdminTab, icon: Landmark, label: 'Bank Reconciliation' },
   ];

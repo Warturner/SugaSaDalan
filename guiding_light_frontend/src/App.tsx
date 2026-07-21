@@ -2,7 +2,6 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PublicPage, AdminTab } from './types';
@@ -11,10 +10,11 @@ import { PublicPage, AdminTab } from './types';
 import Navbar from './components/layout/Navbar';
 import Hero from './components/public/Hero';
 import SuccessStories from './components/public/SuccessStories';
+import StoryArticle from './components/public/StoryArticle';
 import TransparencyTracker from './components/public/TransparencyTracker';
 import DonationForm from './components/public/DonationForm';
 import Mission from './components/public/Mission';
-import Services from './components/public/Services';
+import Services from './components/public/Services.tsx';
 import ContactUs from './components/public/ContactUs';
 import HomeAbout from './components/public/HomeAbout';
 import Footer from './components/public/Footer';
@@ -28,16 +28,25 @@ import BankReconciliation from './components/admin/BankReconciliation';
 export default function App() {
   const [isAdmin, setIsAdmin] = React.useState(false);
   const [activePage, setActivePage] = React.useState<PublicPage>('Home');
+  const [selectedStoryId, setSelectedStoryId] = React.useState<number | null>(null);
   const [activeAdminTab, setActiveAdminTab] = React.useState<AdminTab>('CMS');
+  const [storyToEdit, setStoryToEdit] = React.useState<number | null>(null);
 
   const toggleAdmin = () => {
     setIsAdmin(!isAdmin);
-    if (!isAdmin) {
+if (!isAdmin) {
       setActiveAdminTab('CMS');
     } else {
       setActivePage('Home');
     }
   };
+
+  // Effect to reset story view when navigating away
+  React.useEffect(() => {
+    if (activePage !== 'Stories') {
+      setSelectedStoryId(null);
+    }
+  }, [activePage]);
 
   if (isAdmin) {
     return (
@@ -64,19 +73,11 @@ export default function App() {
             </div>
           </header>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeAdminTab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {activeAdminTab === 'CMS' && <CMSModule />}
-              {activeAdminTab === 'Donations' && <DonationVerification />}
-              {activeAdminTab === 'Reconciliation' && <BankReconciliation />}
-            </motion.div>
-          </AnimatePresence>
+<div className="mt-4">
+            {activeAdminTab === 'Stories' && <CMSModule />}
+            {activeAdminTab === 'Donations' && <DonationVerification />}
+            {activeAdminTab === 'Reconciliation' && <BankReconciliation />}
+          </div>
         </main>
       </div>
     );
@@ -123,9 +124,38 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <SuccessStories />
+              {selectedStoryId ? (
+                <StoryArticle 
+                  storyId={selectedStoryId}
+                  isAdmin={isAdmin}
+                  onEdit={(id) => {
+                    setStoryToEdit(id);
+                    setActiveAdminTab('Stories');
+                    setIsAdmin(true);
+                  }}
+                  onBack={() => {
+                    setSelectedStoryId(null); // Clears the selection to go back to the feed
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }} 
+                />
+              ) : (
+                <>
+                  <div className="bg-[#ede9e3] pt-20 pb-10">
+                    <div className="max-w-7xl mx-auto px-4 text-center">
+                      <div className="inline-block px-4 py-1 bg-stone-200 text-stone-600 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4">The Feed</div>
+                      <h1 className="text-5xl font-serif italic text-stone-800 mb-4 tracking-tight">Stories of Hope</h1>
+                      <p className="text-stone-600 text-lg">Voices of resilience and hope from our community.</p>
+                    </div>
+                  </div>
+                  <SuccessStories onReadStory={(id) => {
+                    setSelectedStoryId(id);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }} />
+                </>
+              )}
             </motion.div>
           )}
+
 
           {activePage === 'Donate' && (
             <motion.div
@@ -164,8 +194,7 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
-
-      <Footer />
+      <Footer setActivePage={setActivePage} />
     </div>
   );
 }

@@ -18,8 +18,8 @@ const CATEGORIES: ServiceCategory[] = [
 
 const METHODS: { id: PaymentMethod, label: string, icon: any }[] = [
   { id: 'E-wallet', label: 'E-wallet', icon: Wallet },
-  { id: 'Manual Bank Transfer', label: 'Manual Bank', icon: Landmark },
   { id: 'Bank Card', label: 'Bank Card', icon: CreditCard },
+  { id: 'Manual Bank Transfer', label: 'Manual Bank', icon: Landmark },
 ];
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
@@ -37,17 +37,44 @@ export default function DonationForm() {
   const [method, setMethod] = React.useState<PaymentMethod>('E-wallet');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || parseFloat(amount) <= 0) return;
     
     setIsSubmitting(true);
-    // Mock API call to PayMongo
-    setTimeout(() => {
+    setError(null);
+
+    const donationData = {
+      amount: parseFloat(amount),
+      payment_method: method,
+      // In a real app, you'd get donor info from a form or user session
+      donor_name: 'Anonymous Donor', 
+      donor_email: 'anonymous@example.com'
+    };
+
+    try {
+      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/process_donation.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(donationData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setIsSuccess(true);
+      } else {
+        setError(result.error || 'An unknown error occurred during donation processing.');
+      }
+    } catch (err) {
+      setError('Failed to connect to the server. Please try again later.');
+    } finally {
       setIsSubmitting(false);
-      setIsSuccess(true);
-    }, 2000);
+    }
   };
 
   if (isSuccess) {
@@ -66,7 +93,11 @@ export default function DonationForm() {
           It will appear in our transparency tracker within 24 hours.
         </p>
         <button 
-          onClick={() => setIsSuccess(false)}
+          onClick={() => {
+            setIsSuccess(false);
+            setAmount('');
+            setError(null);
+          }}
           className="bg-[#4b5e52] text-white px-12 py-4 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#3a4740] transition-all shadow-lg"
         >
           Make Another Donation
@@ -171,25 +202,29 @@ export default function DonationForm() {
           >
             <form onSubmit={handleSubmit} className="space-y-10">
               {/* Amount */}
-              <div>
-                <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Amount (PHP)</label>
-                <div className="relative">
-                  <span className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-300 font-serif italic text-2xl">₱</span>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    required
-                    className="w-full pl-14 pr-6 py-6 bg-stone-50 border-none rounded-[24px] focus:ring-2 focus:ring-[#d4c5b3] font-mono text-2xl"
-                  />
-                </div>
-              </div>
+              <AnimatePresence>
+                {method !== 'Manual Bank Transfer' && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+                    <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Amount (PHP)</label>
+                    <div className="relative">
+                      <span className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-300 font-serif italic text-2xl">₱</span>
+                      <input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="0.00"
+                        required
+                        className="w-full pl-14 pr-6 py-6 bg-stone-50 border-none rounded-[24px] focus:ring-2 focus:ring-[#d4c5b3] font-mono text-2xl"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Payment Method Selector */}
               <div>
                 <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Payment Method</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-stone-50 p-2 rounded-[24px]">
+                <div className="grid grid-cols-3 gap-3 bg-stone-50 p-2 rounded-[24px]">
                   {METHODS.map((m) => (
                     <button
                       key={m.id}
@@ -245,17 +280,29 @@ export default function DonationForm() {
                 )}
               </AnimatePresence>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-[#4b5e52] text-white py-6 rounded-[24px] font-bold text-xs uppercase tracking-[0.2em] hover:bg-[#3a4740] transition-all flex items-center justify-center relative overflow-hidden group shadow-xl shadow-stone-100"
-              >
-                {isSubmitting ? (
-                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <span>Submit via PayMongo</span>
+              <AnimatePresence>
+                {method !== 'Manual Bank Transfer' && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full bg-[#4b5e52] text-white py-6 rounded-[24px] font-bold text-xs uppercase tracking-[0.2em] hover:bg-[#3a4740] transition-all flex items-center justify-center relative overflow-hidden group shadow-xl shadow-stone-100"
+                    >
+                      {isSubmitting ? (
+                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      ) : (
+                        <span>Submit via PayMongo</span>
+                      )}
+                    </button>
+                  </motion.div>
                 )}
-              </button>
+              </AnimatePresence>
+
+              {error && (
+                <div className="text-center text-red-500 text-sm font-bold pt-4">
+                  {error}
+                </div>
+              )}
 
               <div className="flex items-center justify-center space-x-4 text-stone-400">
                 <div className="h-px bg-stone-100 flex-1"></div>

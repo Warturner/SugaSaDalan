@@ -1,6 +1,10 @@
 <?php
-// Set up CORS (Cross-Origin Resource Sharing) NOTE this please jip
-header("Access-Control-Allow-Origin: *");
+// Define the allowed origin for CORS. For production, this should be your frontend's domain.
+// For local development, 'http://localhost:3000' is a common default for React apps.
+$allowed_origin = 'http://localhost:3000'; // <-- Replace with your frontend URL in production
+
+// Set up CORS (Cross-Origin Resource Sharing)
+header("Access-Control-Allow-Origin: " . $allowed_origin);
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 
@@ -16,12 +20,9 @@ try {
     
     // Set the PDO error mode to exception so we can see any problems
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
-    // remove comment the line below if to test the connection later jip
-    // echo "Connected successfully to the Guiding Light database!";
 } 
 catch(PDOException $e) {
-    // If the connection fails e luwa ang error in JSON format
+    // If the connection fails, return the error in JSON format
     echo json_encode(["error" => "Connection failed: " . $e->getMessage()]);
     die();
 }

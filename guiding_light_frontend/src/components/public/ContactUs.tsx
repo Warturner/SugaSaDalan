@@ -5,14 +5,38 @@ import { Mail, Phone, MapPin, Send } from 'lucide-react';
 export default function ContactUs() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/send_message.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setIsSuccess(true);
+        e.currentTarget.reset();
+      } else {
+        setError(result.error || 'An unknown error occurred.');
+      }
+    } catch (err) {
+      setError('Failed to connect to the server. Please try again later.');
+    } finally {
       setIsSubmitting(false);
-      setIsSuccess(true);
-    }, 1500);
+    }
   };
 
   return (
@@ -69,19 +93,21 @@ export default function ContactUs() {
                   </div>
                 </div>
 
-                <div className="flex items-start">
+                <a href="https://maps.app.goo.gl/dxjgKe2dajQUqayo8" target="_blank" rel="noopener noreferrer" className="flex items-start group">
                   <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center mr-6 shrink-0 text-[#4b5e52]">
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Visit Us</p>
-                    <p className="text-lg font-bold text-stone-800">208 Tiano Brothers St. Cagayan De Oro City, Northern Mindanao, Philippines</p>
+                    <p className="text-lg font-bold text-stone-800 group-hover:text-[#4b5e52] transition-colors">
+                      208 Tiano Brothers St. Cagayan De Oro City, Northern Mindanao, Philippines
+                    </p>
                   </div>
-                </div>
+                </a>
 
                 <div className="pt-8">
                   <a 
-                    href="https://facebook.com" 
+                    href="https://www.facebook.com/share/16QTUtyzEC/?mibextid=wwXIfr" 
                     target="_blank" 
                     rel="noreferrer"
                     className="inline-flex items-center px-8 py-4 bg-[#1877F2] text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg"
@@ -120,18 +146,22 @@ export default function ContactUs() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Full Name</label>
+                      <label htmlFor="name" className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Full Name</label>
                       <input 
                         type="text" 
+                        id="name"
+                        name="name"
                         required
                         className="w-full px-6 py-4 bg-stone-50 border-none rounded-2xl focus:ring-2 focus:ring-[#d4c5b3]" 
                         placeholder="Juan Dela Cruz"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Email Address</label>
+                      <label htmlFor="email" className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Email Address</label>
                       <input 
                         type="email" 
+                        id="email"
+                        name="email"
                         required
                         className="w-full px-6 py-4 bg-stone-50 border-none rounded-2xl focus:ring-2 focus:ring-[#d4c5b3]" 
                         placeholder="juan@example.com"
@@ -139,17 +169,21 @@ export default function ContactUs() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Subject</label>
+                    <label htmlFor="subject" className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Subject</label>
                     <input 
                       type="text" 
+                      id="subject"
+                      name="subject"
                       required
                       className="w-full px-6 py-4 bg-stone-50 border-none rounded-2xl focus:ring-2 focus:ring-[#d4c5b3]" 
                       placeholder="How can we help?"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Message</label>
+                    <label htmlFor="message" className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Message</label>
                     <textarea 
+                      id="message"
+                      name="message"
                       required
                       rows={5}
                       className="w-full px-6 py-4 bg-stone-50 border-none rounded-2xl focus:ring-2 focus:ring-[#d4c5b3] resize-none" 
@@ -163,6 +197,11 @@ export default function ContactUs() {
                   >
                     {isSubmitting ? "Sending..." : "Send Message"}
                   </button>
+                  {error && (
+                    <div className="text-center text-red-500 text-sm font-bold">
+                      {error}
+                    </div>
+                  )}
                 </form>
               )}
             </motion.div>
