@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
-import { motion } from 'motion/react';
-import { Heart, Shield, Users, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ArrowRight } from 'lucide-react';
 import { PublicPage } from '../../types';
 
 interface HeroProps {
@@ -13,6 +13,39 @@ interface HeroProps {
 }
 
 export default function Hero({ setActivePage }: HeroProps) {
+  const [images, setImages] = useState<string[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // Fallback image in case the folder is empty
+  const fallbackImage = "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1200";
+
+  // 1. Fetch the images from the backend when the component loads
+  useEffect(() => {
+    fetch('http://localhost/GuidingLight_Project/guiding_light_backend/get_home_pictures.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.images && data.images.length > 0) {
+          // Map the raw filenames into actual URLs pointing to the public folder
+          const imagePaths = data.images.map((fileName: string) => `/media/Home_Pictures/${fileName}`);
+          setImages(imagePaths);
+        }
+      })
+      .catch(err => console.error("Failed to fetch slider images:", err));
+  }, []);
+
+  // 2. Set up the 2-second timer to cycle through the images
+  useEffect(() => {
+    // Only run the timer if we have more than 1 image
+    if (images.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 2000); // 2000 milliseconds = 2 seconds
+
+    // Cleanup the timer when the component unmounts
+    return () => clearInterval(timer);
+  }, [images.length]);
+
   return (
     <section className="relative pt-32 pb-20 overflow-hidden bg-[#f7f5f2]">
       {/* Background decoration */}
@@ -78,17 +111,25 @@ export default function Hero({ setActivePage }: HeroProps) {
           transition={{ delay: 0.4, duration: 0.8 }}
           className="mt-20 relative"
         >
-          <div className="relative rounded-[32px] md:rounded-[48px] overflow-hidden shadow-2xl border-[6px] md:border-[12px] border-white">
-            <img 
-              src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1200" 
-              alt="Community" 
-              className="w-full h-[300px] sm:h-[450px] md:h-[600px] object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 to-transparent"></div>
+          {/* Slider Container */}
+          <div className="relative rounded-[32px] md:rounded-[48px] overflow-hidden shadow-2xl border-[6px] md:border-[12px] border-white w-full h-[300px] sm:h-[450px] md:h-[600px] bg-stone-100">
+            <AnimatePresence mode="popLayout">
+              <motion.img 
+                key={currentIndex}
+                src={images.length > 0 ? images[currentIndex] : fallbackImage}
+                alt="Community Impact"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1 }} // 1 second crossfade animation
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </AnimatePresence>
+            <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 to-transparent z-10 pointer-events-none"></div>
           </div>
           
           {/* Stats overlap */}
-          <div className="md:absolute -bottom-10 left-1/2 md:-translate-x-1/2 w-full max-w-4xl px-4 mt-8 md:mt-0">
+          <div className="md:absolute -bottom-10 left-1/2 md:-translate-x-1/2 w-full max-w-4xl px-4 mt-8 md:mt-0 z-20">
             <div className="bg-white rounded-[24px] md:rounded-[32px] shadow-sm p-8 md:p-10 grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-10 border border-stone-100">
               <div className="text-center sm:border-r border-stone-100 last:border-0">
                 <p className="text-3xl md:text-4xl font-serif italic text-stone-800 mb-2">500+</p>

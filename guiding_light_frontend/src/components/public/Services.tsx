@@ -143,7 +143,7 @@ export default function Services() {
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 blur-3xl -mr-48 -mt-48 rounded-full"></div>
           
           <div className="text-center mb-16 relative z-10">
-            <h3 className="text-[10px] font-bold text-[#d4c5b3] uppercase tracking-[0.25em] mb-4 opacity-80">The Journey to Recovery</h3>
+            <h3 className="text-[10px] font-bold text-[#d4c5b3] uppercase tracking-[0.25em] mb-4 opacity-80">The Journey</h3>
             <h2 className="text-4xl font-serif italic text-white">Our Process Flow</h2>
           </div>
 
