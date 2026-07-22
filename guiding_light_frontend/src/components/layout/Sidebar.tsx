@@ -8,7 +8,8 @@ import {
   LayoutDashboard, 
   FileText, 
   Landmark, 
-  LogOut, 
+  LogOut,
+  Settings,
   ChevronRight,
   Menu,
   X
@@ -29,6 +30,7 @@ const menuItems = [
     { id: 'Stories' as AdminTab, icon: FileText, label: 'Stories' },
     { id: 'Donations' as AdminTab, icon: LayoutDashboard, label: 'Donations' },
     { id: 'Reconciliation' as AdminTab, icon: Landmark, label: 'Bank Reconciliation' },
+    { id: 'Settings' as AdminTab, icon: Settings, label: 'Settings' }, // <-- Add this
   ];
 
   return (

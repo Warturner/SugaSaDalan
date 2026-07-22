@@ -21,6 +21,7 @@ import Footer from './components/public/Footer';
 
 // Admin Components
 import Login from './components/admin/Login';
+import SettingsModule from './components/admin/SettingsModule';
 import Sidebar from './components/layout/Sidebar';
 import CMSModule from './components/admin/CMSModule';
 import DonationVerification from './components/admin/DonationVerification';
@@ -81,6 +82,7 @@ const toggleAdmin = () => {
             {activeAdminTab === 'Stories' && <CMSModule />}
             {activeAdminTab === 'Donations' && <DonationVerification />}
             {activeAdminTab === 'Reconciliation' && <BankReconciliation />}
+            {activeAdminTab === 'Settings' && <SettingsModule user={currentUser} onUpdateUser={setCurrentUser} />}
           </div>
         </main>
       </div>
