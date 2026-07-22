@@ -11,11 +11,9 @@ import { motion, AnimatePresence } from 'motion/react';
 interface NavbarProps {
   activePage: PublicPage;
   setActivePage: (page: PublicPage) => void;
-  isAdmin: boolean;
-  onAdminToggle: () => void;
 }
 
-export default function Navbar({ activePage, setActivePage, isAdmin, onAdminToggle }: NavbarProps) {
+export default function Navbar({ activePage, setActivePage }: NavbarProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const navItems = [
@@ -37,7 +35,7 @@ export default function Navbar({ activePage, setActivePage, isAdmin, onAdminTogg
             </div>
           </div>
 
-          {/* Desktop Nav */}
+          {/* Desktop Nav - Admin Button Removed */}
           <div className="hidden md:flex items-center space-x-8 h-full">
             {navItems.map((item) => (
               <button
@@ -65,12 +63,6 @@ export default function Navbar({ activePage, setActivePage, isAdmin, onAdminTogg
             >
               Donate Now
             </button>
-            <button 
-              onClick={onAdminToggle}
-              className="text-[10px] text-stone-400 hover:text-stone-600 transition-colors uppercase tracking-widest font-bold"
-            >
-              {isAdmin ? 'Exit Admin' : 'Admin'}
-            </button>
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -83,7 +75,7 @@ export default function Navbar({ activePage, setActivePage, isAdmin, onAdminTogg
         </div>
       </div>
 
-      {/* Mobile Nav */}
+      {/* Mobile Nav - Admin Button Removed */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -117,15 +109,6 @@ export default function Navbar({ activePage, setActivePage, isAdmin, onAdminTogg
                 >
                   <Heart className="w-4 h-4 mr-2" />
                   Donate Now
-                </button>
-                <button 
-                  onClick={() => {
-                    onAdminToggle();
-                    setIsOpen(false);
-                  }}
-                  className="w-full text-[10px] text-stone-400 py-2 uppercase tracking-widest font-bold"
-                >
-                  {isAdmin ? 'Exit Admin' : 'Admin Portal'}
                 </button>
               </div>
             </div>

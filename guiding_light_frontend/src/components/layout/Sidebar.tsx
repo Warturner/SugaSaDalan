@@ -20,9 +20,9 @@ interface SidebarProps {
   activeTab: AdminTab;
   setActiveTab: (tab: AdminTab) => void;
   onLogout: () => void;
+  user: { id: number; username: string } | null; 
 }
-
-export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
+export default function Sidebar({ activeTab, setActiveTab, onLogout, user }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
 const menuItems = [
@@ -90,10 +90,10 @@ const menuItems = [
         </nav>
 
         <div className="p-8 border-t border-white/10">
-          <div className="mb-6 p-5 rounded-[24px] bg-white/5 border border-white/10">
+<div className="mb-6 p-5 rounded-[24px] bg-white/5 border border-white/10">
             <p className="text-[10px] opacity-40 uppercase tracking-widest font-bold mb-3">Admin Session</p>
-            <p className="text-xs font-semibold text-white">Maria Clara Santos</p>
-            <p className="text-[9px] text-[#d4c5b3] uppercase tracking-tighter mt-0.5">Senior Administrator</p>
+            <p className="text-xs font-semibold text-white capitalize">{user?.username || 'System User'}</p>
+            <p className="text-[9px] text-[#d4c5b3] uppercase tracking-tighter mt-0.5">System Administrator</p>
           </div>
           <button
             onClick={onLogout}

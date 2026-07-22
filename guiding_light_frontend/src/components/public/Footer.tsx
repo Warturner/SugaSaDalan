@@ -51,7 +51,7 @@ export default function Footer({ setActivePage }: FooterProps) {
 
           <div>
             <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d4c5b3] mb-8">Quick Links</h3>
-            <ul className="space-y-4">              
+<ul className="space-y-4">              
               <li>
                 <button 
                   onClick={() => { setActivePage('Stories'); window.scrollTo(0, 0); }}
@@ -66,6 +66,15 @@ export default function Footer({ setActivePage }: FooterProps) {
                   className="text-xs font-bold uppercase tracking-widest text-stone-400 hover:text-white transition-colors"
                 >
                   Donor Portal
+                </button>
+              </li>
+              {/* NEW: Discreet Staff Portal Link */}
+              <li>
+                <button 
+                  onClick={() => { setActivePage('Login'); window.scrollTo(0, 0); }}
+                  className="text-xs font-bold uppercase tracking-widest text-stone-500/50 hover:text-stone-400 transition-colors"
+                >
+                  Staff Portal
                 </button>
               </li>
             </ul>

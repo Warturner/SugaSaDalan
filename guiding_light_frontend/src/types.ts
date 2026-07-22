@@ -2,7 +2,10 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-
+export interface User {
+  id: number;
+  username: string;
+}
 export interface Story {
   id: string;
   title: string;
@@ -33,4 +36,4 @@ export type ServiceCategory =
 export type PaymentMethod = 'E-wallet' | 'Manual Bank Transfer' | 'Bank Card';
 
 export type AdminTab = 'Stories' | 'Donations' | 'Reconciliation';
-export type PublicPage = 'Home' | 'Stories' | 'Donate' | 'Mission' | 'Services' | 'Contact';
+export type PublicPage = 'Home' | 'Stories' | 'Donate' | 'Mission' | 'Services' | 'Contact' | 'Login';
