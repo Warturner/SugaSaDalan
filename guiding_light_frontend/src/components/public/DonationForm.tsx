@@ -88,9 +88,9 @@ export default function DonationForm() {
           <CheckCircle2 className="w-12 h-12" />
         </div>
         <h2 className="text-4xl font-serif italic text-stone-800 mb-6">Salamat kaayo!</h2>
-        <p className="text-stone-600 mb-10 leading-relaxed">
+<p className="text-stone-600 mb-10 leading-relaxed">
           Your donation of <span className="font-bold text-stone-800">PHP {parseFloat(amount).toLocaleString()}</span> has been received and is pending verification. 
-          It will appear in our transparency tracker within 24 hours.
+          Thank you for your generous support in helping us empower the unheard!
         </p>
         <button 
           onClick={() => {

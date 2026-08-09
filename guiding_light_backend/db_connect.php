@@ -11,8 +11,8 @@ header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 // Database credentials
 $host = "localhost";
 $db_name = "guiding_light_db";
-$username = "root"; // Default XAMPP username
-$password = ""; // Default XAMPP password is blank
+$username = "root"; 
+$password = ""; //
 
 try {
     // Create a new PDO connection

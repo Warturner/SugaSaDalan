@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -10,6 +11,7 @@ import {
   Landmark, 
   LogOut,
   Settings,
+  Users, // Make sure Users is imported here!
   ChevronRight,
   Menu,
   X
@@ -17,21 +19,32 @@ import {
 import { AdminTab } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 
+// Make sure the User type definition expects the 'role' property
 interface SidebarProps {
   activeTab: AdminTab;
   setActiveTab: (tab: AdminTab) => void;
   onLogout: () => void;
-  user: { id: number; username: string } | null; 
+  user: { id: number; username: string; role?: string } | null; 
 }
+
 export default function Sidebar({ activeTab, setActiveTab, onLogout, user }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-const menuItems = [
-    { id: 'Stories' as AdminTab, icon: FileText, label: 'Stories' },
-    { id: 'Donations' as AdminTab, icon: LayoutDashboard, label: 'Donations' },
-    { id: 'Reconciliation' as AdminTab, icon: Landmark, label: 'Bank Reconciliation' },
-    { id: 'Settings' as AdminTab, icon: Settings, label: 'Settings' }, // <-- Add this
+  const menuItems = [
+    // Both roles can see Stories
+    { id: 'Stories' as AdminTab, icon: FileText, label: 'Stories', allowedRoles: ['admin', 'media'] },
+    
+    // Only Admin can see these
+    { id: 'Donations' as AdminTab, icon: LayoutDashboard, label: 'Donations', allowedRoles: ['admin'] },
+    { id: 'Reconciliation' as AdminTab, icon: Landmark, label: 'Bank Reconciliation', allowedRoles: ['admin'] },
+    { id: 'Accounts' as AdminTab, icon: Users, label: 'User Accounts', allowedRoles: ['admin'] },
+    
+    // Both roles should be able to change their own password (removed the duplicate)
+    { id: 'Settings' as AdminTab, icon: Settings, label: 'Settings', allowedRoles: ['admin', 'media'] }, 
   ];
+
+  // Filter the menu so they only see what they are allowed to see
+  const visibleMenu = menuItems.filter(item => item.allowedRoles.includes(user?.role || 'media'));
 
   return (
     <>
@@ -71,7 +84,8 @@ const menuItems = [
 
         <nav className="flex-1 mt-8">
           <div className="px-8 mb-4 opacity-50 text-[10px] uppercase tracking-widest font-bold">NGO Administration</div>
-          {menuItems.map((item) => (
+          {/* FIX: Use visibleMenu.map instead of menuItems.map here! */}
+          {visibleMenu.map((item) => (
             <button
               key={item.id}
               onClick={() => { setActiveTab(item.id); setIsOpen(false); }}
@@ -92,10 +106,13 @@ const menuItems = [
         </nav>
 
         <div className="p-8 border-t border-white/10">
-<div className="mb-6 p-5 rounded-[24px] bg-white/5 border border-white/10">
+          <div className="mb-6 p-5 rounded-[24px] bg-white/5 border border-white/10">
             <p className="text-[10px] opacity-40 uppercase tracking-widest font-bold mb-3">Admin Session</p>
             <p className="text-xs font-semibold text-white capitalize">{user?.username || 'System User'}</p>
-            <p className="text-[9px] text-[#d4c5b3] uppercase tracking-tighter mt-0.5">System Administrator</p>
+            {/* FIX: Dynamically show their role title based on database value */}
+            <p className="text-[9px] text-[#d4c5b3] uppercase tracking-tighter mt-0.5">
+              {user?.role === 'admin' ? 'System Administrator' : 'Media Manager'}
+            </p>
           </div>
           <button
             onClick={onLogout}

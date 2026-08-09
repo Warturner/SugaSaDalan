@@ -2,215 +2,214 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import React, { useState } from 'react';
-import { User, Lock, Loader2, CheckCircle } from 'lucide-react';
-import { User as UserType } from '../../types';
+import { motion } from 'motion/react';
+import { Lock, User, Eye, EyeOff, Save, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
-interface SettingsModuleProps {
-  user: UserType | null;
-  onUpdateUser: (user: UserType) => void;
+interface SettingsProps {
+  user: { id: number; username: string; role?: string } | null;
+  onUpdateUser: (user: { id: number; username: string; role?: string }) => void;
 }
 
-export default function SettingsModule({ user, onUpdateUser }: SettingsModuleProps) {
-  // Username Form State
-  const [newUsername, setNewUsername] = useState('');
-  const [currentPasswordForUser, setCurrentPasswordForUser] = useState('');
-  const [usernameStatus, setUsernameStatus] = useState<{ type: 'error' | 'success', msg: string } | null>(null);
-  const [isSubmittingUsername, setIsSubmittingUsername] = useState(false);
-
-  // Password Form State
-  const [oldPassword, setOldPassword] = useState('');
+export default function SettingsModule({ user, onUpdateUser }: SettingsProps) {
+  const [username, setUsername] = useState(user?.username || '');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordStatus, setPasswordStatus] = useState<{ type: 'error' | 'success', msg: string } | null>(null);
-  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
+  
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  const handleUpdateUsername = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-    
-    // NEW: Strict Username Validation
-    if (newUsername.trim().length < 3) {
-      setUsernameStatus({ type: 'error', msg: 'Username must be at least 3 characters long.' });
+    setError(null);
+    setSuccess(false);
+
+    if (newPassword && newPassword !== confirmPassword) {
+      setError("New passwords do not match.");
       return;
     }
-    
-    setUsernameStatus(null);
-    setIsSubmittingUsername(true);
+
+    if (!currentPassword) {
+      setError("Your current password is required to save changes.");
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/update_profile.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'update_username',
-          user_id: user.id,
-          new_username: newUsername.trim(),
-          current_password: currentPasswordForUser
-        })
-      });
-      const data = await response.json();
-
-      if (data.error) throw new Error(data.error);
-
-      if (data.success) {
-        setUsernameStatus({ type: 'success', msg: 'Username updated successfully!' });
-        onUpdateUser({ ...user, username: data.new_username }); 
-        setNewUsername('');
-        setCurrentPasswordForUser('');
-      }
-    } catch (err) {
-      setUsernameStatus({ type: 'error', msg: err instanceof Error ? err.message : 'Failed to update username' });
-    } finally {
-      setIsSubmittingUsername(false);
-    }
-  };
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    // NEW: Strict Password Validations
-    if (newPassword.length < 8) {
-      setPasswordStatus({ type: 'error', msg: 'New password must be at least 8 characters long.' });
-      return;
-    }
-    if (!/[A-Z]/.test(newPassword)) {
-      setPasswordStatus({ type: 'error', msg: 'New password must contain at least one uppercase letter.' });
-      return;
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
-      setPasswordStatus({ type: 'error', msg: 'New password must contain at least one special character.' });
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordStatus({ type: 'error', msg: 'New passwords do not match.' });
-      return;
-    }
-
-    setPasswordStatus(null);
-    setIsSubmittingPassword(true);
-
-    try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/update_profile.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'update_password',
-          user_id: user.id,
-          old_password: oldPassword,
+          user_id: user?.id,
+          current_password: currentPassword,
+          new_username: username,
           new_password: newPassword
         })
       });
+
       const data = await response.json();
 
-      if (data.error) throw new Error(data.error);
-
       if (data.success) {
-        setPasswordStatus({ type: 'success', msg: 'Password updated successfully!' });
-        setOldPassword('');
+        setSuccess(true);
+        setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
+        
+        // Update the global state so the header instantly reflects the new username
+        if (user && data.new_username !== user.username) {
+          onUpdateUser({ ...user, username: data.new_username });
+        }
+      } else {
+        setError(data.error || 'Failed to update profile.');
       }
     } catch (err) {
-      setPasswordStatus({ type: 'error', msg: err instanceof Error ? err.message : 'Failed to update password' });
+      setError('Server connection failed.');
     } finally {
-      setIsSubmittingPassword(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="max-w-4xl space-y-8">
-      <div className="mb-8">
-        <h2 className="text-2xl font-serif italic text-stone-700">Account Settings</h2>
+    <div className="p-8 max-w-3xl mx-auto">
+      <div className="mb-10">
+        <h2 className="text-3xl font-serif italic text-stone-800 mb-2">Account Settings</h2>
+        <p className="text-stone-500">Update your personal credentials and manage your account security.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Update Username Card */}
-        <div className="bg-white rounded-[32px] p-8 border border-stone-100 shadow-sm">
-          <div className="flex items-center mb-6">
-            <div className="w-10 h-10 bg-[#f7f5f2] rounded-full flex items-center justify-center mr-4">
-              <User className="w-5 h-5 text-[#4b5e52]" />
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-[32px] border border-stone-100 shadow-sm overflow-hidden p-8 md:p-12"
+      >
+        <form onSubmit={handleSubmit} className="space-y-8">
+          
+          {/* Account Info Section */}
+          <div>
+            <h3 className="text-lg font-bold text-stone-800 flex items-center mb-6 pb-4 border-b border-stone-100">
+              <User className="w-5 h-5 mr-3 text-[#4b5e52]" />
+              Profile Information
+            </h3>
+            
+            <div className="mb-6">
+              <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Account Role</label>
+              <div className="inline-flex items-center px-4 py-2 bg-stone-50 rounded-xl border border-stone-100">
+                <span className="text-sm font-bold text-stone-500 capitalize">{user?.role || 'User'}</span>
+              </div>
+              <p className="text-[10px] text-stone-400 mt-2">Your role determines your system access levels. Contact a system administrator to change this.</p>
             </div>
-            <h3 className="text-lg font-bold text-stone-800">Change Username</h3>
+
+            <div>
+              <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Username</label>
+              <input
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-3 bg-stone-50 border-none rounded-2xl focus:ring-2 focus:ring-[#d4c5b3]"
+              />
+            </div>
           </div>
 
-          {usernameStatus && (
-            <div className={`mb-6 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest text-center border ${usernameStatus.type === 'error' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-green-50 text-green-600 border-green-100 flex items-center justify-center'}`}>
-              {usernameStatus.type === 'success' && <CheckCircle className="w-4 h-4 mr-2" />}
-              {usernameStatus.msg}
-            </div>
-          )}
+          {/* Security Section */}
+          <div>
+            <h3 className="text-lg font-bold text-stone-800 flex items-center mb-6 pb-4 border-b border-stone-100 mt-10">
+              <Lock className="w-5 h-5 mr-3 text-[#4b5e52]" />
+              Security Settings
+            </h3>
 
-          <form onSubmit={handleUpdateUsername} className="space-y-5">
-            <div>
-              <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">New Username</label>
-              <input 
-                type="text" required value={newUsername} onChange={(e) => setNewUsername(e.target.value)}
-                className="w-full px-5 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Current Password (To Verify)</label>
-              <input 
-                type="password" required value={currentPasswordForUser} onChange={(e) => setCurrentPasswordForUser(e.target.value)}
-                className="w-full px-5 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 text-sm"
-              />
-            </div>
-            <button type="submit" disabled={isSubmittingUsername} className="w-full bg-[#4b5e52] text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#3a4740] transition-colors disabled:opacity-70 flex justify-center items-center mt-2">
-              {isSubmittingUsername ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Update Username
-            </button>
-          </form>
-        </div>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Current Password (Required)</label>
+                <div className="relative">
+                  <input
+                    type={showCurrent ? "text" : "password"}
+                    required
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-amber-50 border border-amber-100 rounded-2xl focus:ring-2 focus:ring-amber-200 pr-12"
+                    placeholder="Enter current password to authorize changes"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowCurrent(!showCurrent)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                  >
+                    {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
 
-        {/* Update Password Card */}
-        <div className="bg-white rounded-[32px] p-8 border border-stone-100 shadow-sm">
-          <div className="flex items-center mb-6">
-            <div className="w-10 h-10 bg-[#f7f5f2] rounded-full flex items-center justify-center mr-4">
-              <Lock className="w-5 h-5 text-[#4b5e52]" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">New Password (Optional)</label>
+                  <div className="relative">
+                    <input
+                      type={showNew ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-stone-50 border-none rounded-2xl focus:ring-2 focus:ring-[#d4c5b3] pr-12"
+                      placeholder="Leave blank to keep current"
+                    />
+                    <button 
+                      type="button" 
+                      onClick={() => setShowNew(!showNew)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                    >
+                      {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Confirm New Password</label>
+                  <input
+                    type={showNew ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-stone-50 border-none rounded-2xl focus:ring-2 focus:ring-[#d4c5b3]"
+                    placeholder="Retype new password"
+                  />
+                </div>
+              </div>
             </div>
-            <h3 className="text-lg font-bold text-stone-800">Change Password</h3>
           </div>
 
-          {passwordStatus && (
-            <div className={`mb-6 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest text-center border ${passwordStatus.type === 'error' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-green-50 text-green-600 border-green-100 flex items-center justify-center'}`}>
-              {passwordStatus.type === 'success' && <CheckCircle className="w-4 h-4 mr-2" />}
-              {passwordStatus.msg}
-            </div>
+          {/* Status Messages */}
+          {error && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs flex items-center font-medium">
+              <AlertTriangle className="w-4 h-4 mr-2 shrink-0" />
+              <p>{error}</p>
+            </motion.div>
           )}
 
-          <form onSubmit={handleUpdatePassword} className="space-y-5">
-            <div>
-              <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Old Password</label>
-              <input 
-                type="password" required value={oldPassword} onChange={(e) => setOldPassword(e.target.value)}
-                className="w-full px-5 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">New Password</label>
-              <input 
-                type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-5 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 text-sm"
-              />
-              <p className="text-[9px] text-stone-400 mt-2 uppercase tracking-wider">Must contain 8+ characters, 1 uppercase, 1 special character.</p>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Re-type New Password</label>
-              <input 
-                type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-5 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 text-sm"
-              />
-            </div>
-            <button type="submit" disabled={isSubmittingPassword} className="w-full bg-[#4b5e52] text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#3a4740] transition-colors disabled:opacity-70 flex justify-center items-center mt-2">
-              {isSubmittingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Update Password
-            </button>
-          </form>
-        </div>
-      </div>
+          {success && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-emerald-50 text-emerald-600 p-4 rounded-2xl text-xs flex items-center font-medium">
+              <CheckCircle2 className="w-4 h-4 mr-2 shrink-0" />
+              <p>Profile updated successfully!</p>
+            </motion.div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full md:w-auto px-10 py-4 bg-[#3a4740] text-[#d4c5b3] rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-[#2c3630] transition-colors flex items-center justify-center disabled:opacity-70 mt-8 shadow-xl shadow-[#3a4740]/20"
+          >
+            {isLoading ? 'Saving...' : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
+              </>
+            )}
+          </button>
+
+        </form>
+      </motion.div>
     </div>
   );
 }

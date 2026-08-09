@@ -35,8 +35,6 @@ try {
     }
 
     // Step 2: Delete the record from the database. 
-    // (Because you set up ON DELETE CASCADE in your SQL, this will automatically 
-    // delete the associated history logs in story_edit_history!)
     $sql = "DELETE FROM stories WHERE post_id = :post_id";
     $stmt = $conn->prepare($sql);
     $stmt->execute([':post_id' => $post_id]);

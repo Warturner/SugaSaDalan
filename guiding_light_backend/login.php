@@ -21,7 +21,7 @@ try {
     }
 
     // Fetch the user from the database
-    $stmt = $conn->prepare("SELECT user_id, username, password_hash FROM users WHERE username = :username");
+    $stmt = $conn->prepare("SELECT user_id, username, password_hash, role FROM users WHERE username = :username");
     $stmt->execute([':username' => $username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -32,7 +32,8 @@ try {
             'success' => true,
             'user' => [
                 'id' => $user['user_id'],
-                'username' => $user['username']
+                'username' => $user['username'],
+                'role' => $user['role']
             ]
         ]);
     } else {
