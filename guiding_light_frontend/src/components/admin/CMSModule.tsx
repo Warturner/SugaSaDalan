@@ -5,7 +5,14 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, X, Loader, ChevronLeft, ChevronRight, Clock, User, FileText, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Plus, X, Loader, ChevronLeft, ChevronRight, Clock, User, FileText, Upload, Trash2, Image as ImageIcon, Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, List, ListOrdered, Quote, AlignLeft, AlignCenter, AlignRight, Edit3, FileUp } from 'lucide-react';
+import * as mammoth from 'mammoth';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
 
 interface Story {
   post_id: number;
@@ -25,6 +32,73 @@ interface EditHistory {
 
 const STORIES_PER_PAGE = 5;
 
+// ==========================================
+// TIPTAP MENU BAR COMPONENT
+// ==========================================
+const MenuBar = ({ editor }: { editor: any }) => {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = React.useState(false);
+
+  if (!editor) return null;
+
+  const btnClass = "p-2 rounded hover:bg-stone-200 text-stone-600 transition-colors";
+  const activeBtnClass = "p-2 rounded bg-stone-300 text-stone-900 font-bold transition-colors";
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/upload_inline_image.php', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        editor.chain().focus().setImage({ src: data.url }).run();
+      } else {
+        alert(data.error || 'Failed to upload image.');
+      }
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      alert('Network error while uploading image.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap gap-1 p-2 bg-stone-50 border-b border-stone-200 rounded-t-2xl items-center">
+      <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? activeBtnClass : btnClass} title="Bold"><Bold className="w-4 h-4" /></button>
+      <button onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? activeBtnClass : btnClass} title="Italic"><Italic className="w-4 h-4" /></button>
+      <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive('underline') ? activeBtnClass : btnClass} title="Underline"><UnderlineIcon className="w-4 h-4" /></button>
+      <button onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive('strike') ? activeBtnClass : btnClass} title="Strikethrough"><Strikethrough className="w-4 h-4" /></button>
+      <div className="w-px h-6 bg-stone-300 mx-1 self-center"></div>
+      <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={editor.isActive('heading', { level: 1 }) ? activeBtnClass : btnClass} title="Heading 1"><Heading1 className="w-4 h-4" /></button>
+      <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={editor.isActive('heading', { level: 2 }) ? activeBtnClass : btnClass} title="Heading 2"><Heading2 className="w-4 h-4" /></button>
+      <div className="w-px h-6 bg-stone-300 mx-1 self-center"></div>
+      <button onClick={() => editor.chain().focus().setTextAlign('left').run()} className={editor.isActive({ textAlign: 'left' }) ? activeBtnClass : btnClass} title="Align Left"><AlignLeft className="w-4 h-4" /></button>
+      <button onClick={() => editor.chain().focus().setTextAlign('center').run()} className={editor.isActive({ textAlign: 'center' }) ? activeBtnClass : btnClass} title="Align Center"><AlignCenter className="w-4 h-4" /></button>
+      <button onClick={() => editor.chain().focus().setTextAlign('right').run()} className={editor.isActive({ textAlign: 'right' }) ? activeBtnClass : btnClass} title="Align Right"><AlignRight className="w-4 h-4" /></button>
+      <div className="w-px h-6 bg-stone-300 mx-1 self-center"></div>
+      <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={editor.isActive('bulletList') ? activeBtnClass : btnClass} title="Bullet List"><List className="w-4 h-4" /></button>
+      <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={editor.isActive('orderedList') ? activeBtnClass : btnClass} title="Numbered List"><ListOrdered className="w-4 h-4" /></button>
+      <button onClick={() => editor.chain().focus().toggleBlockquote().run()} className={editor.isActive('blockquote') ? activeBtnClass : btnClass} title="Blockquote"><Quote className="w-4 h-4" /></button>
+      <div className="w-px h-6 bg-stone-300 mx-1 self-center"></div>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" ref={fileInputRef} onChange={handleImageUpload} />
+      <button onClick={() => fileInputRef.current?.click()} className={btnClass} title="Insert Image" disabled={isUploading}>
+        {isUploading ? <Loader className="w-4 h-4 animate-spin text-[#4b5e52]" /> : <ImageIcon className="w-4 h-4" />}
+      </button>
+    </div>
+  );
+};
+
 export default function CMSModule() {
   const [stories, setStories] = React.useState<Story[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -34,7 +108,13 @@ export default function CMSModule() {
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
   
   const [storyToEdit, setStoryToEdit] = React.useState<Story | null>(null);
+  const [importedHtmlContent, setImportedHtmlContent] = React.useState<string | null>(null);
   const [isEditorOpen, setIsEditorOpen] = React.useState(false);
+  
+  // NEW: State for the creation menu modal
+  const [isCreationMenuOpen, setIsCreationMenuOpen] = React.useState(false);
+  const [isExtractingDocx, setIsExtractingDocx] = React.useState(false);
+  const docxInputRef = React.useRef<HTMLInputElement>(null);
   
   const [currentPage, setCurrentPage] = React.useState(1);
 
@@ -61,13 +141,9 @@ export default function CMSModule() {
     setIsPreviewOpen(true);
   };
 
-  const handleCreateNew = () => {
-    setStoryToEdit(null);
-    setIsEditorOpen(true);
-  };
-
   const handleEdit = (story: Story) => {
     setStoryToEdit(story);
+    setImportedHtmlContent(null);
     setIsPreviewOpen(false);
     setIsEditorOpen(true);
   };
@@ -75,35 +151,122 @@ export default function CMSModule() {
   const handleEditorClose = (didUpdate: boolean) => {
     setIsEditorOpen(false);
     setStoryToEdit(null);
-    if (didUpdate) {
-      fetchStories();
-    }
+    setImportedHtmlContent(null);
+    if (didUpdate) fetchStories();
   };
 
-  // NEW: Delete Functionality with Confirmation
   const handleDelete = async (story: Story) => {
     const isConfirmed = window.confirm(`Are you sure you want to permanently delete "${story.title}"? This action cannot be undone.`);
-    
     if (!isConfirmed) return;
-
     try {
       const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/delete_story.php', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ post_id: story.post_id })
       });
-      
       const data = await response.json();
       if (data.error) throw new Error(data.error);
-      
-      // Refresh the table after successful deletion
       fetchStories();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete story.');
     }
   };
+
+  // ==========================================
+  // CREATION MENU HANDLERS
+  // ==========================================
+  const handleOpenCreationMenu = () => {
+    setIsCreationMenuOpen(true);
+  };
+
+  const handleCreateFromScratch = () => {
+    setIsCreationMenuOpen(false);
+    setStoryToEdit(null);
+    setImportedHtmlContent('');
+    setIsEditorOpen(true);
+  };
+
+  const handleDocxImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.docx')) {
+      alert('Only .docx files are supported for article conversion.');
+      if (docxInputRef.current) docxInputRef.current.value = '';
+      return;
+    }
+
+    setIsExtractingDocx(true);
+    
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const arrayBuffer = event.target?.result as ArrayBuffer;
+          
+const options = {
+            // NEW: Tell Mammoth how to translate Word styles into Tiptap HTML tags
+            styleMap: [
+              "p[style-name='Title'] => h1",
+              "p[style-name='Subtitle'] => h2",
+              "p[style-name='Heading 1'] => h1",
+              "p[style-name='Heading 2'] => h2",
+              "p[style-name='Heading 3'] => h3",
+              "p[style-name='Quote'] => blockquote",
+              "p[style-name='List Paragraph'] => ul > li:fresh"
+            ],
+            // KEEP YOUR EXISTING IMAGE UPLOADER:
+            convertImage: mammoth.images.imgElement(function(image) {
+              return image.read("base64").then(async function(imageBuffer) {
+                const byteString = atob(imageBuffer);
+                const ab = new ArrayBuffer(byteString.length);
+                const ia = new Uint8Array(ab);
+                for (let i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                const blob = new Blob([ab], { type: image.contentType });
+                const formData = new FormData();
+                const ext = image.contentType.split('/')[1] || 'png';
+                formData.append('image', blob, `imported-docx-img-${Date.now()}.${ext}`);
+
+                try {
+                  const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/upload_inline_image.php', {
+                    method: 'POST',
+                    body: formData,
+                  });
+                  const data = await response.json();
+                  if (data.success) return { src: data.url };
+                } catch (error) {
+                  console.error("Word document image upload failed:", error);
+                }
+                return { src: `data:${image.contentType};base64,${imageBuffer}` };
+              });
+            })
+          };
+
+          const result = await mammoth.convertToHtml({ arrayBuffer }, options);
+          setImportedHtmlContent(result.value);
+          setStoryToEdit(null);
+          setIsCreationMenuOpen(false);
+          setIsEditorOpen(true);
+
+        } catch (err) {
+          console.error(err);
+          alert("Failed to parse Word document.");
+        } finally {
+          setIsExtractingDocx(false);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } catch (error) {
+      console.error("Error reading file:", error);
+      alert("Failed to read the file.");
+      setIsExtractingDocx(false);
+    }
+    
+    if (docxInputRef.current) docxInputRef.current.value = '';
+  };
+
 
   const totalPages = Math.ceil(stories.length / STORIES_PER_PAGE);
   const paginatedStories = stories.slice((currentPage - 1) * STORIES_PER_PAGE, currentPage * STORIES_PER_PAGE);
@@ -113,7 +276,7 @@ export default function CMSModule() {
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl font-serif italic text-stone-700">Story Management</h2>
         <button 
-          onClick={handleCreateNew}
+          onClick={handleOpenCreationMenu}
           className="flex items-center bg-[#4b5e52] text-white px-5 py-3 rounded-full transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg hover:bg-[#3a4740] hover:scale-105 active:scale-100"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -147,7 +310,6 @@ export default function CMSModule() {
                 <td className="px-6 py-5 flex items-center space-x-4">
                   <button onClick={() => handleStoryClick(story)} className="text-[#4b5e52] font-bold text-[10px] uppercase tracking-widest hover:underline">View</button>
                   <button onClick={() => handleEdit(story)} className="text-stone-400 font-bold text-[10px] uppercase tracking-widest hover:text-stone-800 transition-colors">Edit</button>
-                  {/* NEW: Delete Button */}
                   <button onClick={() => handleDelete(story)} className="text-red-400 font-bold text-[10px] uppercase tracking-widest hover:text-red-600 transition-colors">Delete</button>
                 </td>
               </tr>
@@ -166,6 +328,54 @@ export default function CMSModule() {
         )}
       </div>
 
+      {/* CREATION MENU MODAL */}
+      <AnimatePresence>
+        {isCreationMenuOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !isExtractingDocx && setIsCreationMenuOpen(false)} className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="bg-white rounded-[32px] shadow-2xl p-8 max-w-2xl w-full">
+                
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="text-3xl font-serif italic text-stone-800">New Story</h3>
+                  <button onClick={() => setIsCreationMenuOpen(false)} disabled={isExtractingDocx} className="p-2 rounded-full hover:bg-stone-100 transition-colors disabled:opacity-50"><X className="w-6 h-6 text-stone-400" /></button>
+                </div>
+
+                {isExtractingDocx ? (
+                  <div className="py-20 flex flex-col items-center justify-center">
+                    <Loader className="w-12 h-12 text-[#4b5e52] animate-spin mb-4" />
+                    <p className="text-stone-600 font-bold text-sm uppercase tracking-widest">Extracting Document & Images...</p>
+                    <p className="text-stone-400 text-xs mt-2">This may take a moment depending on the file size.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    {/* OPTION 1: Scratch */}
+                    <button onClick={handleCreateFromScratch} className="flex flex-col items-center justify-center p-10 border-2 border-stone-200 rounded-3xl hover:border-[#4b5e52] hover:bg-stone-50 transition-all group text-left w-full">
+                      <div className="w-16 h-16 bg-[#f7f5f2] rounded-full flex items-center justify-center mb-6 group-hover:bg-[#4b5e52] transition-colors">
+                        <Edit3 className="w-8 h-8 text-stone-600 group-hover:text-white transition-colors" />
+                      </div>
+                      <h4 className="text-lg font-bold text-stone-800 mb-2">Create from Scratch</h4>
+                      <p className="text-xs text-stone-500 text-center leading-relaxed">Open the rich-text editor to write your article directly on the site.</p>
+                    </button>
+
+                    {/* OPTION 2: Upload */}
+                    <button onClick={() => docxInputRef.current?.click()} className="flex flex-col items-center justify-center p-10 border-2 border-stone-200 rounded-3xl hover:border-[#4b5e52] hover:bg-stone-50 transition-all group text-left w-full relative overflow-hidden">
+                      <input type="file" accept=".docx" className="hidden" ref={docxInputRef} onChange={handleDocxImport} />
+                      <div className="w-16 h-16 bg-[#f7f5f2] rounded-full flex items-center justify-center mb-6 group-hover:bg-[#4b5e52] transition-colors">
+                        <FileUp className="w-8 h-8 text-stone-600 group-hover:text-white transition-colors" />
+                      </div>
+                      <h4 className="text-lg font-bold text-stone-800 mb-2">Upload File (.docx)</h4>
+                      <p className="text-xs text-stone-500 text-center leading-relaxed">Import a Word document to preserve headings, lists, and images.</p>
+                    </button>
+
+                  </div>
+                )}
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       <StoryPreviewPanel
         story={selectedStory}
         isOpen={isPreviewOpen}
@@ -175,6 +385,7 @@ export default function CMSModule() {
 
       <StoryEditorPanel 
         story={storyToEdit}
+        importedContent={importedHtmlContent}
         isOpen={isEditorOpen}
         onClose={handleEditorClose}
       />
@@ -239,14 +450,17 @@ function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | 
             <div className="p-8 overflow-y-auto flex-1">
               <AnimatePresence mode="wait">
                 {activeTab === 'preview' && (
-                  <motion.div key="preview" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="prose prose-stone prose-lg max-w-none">
+                  <motion.div key="preview" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="prose prose-stone max-w-none">
                     {story.image && (
                       <div className="w-full h-64 rounded-2xl overflow-hidden mb-8">
                         <img src={story.image} alt={story.title} className="w-full h-full object-cover" />
                       </div>
                     )}
                     <p className="text-xl text-stone-600 font-serif italic mb-8">{story.excerpt}</p>
-                    {story.content.split('\n').map((p, i) => <p key={i} className="text-stone-700 leading-relaxed">{p}</p>)}
+                    
+                    <div className="bg-stone-100 p-4 rounded-xl text-xs font-mono text-stone-500 overflow-hidden">
+                      {story.content}
+                    </div>
                   </motion.div>
                 )}
                 {activeTab === 'history' && (
@@ -295,10 +509,11 @@ function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | 
 // ==========================================
 // EDITOR PANEL
 // ==========================================
-function StoryEditorPanel({ story, isOpen, onClose }: { story: Story | null, isOpen: boolean, onClose: (didUpdate: boolean) => void }) {
+function StoryEditorPanel({ story, importedContent, isOpen, onClose }: { story: Story | null, importedContent: string | null, isOpen: boolean, onClose: (didUpdate: boolean) => void }) {
   const [title, setTitle] = React.useState('');
   const [excerpt, setExcerpt] = React.useState('');
-  const [content, setContent] = React.useState('');
+  
+  const [jsonContent, setJsonContent] = React.useState('');
   
   const [imageFile, setImageFile] = React.useState<File | null>(null);
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
@@ -307,17 +522,50 @@ function StoryEditorPanel({ story, isOpen, onClose }: { story: Story | null, isO
   const [isSaving, setIsSaving] = React.useState(false);
   const [saveError, setSaveError] = React.useState<string | null>(null);
 
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      Image,
+      Link.configure({ openOnClick: false }),
+    ],
+    editorProps: {
+      attributes: {
+        class: 'prose prose-stone max-w-none p-6 min-h-[400px] focus:outline-none',
+      },
+    },
+    onUpdate: ({ editor }) => {
+      setJsonContent(JSON.stringify(editor.getJSON()));
+    },
+  });
+
   React.useEffect(() => {
-    if (isOpen) {
+    if (isOpen && editor) {
       setTitle(story?.title || '');
       setExcerpt(story?.excerpt || '');
-      setContent(story?.content || '');
       setImagePreview(story?.image || null);
       setImageFile(null);
       setIsRemovingImage(false);
       setSaveError(null);
+      
+      // Determine what to put in the editor
+      if (story) {
+        let parsed = '';
+        try { parsed = story.content ? JSON.parse(story.content) : ''; } 
+        catch (e) { parsed = story.content || ''; }
+        editor.commands.setContent(parsed);
+        setJsonContent(story.content || '');
+      } else if (importedContent) {
+        // Feed the raw HTML from the Word Doc into Tiptap
+        editor.commands.setContent(importedContent);
+        setJsonContent(JSON.stringify(editor.getJSON()));
+      } else {
+        editor.commands.setContent('');
+        setJsonContent('');
+      }
     }
-  }, [isOpen, story]);
+  }, [isOpen, story, importedContent, editor]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -335,16 +583,15 @@ function StoryEditorPanel({ story, isOpen, onClose }: { story: Story | null, isO
   };
 
   const handleSave = async () => {
-    if (!title.trim() || !content.trim()) {
+    if (!title.trim() || !jsonContent) {
       setSaveError("Title and Content are required.");
       return;
     }
 
-    // NEW: Save/Publish Confirmations
     const actionText = story ? "save changes to this story" : "publish this new story";
     const isConfirmed = window.confirm(`Are you sure you want to ${actionText}?`);
     
-    if (!isConfirmed) return; // Stop the save if they click Cancel
+    if (!isConfirmed) return;
 
     setIsSaving(true);
     setSaveError(null);
@@ -352,7 +599,7 @@ function StoryEditorPanel({ story, isOpen, onClose }: { story: Story | null, isO
     const formData = new FormData();
     formData.append('title', title);
     formData.append('excerpt', excerpt);
-    formData.append('content', content);
+    formData.append('content', jsonContent);
     formData.append('author_id', '1'); 
     
     if (story?.post_id) formData.append('post_id', story.post_id.toString());
@@ -370,7 +617,7 @@ function StoryEditorPanel({ story, isOpen, onClose }: { story: Story | null, isO
       
       if (data.error) throw new Error(data.error);
       
-      onClose(true); // Close and refresh table
+      onClose(true);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save story.');
     } finally {
@@ -383,11 +630,11 @@ function StoryEditorPanel({ story, isOpen, onClose }: { story: Story | null, isO
       {isOpen && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => onClose(false)} className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50" />
-          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="fixed top-0 right-0 h-full w-full max-w-3xl bg-white z-[60] shadow-2xl flex flex-col">
+          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="fixed top-0 right-0 h-full w-full max-w-4xl bg-white z-[60] shadow-2xl flex flex-col">
             
             <header className="p-6 border-b border-stone-200 flex justify-between items-center bg-[#f7f5f2] shrink-0">
               <h3 className="text-2xl font-serif italic text-stone-800">
-                {story ? 'Edit Story' : 'Create New Story'}
+                {story ? 'Edit Story' : importedContent ? 'Review Imported Article' : 'Create New Story'}
               </h3>
               <button onClick={() => onClose(false)} className="p-2 rounded-full hover:bg-stone-200 transition-colors"><X className="w-5 h-5" /></button>
             </header>
@@ -400,7 +647,7 @@ function StoryEditorPanel({ story, isOpen, onClose }: { story: Story | null, isO
               )}
 
               <div>
-                <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">Cover Image</label>
+                <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">Feed Cover Image</label>
                 {imagePreview ? (
                   <div className="relative w-full h-64 rounded-3xl overflow-hidden group border-2 border-stone-100">
                     <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
@@ -413,7 +660,7 @@ function StoryEditorPanel({ story, isOpen, onClose }: { story: Story | null, isO
                 ) : (
                   <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-stone-300 rounded-3xl bg-stone-50 cursor-pointer hover:bg-stone-100 hover:border-stone-400 transition-colors">
                     <ImageIcon className="w-8 h-8 text-stone-400 mb-3" />
-                    <span className="text-xs font-bold text-stone-600 uppercase tracking-widest">Click to upload image</span>
+                    <span className="text-xs font-bold text-stone-600 uppercase tracking-widest">Click to upload feed image</span>
                     <span className="text-[10px] text-stone-400 mt-1">JPEG, PNG, or WEBP (Max 5MB)</span>
                     <input type="file" className="hidden" accept="image/*" onChange={handleImageSelect} />
                   </label>
@@ -442,15 +689,18 @@ function StoryEditorPanel({ story, isOpen, onClose }: { story: Story | null, isO
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Full Story Content</label>
-                <textarea 
-                  value={content} 
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={12}
-                  className="w-full px-5 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-stone-700 leading-relaxed resize-none"
-                  placeholder="Write the full story here..."
-                />
+              <div className="pb-12">
+                <div className="mb-2 flex justify-between items-end">
+                  <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest">Rich Story Content</label>
+                </div>
+                
+                <div className="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                  <MenuBar editor={editor} />
+                  <div className="flex-1 bg-white cursor-text" onClick={() => editor?.commands.focus()}>
+                    <EditorContent editor={editor} />
+                  </div>
+                </div>
+
               </div>
             </div>
 
