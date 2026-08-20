@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, X, Loader, ChevronLeft, ChevronRight, Clock, User, FileText, Upload, Trash2, Image as ImageIcon, Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, List, ListOrdered, Quote, AlignLeft, AlignCenter, AlignRight, Edit3, FileUp } from 'lucide-react';
+import { Plus, X, Loader, ChevronLeft, ChevronRight, Clock, User, FileText, Upload, Trash2, Image as ImageIcon, Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, List, ListOrdered, Quote, AlignLeft, AlignCenter, AlignRight, Edit3, FileUp, Tag, Pin, Calendar, Search, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import * as mammoth from 'mammoth';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -13,6 +13,11 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
+
+interface Category {
+  id: number;
+  name: string;
+}
 
 interface Story {
   post_id: number;
@@ -22,6 +27,10 @@ interface Story {
   content: string;
   excerpt: string;
   image?: string;
+  category_id?: number;
+  category_name?: string;
+  is_pinned?: number;
+  pin_until?: string | null;
 }
 
 interface EditHistory {
@@ -30,14 +39,14 @@ interface EditHistory {
   changes_made: string;
 }
 
-const STORIES_PER_PAGE = 5;
+const STORIES_PER_PAGE = 9;
 
 // ==========================================
 // TIPTAP MENU BAR COMPONENT
 // ==========================================
 const MenuBar = ({ editor }: { editor: any }) => {
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = React.useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   if (!editor) return null;
 
@@ -100,23 +109,25 @@ const MenuBar = ({ editor }: { editor: any }) => {
 };
 
 export default function CMSModule() {
-  const [stories, setStories] = React.useState<Story[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const [stories, setStories] = useState<Story[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  const [selectedStory, setSelectedStory] = React.useState<Story | null>(null);
-  const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
-  const [storyToEdit, setStoryToEdit] = React.useState<Story | null>(null);
-  const [importedHtmlContent, setImportedHtmlContent] = React.useState<string | null>(null);
-  const [isEditorOpen, setIsEditorOpen] = React.useState(false);
+  const [storyToEdit, setStoryToEdit] = useState<Story | null>(null);
+  const [importedHtmlContent, setImportedHtmlContent] = useState<string | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   
-  // NEW: State for the creation menu modal
-  const [isCreationMenuOpen, setIsCreationMenuOpen] = React.useState(false);
-  const [isExtractingDocx, setIsExtractingDocx] = React.useState(false);
-  const docxInputRef = React.useRef<HTMLInputElement>(null);
+  const [isCreationMenuOpen, setIsCreationMenuOpen] = useState(false);
+  const [isExtractingDocx, setIsExtractingDocx] = useState(false);
+  const docxInputRef = useRef<HTMLInputElement>(null);
   
-  const [currentPage, setCurrentPage] = React.useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Story | 'category_name', direction: 'asc' | 'desc' } | null>(null);
 
   const fetchStories = async () => {
     setIsLoading(true);
@@ -132,8 +143,19 @@ export default function CMSModule() {
     }
   };
 
-  React.useEffect(() => {
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/get_categories.php');
+      const data = await response.json();
+      if (!data.error) setCategories(data);
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    }
+  };
+
+  useEffect(() => {
     fetchStories();
+    fetchCategories();
   }, []);
 
   const handleStoryClick = (story: Story) => {
@@ -152,7 +174,10 @@ export default function CMSModule() {
     setIsEditorOpen(false);
     setStoryToEdit(null);
     setImportedHtmlContent(null);
-    if (didUpdate) fetchStories();
+    if (didUpdate) {
+      fetchStories();
+      fetchCategories();
+    }
   };
 
   const handleDelete = async (story: Story) => {
@@ -172,12 +197,7 @@ export default function CMSModule() {
     }
   };
 
-  // ==========================================
-  // CREATION MENU HANDLERS
-  // ==========================================
-  const handleOpenCreationMenu = () => {
-    setIsCreationMenuOpen(true);
-  };
+  const handleOpenCreationMenu = () => setIsCreationMenuOpen(true);
 
   const handleCreateFromScratch = () => {
     setIsCreationMenuOpen(false);
@@ -204,8 +224,7 @@ export default function CMSModule() {
         try {
           const arrayBuffer = event.target?.result as ArrayBuffer;
           
-const options = {
-            // NEW: Tell Mammoth how to translate Word styles into Tiptap HTML tags
+          const options = {
             styleMap: [
               "p[style-name='Title'] => h1",
               "p[style-name='Subtitle'] => h2",
@@ -215,7 +234,6 @@ const options = {
               "p[style-name='Quote'] => blockquote",
               "p[style-name='List Paragraph'] => ul > li:fresh"
             ],
-            // KEEP YOUR EXISTING IMAGE UPLOADER:
             convertImage: mammoth.images.imgElement(function(image) {
               return image.read("base64").then(async function(imageBuffer) {
                 const byteString = atob(imageBuffer);
@@ -267,42 +285,141 @@ const options = {
     if (docxInputRef.current) docxInputRef.current.value = '';
   };
 
+  const handleSort = (key: keyof Story | 'category_name') => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
 
-  const totalPages = Math.ceil(stories.length / STORIES_PER_PAGE);
-  const paginatedStories = stories.slice((currentPage - 1) * STORIES_PER_PAGE, currentPage * STORIES_PER_PAGE);
+  const SortIcon = ({ columnKey }: { columnKey: string }) => {
+    if (sortConfig?.key !== columnKey) return <ArrowUpDown className="w-3 h-3 opacity-30" />;
+    return sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-[#4b5e52]" /> : <ArrowDown className="w-3 h-3 text-[#4b5e52]" />;
+  };
+
+  // Process data: Filter then Sort
+  let processedStories = [...stories];
+
+  if (searchQuery) {
+    const lowerQuery = searchQuery.toLowerCase();
+    processedStories = processedStories.filter(story => 
+      story.title.toLowerCase().includes(lowerQuery) ||
+      (story.category_name && story.category_name.toLowerCase().includes(lowerQuery)) ||
+      (story.author && story.author.toLowerCase().includes(lowerQuery))
+    );
+  }
+
+  if (sortConfig) {
+    processedStories.sort((a, b) => {
+      let aValue: any = a[sortConfig.key as keyof Story];
+      let bValue: any = b[sortConfig.key as keyof Story];
+
+      if (sortConfig.key === 'published_date') {
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
+      } else {
+        aValue = aValue ? aValue.toString().toLowerCase() : '';
+        bValue = bValue ? bValue.toString().toLowerCase() : '';
+      }
+
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  const totalPages = Math.max(1, Math.ceil(processedStories.length / STORIES_PER_PAGE));
+  const paginatedStories = processedStories.slice((currentPage - 1) * STORIES_PER_PAGE, currentPage * STORIES_PER_PAGE);
 
   return (
     <div className="relative">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <h2 className="text-2xl font-serif italic text-stone-700">Story Management</h2>
-        <button 
-          onClick={handleOpenCreationMenu}
-          className="flex items-center bg-[#4b5e52] text-white px-5 py-3 rounded-full transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg hover:bg-[#3a4740] hover:scale-105 active:scale-100"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create New Story
-        </button>
+        
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          {/* Admin Search Bar */}
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <input 
+              type="text" 
+              placeholder="Search by title, author, or category..." 
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1); // Reset to page 1 on search
+              }}
+              className="w-full pl-10 pr-4 py-3 bg-white border border-stone-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-sm text-stone-700 shadow-sm"
+            />
+          </div>
+
+          <button 
+            onClick={handleOpenCreationMenu}
+            className="flex items-center bg-[#4b5e52] text-white px-5 py-3 rounded-full transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg hover:bg-[#3a4740] shrink-0"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create New
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-[32px] shadow-sm border border-stone-100 overflow-hidden">
         <table className="w-full">
-          <thead className="border-b border-stone-100">
+          <thead className="border-b border-stone-100 bg-stone-50/50">
             <tr>
-              <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">Title</th>
-              <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">Author</th>
-              <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">Published Date</th>
+              <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                <div className="flex items-center gap-2 cursor-pointer hover:text-stone-700 transition-colors" onClick={() => handleSort('title')}>
+                  Title <SortIcon columnKey="title" />
+                </div>
+              </th>
+              <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                <div className="flex items-center gap-2 cursor-pointer hover:text-stone-700 transition-colors" onClick={() => handleSort('category_name')}>
+                  Category <SortIcon columnKey="category_name" />
+                </div>
+              </th>
+              <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                <div className="flex items-center gap-2 cursor-pointer hover:text-stone-700 transition-colors" onClick={() => handleSort('author')}>
+                  Author <SortIcon columnKey="author" />
+                </div>
+              </th>
+              <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                <div className="flex items-center gap-2 cursor-pointer hover:text-stone-700 transition-colors" onClick={() => handleSort('published_date')}>
+                  Published Date <SortIcon columnKey="published_date" />
+                </div>
+              </th>
               <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {isLoading && <tr><td colSpan={4} className="text-center p-10"><Loader className="mx-auto animate-spin text-stone-300" /></td></tr>}
-            {error && <tr><td colSpan={4} className="text-center p-10 text-red-500">{error}</td></tr>}
-            {!isLoading && !error && stories.length === 0 && (
-              <tr><td colSpan={4} className="text-center p-10 text-stone-500">No stories found in the database.</td></tr>
+            {isLoading && <tr><td colSpan={5} className="text-center p-10"><Loader className="mx-auto animate-spin text-stone-300" /></td></tr>}
+            {error && <tr><td colSpan={5} className="text-center p-10 text-red-500">{error}</td></tr>}
+            {!isLoading && !error && processedStories.length === 0 && (
+              <tr>
+                <td colSpan={5} className="text-center p-16">
+                  <div className="flex flex-col items-center text-stone-400">
+                    <Search className="w-8 h-8 mb-3 opacity-20" />
+                    <p className="text-sm font-bold uppercase tracking-widest">No stories found</p>
+                  </div>
+                </td>
+              </tr>
             )}
             {!isLoading && !error && paginatedStories.map(story => (
               <tr key={story.post_id} className="border-b border-stone-100 last:border-b-0 hover:bg-stone-50/50 transition-colors">
-                <td className="px-6 py-5 font-bold text-stone-700">{story.title}</td>
+                <td className="px-6 py-5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-stone-700">{story.title}</span>
+                    {story.is_pinned === 1 && (
+                      <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-widest flex items-center shrink-0">
+                        <Pin className="w-3 h-3 mr-1" /> Pinned
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-5">
+                  <span className="bg-white border border-stone-200 text-stone-600 text-xs px-3 py-1 rounded-full font-bold shadow-sm">
+                    {story.category_name || 'Uncategorized'}
+                  </span>
+                </td>
                 <td className="px-6 py-5 text-stone-500">{story.author}</td>
                 <td className="px-6 py-5 text-stone-500 font-mono text-sm">
                   {new Date(story.published_date).toLocaleDateString()}
@@ -317,12 +434,12 @@ const options = {
           </tbody>
         </table>
         
-        {!isLoading && !error && stories.length > 0 && (
+        {!isLoading && !error && processedStories.length > 0 && (
           <div className="p-4 flex justify-between items-center bg-stone-50/50">
             <span className="text-xs text-stone-500 font-bold uppercase tracking-widest">Page {currentPage} of {totalPages}</span>
             <div className="flex gap-2">
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 rounded-md bg-white border border-stone-200 hover:bg-stone-100 disabled:opacity-50 transition-colors"><ChevronLeft className="w-4 h-4" /></button>
-              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 rounded-md bg-white border border-stone-200 hover:bg-stone-100 disabled:opacity-50 transition-colors"><ChevronRight className="w-4 h-4" /></button>
+              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 rounded-md bg-white border border-stone-200 hover:bg-stone-100 disabled:opacity-50 transition-colors shadow-sm"><ChevronLeft className="w-4 h-4" /></button>
+              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 rounded-md bg-white border border-stone-200 hover:bg-stone-100 disabled:opacity-50 transition-colors shadow-sm"><ChevronRight className="w-4 h-4" /></button>
             </div>
           </div>
         )}
@@ -348,8 +465,6 @@ const options = {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
-                    {/* OPTION 1: Scratch */}
                     <button onClick={handleCreateFromScratch} className="flex flex-col items-center justify-center p-10 border-2 border-stone-200 rounded-3xl hover:border-[#4b5e52] hover:bg-stone-50 transition-all group text-left w-full">
                       <div className="w-16 h-16 bg-[#f7f5f2] rounded-full flex items-center justify-center mb-6 group-hover:bg-[#4b5e52] transition-colors">
                         <Edit3 className="w-8 h-8 text-stone-600 group-hover:text-white transition-colors" />
@@ -358,7 +473,6 @@ const options = {
                       <p className="text-xs text-stone-500 text-center leading-relaxed">Open the rich-text editor to write your article directly on the site.</p>
                     </button>
 
-                    {/* OPTION 2: Upload */}
                     <button onClick={() => docxInputRef.current?.click()} className="flex flex-col items-center justify-center p-10 border-2 border-stone-200 rounded-3xl hover:border-[#4b5e52] hover:bg-stone-50 transition-all group text-left w-full relative overflow-hidden">
                       <input type="file" accept=".docx" className="hidden" ref={docxInputRef} onChange={handleDocxImport} />
                       <div className="w-16 h-16 bg-[#f7f5f2] rounded-full flex items-center justify-center mb-6 group-hover:bg-[#4b5e52] transition-colors">
@@ -367,7 +481,6 @@ const options = {
                       <h4 className="text-lg font-bold text-stone-800 mb-2">Upload File (.docx)</h4>
                       <p className="text-xs text-stone-500 text-center leading-relaxed">Import a Word document to preserve headings, lists, and images.</p>
                     </button>
-
                   </div>
                 )}
               </motion.div>
@@ -387,6 +500,7 @@ const options = {
         story={storyToEdit}
         importedContent={importedHtmlContent}
         isOpen={isEditorOpen}
+        categories={categories}
         onClose={handleEditorClose}
       />
     </div>
@@ -397,11 +511,11 @@ const options = {
 // PREVIEW PANEL
 // ==========================================
 function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | null, isOpen: boolean, onClose: () => void, onEdit: () => void }) {
-  const [activeTab, setActiveTab] = React.useState<'preview' | 'history'>('preview');
-  const [history, setHistory] = React.useState<EditHistory[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
+  const [activeTab, setActiveTab] = useState<'preview' | 'history'>('preview');
+  const [history, setHistory] = useState<EditHistory[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen && story && activeTab === 'history') {
       const fetchHistory = async () => {
         setIsLoadingHistory(true);
@@ -428,6 +542,16 @@ function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | 
           <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="fixed top-0 right-0 h-full w-full max-w-2xl bg-[#f7f5f2] z-50 shadow-2xl flex flex-col">
             <header className="p-6 border-b border-stone-200 flex justify-between items-center shrink-0 bg-white">
               <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="bg-stone-100 text-stone-600 text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest">
+                    {story.category_name || 'Uncategorized'}
+                  </span>
+                  {story.is_pinned === 1 && (
+                    <span className="bg-amber-100 text-amber-700 text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest flex items-center">
+                      <Pin className="w-3 h-3 mr-1" /> Pinned
+                    </span>
+                  )}
+                </div>
                 <h3 className="text-2xl font-serif italic text-stone-800">{story.title}</h3>
                 <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400 mt-1">
                   By {story.author} on {new Date(story.published_date).toLocaleDateString()}
@@ -457,7 +581,6 @@ function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | 
                       </div>
                     )}
                     <p className="text-xl text-stone-600 font-serif italic mb-8">{story.excerpt}</p>
-                    
                     <div className="bg-stone-100 p-4 rounded-xl text-xs font-mono text-stone-500 overflow-hidden">
                       {story.content}
                     </div>
@@ -509,27 +632,36 @@ function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | 
 // ==========================================
 // EDITOR PANEL
 // ==========================================
-function StoryEditorPanel({ story, importedContent, isOpen, onClose }: { story: Story | null, importedContent: string | null, isOpen: boolean, onClose: (didUpdate: boolean) => void }) {
-  const [title, setTitle] = React.useState('');
-  const [excerpt, setExcerpt] = React.useState('');
+const editorExtensions = [
+  StarterKit,
+  Underline,
+  TextAlign.configure({ types: ['heading', 'paragraph'] }),
+  Image,
+  Link.configure({ openOnClick: false }),
+];
+
+function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose }: { story: Story | null, importedContent: string | null, isOpen: boolean, categories: Category[], onClose: (didUpdate: boolean) => void }) {
+  const [title, setTitle] = useState('');
+  const [excerpt, setExcerpt] = useState('');
   
-  const [jsonContent, setJsonContent] = React.useState('');
+  const [categoryId, setCategoryId] = useState<string>('');
+  const [isPinned, setIsPinned] = useState(false);
+  const [pinUntil, setPinUntil] = useState<string>('');
   
-  const [imageFile, setImageFile] = React.useState<File | null>(null);
-  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
-  const [isRemovingImage, setIsRemovingImage] = React.useState(false);
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+
+  const [jsonContent, setJsonContent] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isRemovingImage, setIsRemovingImage] = useState(false);
   
-  const [isSaving, setIsSaving] = React.useState(false);
-  const [saveError, setSaveError] = React.useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Underline,
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      Image,
-      Link.configure({ openOnClick: false }),
-    ],
+    extensions: editorExtensions,
     editorProps: {
       attributes: {
         class: 'prose prose-stone max-w-none p-6 min-h-[400px] focus:outline-none',
@@ -540,16 +672,29 @@ function StoryEditorPanel({ story, importedContent, isOpen, onClose }: { story: 
     },
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen && editor) {
       setTitle(story?.title || '');
       setExcerpt(story?.excerpt || '');
+      setCategoryId(story?.category_id ? story.category_id.toString() : '');
+      setIsPinned(story?.is_pinned === 1);
+      
+      if (story?.pin_until) {
+        const date = new Date(story.pin_until);
+        date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+        setPinUntil(date.toISOString().slice(0, 16));
+      } else {
+        setPinUntil('');
+      }
+
+      setIsCreatingCategory(false);
+      setNewCategoryName('');
+
       setImagePreview(story?.image || null);
       setImageFile(null);
       setIsRemovingImage(false);
       setSaveError(null);
       
-      // Determine what to put in the editor
       if (story) {
         let parsed = '';
         try { parsed = story.content ? JSON.parse(story.content) : ''; } 
@@ -557,7 +702,6 @@ function StoryEditorPanel({ story, importedContent, isOpen, onClose }: { story: 
         editor.commands.setContent(parsed);
         setJsonContent(story.content || '');
       } else if (importedContent) {
-        // Feed the raw HTML from the Word Doc into Tiptap
         editor.commands.setContent(importedContent);
         setJsonContent(JSON.stringify(editor.getJSON()));
       } else {
@@ -582,6 +726,31 @@ function StoryEditorPanel({ story, importedContent, isOpen, onClose }: { story: 
     setIsRemovingImage(true);
   };
 
+  const handleCreateNewCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    setIsSavingCategory(true);
+    try {
+      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/create_category.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCategoryName })
+      });
+      const data = await response.json();
+      if (data.success) {
+        categories.push({ id: data.id, name: data.name });
+        setCategoryId(data.id.toString());
+        setIsCreatingCategory(false);
+        setNewCategoryName('');
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      alert("Failed to create category");
+    } finally {
+      setIsSavingCategory(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!title.trim() || !jsonContent) {
       setSaveError("Title and Content are required.");
@@ -601,6 +770,13 @@ function StoryEditorPanel({ story, importedContent, isOpen, onClose }: { story: 
     formData.append('excerpt', excerpt);
     formData.append('content', jsonContent);
     formData.append('author_id', '1'); 
+    
+    formData.append('category_id', categoryId);
+    formData.append('is_pinned', isPinned ? 'true' : 'false');
+    if (isPinned && pinUntil) {
+      const mysqlDate = pinUntil.replace('T', ' ') + ':00';
+      formData.append('pin_until', mysqlDate);
+    }
     
     if (story?.post_id) formData.append('post_id', story.post_id.toString());
     if (imageFile) formData.append('image', imageFile);
@@ -645,6 +821,80 @@ function StoryEditorPanel({ story, importedContent, isOpen, onClose }: { story: 
                   {saveError}
                 </div>
               )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-50 p-6 rounded-3xl border border-stone-200">
+                <div>
+                  <label className="flex items-center text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">
+                    <Tag className="w-3 h-3 mr-2" /> Article Category
+                  </label>
+                  {!isCreatingCategory ? (
+                    <select 
+                      value={categoryId} 
+                      onChange={(e) => {
+                        if (e.target.value === 'new') setIsCreatingCategory(true);
+                        else setCategoryId(e.target.value);
+                      }}
+                      className="w-full px-5 py-4 bg-white border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-stone-700 font-bold"
+                    >
+                      <option value="">Select a category...</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                      <option value="new" className="font-bold text-[#4b5e52]">+ Create New Category</option>
+                    </select>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={newCategoryName} 
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        placeholder="New category name..."
+                        className="w-full px-4 py-4 bg-white border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-stone-700 font-bold"
+                        autoFocus
+                      />
+                      <button onClick={handleCreateNewCategory} disabled={isSavingCategory || !newCategoryName.trim()} className="bg-[#4b5e52] text-white px-4 rounded-2xl font-bold text-xs uppercase tracking-widest disabled:opacity-50 hover:bg-[#3a4740] transition-colors">
+                        {isSavingCategory ? <Loader className="w-4 h-4 animate-spin" /> : 'Save'}
+                      </button>
+                      <button onClick={() => setIsCreatingCategory(false)} className="bg-stone-200 text-stone-600 px-4 rounded-2xl hover:bg-stone-300 transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">
+                    <Pin className="w-3 h-3 mr-2" /> Featured Story
+                  </label>
+                  <div className="flex items-center gap-4 bg-white px-5 py-4 border border-stone-200 rounded-2xl">
+                    <button 
+                      onClick={() => setIsPinned(!isPinned)}
+                      className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${isPinned ? 'bg-amber-500' : 'bg-stone-200'}`}
+                    >
+                      <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ${isPinned ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </button>
+                    <span className="text-sm font-bold text-stone-700">Pin to Top</span>
+                  </div>
+
+                  <AnimatePresence>
+                    {isPinned && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mt-3">
+                        <div className="relative">
+                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                          <input 
+                            type="datetime-local" 
+                            value={pinUntil}
+                            onChange={(e) => setPinUntil(e.target.value)}
+                            title="Leave blank to pin forever"
+                            className="w-full pl-10 pr-5 py-3 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-stone-600 text-sm"
+                          />
+                        </div>
+                        <p className="text-[10px] text-stone-400 mt-1 uppercase tracking-widest font-bold">Leave blank to pin forever</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
 
               <div>
                 <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3">Feed Cover Image</label>

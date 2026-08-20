@@ -268,10 +268,10 @@ export default function App() {
                       <p className="text-stone-600 text-lg">Voices of resilience and hope from our community.</p>
                     </div>
                   </div>
-                  <SuccessStories onReadStory={(id) => {
-                    setSelectedStoryId(id);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }} />
+<SuccessStories onStoryClick={(id) => {
+  setSelectedStoryId(id);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}} />
                 </>
               )}
             </motion.div>
