@@ -5,7 +5,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PublicPage, AdminTab } from './types';
-import { AlertTriangle } from 'lucide-react'; // ADDED IMPORT
+import { AlertTriangle } from 'lucide-react';
 
 // Components
 import Navbar from './components/layout/Navbar';
@@ -18,6 +18,7 @@ import Services from './components/public/Services.tsx';
 import ContactUs from './components/public/ContactUs';
 import HomeAbout from './components/public/HomeAbout';
 import Footer from './components/public/Footer';
+import Team from './components/public/Team'; // ADDED: Public Team Page
 
 // Admin Components
 import UserAccounts from './components/admin/UserAccounts';
@@ -25,6 +26,7 @@ import Login from './components/admin/Login';
 import SettingsModule from './components/admin/SettingsModule';
 import Sidebar from './components/layout/Sidebar';
 import CMSModule from './components/admin/CMSModule';
+import TeamManagement from './components/admin/TeamManagement'; // ADDED: Admin Team Management
 import DonationVerification from './components/admin/DonationVerification';
 import BankReconciliation from './components/admin/BankReconciliation';
 
@@ -45,7 +47,6 @@ export default function App() {
   
   const [logoutTimer, setLogoutTimer] = React.useState<number>(3);
   
-  // NEW: States for the inactivity warning modal and countdown
   const [showWarning, setShowWarning] = React.useState(false);
   const [countdown, setCountdown] = React.useState(30);
 
@@ -59,44 +60,37 @@ export default function App() {
     }
   };
 
-  // Effect to reset story view when navigating away
   React.useEffect(() => {
     if (activePage !== 'Stories') {
       setSelectedStoryId(null);
     }
   }, [activePage]);
 
-  // UPDATED: Inactivity Auto-Logout Logic with 30-Second Warning
   React.useEffect(() => {
     let warningTimeout: NodeJS.Timeout;
     let logoutTimeout: NodeJS.Timeout;
     let countdownInterval: NodeJS.Timeout;
 
     const resetTimer = () => {
-      // Clear existing timers
       clearTimeout(warningTimeout);
       clearTimeout(logoutTimeout);
       clearInterval(countdownInterval);
       
-      // Hide warning and reset countdown if they interact
       setShowWarning(false);
       setCountdown(30);
 
       if (isAdmin) {
-        // Phase 1: Trigger the warning modal 30 seconds before logout
         const warningDelay = (logoutTimer * 60 * 1000) - 30000;
         
         warningTimeout = setTimeout(() => {
           setShowWarning(true);
 
-          // Start the visual countdown
           let timeLeft = 30;
           countdownInterval = setInterval(() => {
             timeLeft -= 1;
             setCountdown(timeLeft);
           }, 1000);
 
-          // Phase 2: Log them out when the 30 seconds are up
           logoutTimeout = setTimeout(() => {
             clearInterval(countdownInterval);
             setShowWarning(false);
@@ -114,7 +108,7 @@ export default function App() {
       window.addEventListener('keydown', resetTimer);
       window.addEventListener('mousedown', resetTimer);
       window.addEventListener('touchstart', resetTimer);
-      resetTimer(); // Initialize timer on mount
+      resetTimer(); 
     }
 
     return () => {
@@ -131,7 +125,6 @@ export default function App() {
   if (isAdmin) {
     return (
       <div className="min-h-screen bg-[#f7f5f2] flex relative">
-        {/* NEW: Inactivity Warning Modal */}
         <AnimatePresence>
           {showWarning && (
             <motion.div
@@ -191,10 +184,12 @@ export default function App() {
             </div>
           </header>
 
-<div className="mt-4">
+          <div className="mt-4">
             {activeAdminTab === 'Stories' && <CMSModule />}
             
-            {/* UPDATE THESE TWO LINES TO PASS THE CURRENT USER: */}
+            {/* ADDED: Team Management Module */}
+            {activeAdminTab === 'Team' && <TeamManagement />}
+            
             {activeAdminTab === 'Donations' && <DonationVerification currentUser={currentUser} />}
             {activeAdminTab === 'Reconciliation' && <BankReconciliation currentUser={currentUser} />}
             
@@ -268,12 +263,24 @@ export default function App() {
                       <p className="text-stone-600 text-lg">Voices of resilience and hope from our community.</p>
                     </div>
                   </div>
-<SuccessStories onStoryClick={(id) => {
-  setSelectedStoryId(id);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}} />
+                  <SuccessStories onStoryClick={(id) => {
+                    setSelectedStoryId(id);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }} />
                 </>
               )}
+            </motion.div>
+          )}
+
+          {/* ADDED: Public Team Page Route */}
+          {activePage === 'Team' && (
+            <motion.div
+              key="team"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Team />
             </motion.div>
           )}
 

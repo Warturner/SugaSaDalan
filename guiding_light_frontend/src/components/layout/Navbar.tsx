@@ -19,6 +19,7 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
   const navItems = [
     { id: 'Home' as PublicPage, label: 'Home' },
     { id: 'Mission' as PublicPage, label: 'Our Mission' },
+    { id: 'Team' as PublicPage, label: 'Our Team' },
     { id: 'Services' as PublicPage, label: 'Services' },
     { id: 'Stories' as PublicPage, label: 'Stories' },
     { id: 'Contact' as PublicPage, label: 'Contact Us' },

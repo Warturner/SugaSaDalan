@@ -16,7 +16,8 @@ export default function ContactUs() {
     const data = Object.fromEntries(formData.entries());
 
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/send_message.php', {
+      // UPDATED: Pointing to the new send_email.php script
+      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/send_email.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

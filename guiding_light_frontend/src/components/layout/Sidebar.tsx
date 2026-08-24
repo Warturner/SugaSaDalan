@@ -1,4 +1,3 @@
-
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -11,7 +10,8 @@ import {
   Landmark, 
   LogOut,
   Settings,
-  Users, // Make sure Users is imported here!
+  Users,
+  UserSquare,
   ChevronRight,
   Menu,
   X
@@ -19,7 +19,6 @@ import {
 import { AdminTab } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 
-// Make sure the User type definition expects the 'role' property
 interface SidebarProps {
   activeTab: AdminTab;
   setActiveTab: (tab: AdminTab) => void;
@@ -35,11 +34,12 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, user }: Sid
     { id: 'Stories' as AdminTab, icon: FileText, label: 'Stories', allowedRoles: ['admin', 'media'] },
     
     // Only Admin can see these
+    { id: 'Team' as AdminTab, icon: UserSquare, label: 'Team Profiles', allowedRoles: ['admin'] },
     { id: 'Donations' as AdminTab, icon: LayoutDashboard, label: 'Donations', allowedRoles: ['admin'] },
     { id: 'Reconciliation' as AdminTab, icon: Landmark, label: 'Bank Reconciliation', allowedRoles: ['admin'] },
     { id: 'Accounts' as AdminTab, icon: Users, label: 'User Accounts', allowedRoles: ['admin'] },
     
-    // Both roles should be able to change their own password (removed the duplicate)
+    // Both roles should be able to change their own password
     { id: 'Settings' as AdminTab, icon: Settings, label: 'Settings', allowedRoles: ['admin', 'media'] }, 
   ];
 
@@ -84,7 +84,6 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, user }: Sid
 
         <nav className="flex-1 mt-8">
           <div className="px-8 mb-4 opacity-50 text-[10px] uppercase tracking-widest font-bold">NGO Administration</div>
-          {/* FIX: Use visibleMenu.map instead of menuItems.map here! */}
           {visibleMenu.map((item) => (
             <button
               key={item.id}
@@ -109,7 +108,6 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, user }: Sid
           <div className="mb-6 p-5 rounded-[24px] bg-white/5 border border-white/10">
             <p className="text-[10px] opacity-40 uppercase tracking-widest font-bold mb-3">Admin Session</p>
             <p className="text-xs font-semibold text-white capitalize">{user?.username || 'System User'}</p>
-            {/* FIX: Dynamically show their role title based on database value */}
             <p className="text-[9px] text-[#d4c5b3] uppercase tracking-tighter mt-0.5">
               {user?.role === 'admin' ? 'System Administrator' : 'Media Manager'}
             </p>

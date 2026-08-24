@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, X, Loader, ChevronLeft, ChevronRight, Clock, User, FileText, Upload, Trash2, Image as ImageIcon, Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, List, ListOrdered, Quote, AlignLeft, AlignCenter, AlignRight, Edit3, FileUp, Tag, Pin, Calendar, Search, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Plus, X, Loader, ChevronLeft, ChevronRight, Clock, User, FileText, Upload, Trash2, Image as ImageIcon, Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, List, ListOrdered, Quote, AlignLeft, AlignCenter, AlignRight, Edit3, FileUp, Tag, Pin, Calendar, Search, ArrowUp, ArrowDown, ArrowUpDown, Paperclip } from 'lucide-react';
 import * as mammoth from 'mammoth';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -37,6 +37,12 @@ interface EditHistory {
   edit_timestamp: string;
   username: string;
   changes_made: string;
+}
+
+interface Attachment {
+  id: number;
+  file_name: string;
+  file_url: string;
 }
 
 const STORIES_PER_PAGE = 9;
@@ -298,7 +304,6 @@ export default function CMSModule() {
     return sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-[#4b5e52]" /> : <ArrowDown className="w-3 h-3 text-[#4b5e52]" />;
   };
 
-  // Process data: Filter then Sort
   let processedStories = [...stories];
 
   if (searchQuery) {
@@ -338,7 +343,6 @@ export default function CMSModule() {
         <h2 className="text-2xl font-serif italic text-stone-700">Story Management</h2>
         
         <div className="flex items-center gap-4 w-full md:w-auto">
-          {/* Admin Search Bar */}
           <div className="relative flex-1 md:w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <input 
@@ -347,7 +351,7 @@ export default function CMSModule() {
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                setCurrentPage(1); // Reset to page 1 on search
+                setCurrentPage(1); 
               }}
               className="w-full pl-10 pr-4 py-3 bg-white border border-stone-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-sm text-stone-700 shadow-sm"
             />
@@ -445,7 +449,6 @@ export default function CMSModule() {
         )}
       </div>
 
-      {/* CREATION MENU MODAL */}
       <AnimatePresence>
         {isCreationMenuOpen && (
           <>
@@ -657,6 +660,11 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isRemovingImage, setIsRemovingImage] = useState(false);
   
+  // PDF Attachment States
+  const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
+  const [newAttachments, setNewAttachments] = useState<File[]>([]);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -695,7 +703,16 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
       setIsRemovingImage(false);
       setSaveError(null);
       
+      setNewAttachments([]);
+      setExistingAttachments([]);
+      
       if (story) {
+        // Fetch existing attachments if editing
+        fetch(`http://localhost/GuidingLight_Project/guiding_light_backend/get_story_attachments.php?post_id=${story.post_id}`)
+          .then(res => res.json())
+          .then(data => { if (!data.error) setExistingAttachments(data); })
+          .catch(err => console.error("Failed to load attachments:", err));
+
         let parsed = '';
         try { parsed = story.content ? JSON.parse(story.content) : ''; } 
         catch (e) { parsed = story.content || ''; }
@@ -724,6 +741,37 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
     setImageFile(null);
     setImagePreview(null);
     setIsRemovingImage(true);
+  };
+
+  const handleAttachmentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setNewAttachments(prev => [...prev, ...filesArray]);
+    }
+  };
+
+  const handleRemoveNewAttachment = (index: number) => {
+    setNewAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDeleteExistingAttachment = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this attachment permanently?")) return;
+    
+    try {
+      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/delete_attachment.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setExistingAttachments(prev => prev.filter(att => att.id !== id));
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      alert("Failed to delete attachment.");
+    }
   };
 
   const handleCreateNewCategory = async () => {
@@ -781,6 +829,13 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
     if (story?.post_id) formData.append('post_id', story.post_id.toString());
     if (imageFile) formData.append('image', imageFile);
     if (isRemovingImage) formData.append('remove_image', 'true');
+
+    // Append new PDF attachments
+    if (newAttachments.length > 0) {
+      newAttachments.forEach(file => {
+        formData.append('attachments[]', file);
+      });
+    }
 
     const endpoint = story ? 'update_story.php' : 'create_story.php';
 
@@ -937,6 +992,62 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
                   className="w-full px-5 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-stone-600 resize-none"
                   placeholder="A brief summary that appears on the feed cards..."
                 />
+              </div>
+
+              {/* NEW: PDF Attachments Section */}
+              <div className="bg-stone-50 p-6 rounded-3xl border border-stone-200">
+                <div className="flex justify-between items-center mb-4">
+                  <label className="flex items-center text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                    <Paperclip className="w-3 h-3 mr-2" /> PDF Document (Read-Only Embed)
+                  </label>
+                  <button 
+                    onClick={() => attachmentInputRef.current?.click()}
+                    className="text-[#4b5e52] font-bold text-[10px] uppercase tracking-widest hover:underline"
+                  >
+                    + Add File
+                  </button>
+                  <input 
+                    type="file" 
+                    accept=".pdf,.doc,.docx" 
+                    multiple 
+                    className="hidden" 
+                    ref={attachmentInputRef} 
+                    onChange={handleAttachmentSelect} 
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  {existingAttachments.map(att => (
+                    <div key={att.id} className="flex justify-between items-center bg-white border border-stone-200 px-4 py-3 rounded-xl shadow-sm">
+                      <div className="flex items-center overflow-hidden">
+                        <FileText className="w-4 h-4 text-stone-400 mr-3 shrink-0" />
+                        <span className="text-sm text-stone-600 font-bold truncate">{att.file_name}</span>
+                      </div>
+                      <button onClick={() => handleDeleteExistingAttachment(att.id)} className="text-red-400 hover:text-red-600 ml-4 shrink-0">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {newAttachments.map((file, index) => (
+                    <div key={index} className="flex justify-between items-center bg-white border border-[#4b5e52]/30 px-4 py-3 rounded-xl shadow-sm">
+                      <div className="flex items-center overflow-hidden">
+                        <Loader className="w-4 h-4 text-[#4b5e52] mr-3 shrink-0 animate-spin" />
+                        <span className="text-sm text-[#4b5e52] font-bold truncate">{file.name}</span>
+                        <span className="text-[10px] text-stone-400 uppercase tracking-widest ml-2">(Pending Save)</span>
+                      </div>
+                      <button onClick={() => handleRemoveNewAttachment(index)} className="text-stone-400 hover:text-stone-600 ml-4 shrink-0">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {existingAttachments.length === 0 && newAttachments.length === 0 && (
+                    <p className="text-xs text-stone-400 text-center py-4 border-2 border-dashed border-stone-200 rounded-xl">
+                      No documents attached.
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="pb-12">

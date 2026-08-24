@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, Edit, Languages, Loader, Moon, Sun } from 'lucide-react';
+import { ArrowLeft, Edit, Languages, Loader, Moon, Sun, FileText } from 'lucide-react';
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -19,6 +19,13 @@ interface StoryArticleProps {
   onBack: () => void;
 }
 
+interface Attachment {
+  id: number;
+  file_name: string;
+  file_url: string;
+  file_type: string;
+}
+
 // Ensure these exactly match the extensions used in CMSModule
 const tiptapExtensions = [
   StarterKit,
@@ -31,6 +38,7 @@ const tiptapExtensions = [
 export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: StoryArticleProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [originalStory, setOriginalStory] = useState<{title: string, content: string, image: string, author: string, date: string} | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   
   const [targetLang, setTargetLang] = useState('en');
   const [isTranslating, setIsTranslating] = useState(false);
@@ -40,25 +48,36 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    const fetchStory = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`http://localhost/GuidingLight_Project/guiding_light_backend/get_story.php?id=${storyId}`);
-        const data = await response.json();
+        // Fetch both the story content and its attachments simultaneously
+        const [storyRes, attRes] = await Promise.all([
+          fetch(`http://localhost/GuidingLight_Project/guiding_light_backend/get_story.php?id=${storyId}`),
+          fetch(`http://localhost/GuidingLight_Project/guiding_light_backend/get_story_attachments.php?post_id=${storyId}`)
+        ]);
         
-        if (data.success) {
-          setOriginalStory(data.story);
+        const storyData = await storyRes.json();
+        const attData = await attRes.json();
+        
+        if (storyData.success) {
+          setOriginalStory(storyData.story);
         } else {
-          console.error(data.error);
+          console.error(storyData.error);
         }
+
+        if (!attData.error) {
+          setAttachments(attData);
+        }
+
       } catch (error) {
-        console.error("Failed to fetch the story:", error);
+        console.error("Failed to fetch the story data:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchStory();
+    fetchData();
   }, [storyId]);
 
   const translateText = async (text: string, lang: string) => {
@@ -221,14 +240,38 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
           </div>
         )}
 
-        {/* Renders the beautifully generated HTML from Tiptap */}
-        <motion.div 
-          key={displayContent} 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className={`prose prose-stone prose-lg max-w-none leading-relaxed tiptap-content transition-colors duration-300 ${isDarkMode ? 'prose-invert text-stone-300' : 'text-stone-600'}`}
-          dangerouslySetInnerHTML={{ __html: displayContent }}
-        />
+        {/* CONDITIONALLY RENDER: EITHER the Attachments OR the Tiptap Content */}
+        {attachments.length > 0 ? (
+          <div className="space-y-12">
+            {attachments.map((att) => (
+              att.file_type === 'pdf' ? (
+                <div key={att.id} className={`w-full h-[500px] md:h-[800px] rounded-3xl overflow-hidden shadow-xl border ${isDarkMode ? 'border-white/10' : 'border-stone-200'}`}>
+                  <iframe 
+                    src={`${att.file_url}#view=FitH`} 
+                    className="w-full h-full" 
+                    title={att.file_name} 
+                  />
+                </div>
+              ) : (
+                <div key={att.id} className={`w-full p-8 rounded-3xl border border-dashed flex flex-col items-center justify-center text-center ${isDarkMode ? 'border-white/10 bg-white/5' : 'border-stone-300 bg-stone-50'}`}>
+                  <FileText className={`w-12 h-12 mb-4 opacity-20 ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`} />
+                  <p className={`text-sm font-bold uppercase tracking-widest mb-2 ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Document Preview Not Available</p>
+                  <p className={`text-xs ${isDarkMode ? 'text-stone-500' : 'text-stone-400'}`}>This file type cannot be previewed in the browser.</p>
+                </div>
+              )
+            ))}
+          </div>
+        ) : (
+          /* Renders the beautifully generated HTML from Tiptap ONLY if there are no attachments */
+          <motion.div 
+            key={displayContent} 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className={`prose prose-stone prose-lg max-w-none leading-relaxed tiptap-content transition-colors duration-300 ${isDarkMode ? 'prose-invert text-stone-300' : 'text-stone-600'}`}
+            dangerouslySetInnerHTML={{ __html: displayContent }}
+          />
+        )}
+
       </motion.article>
     </div>
   );
