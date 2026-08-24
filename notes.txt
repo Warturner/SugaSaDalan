@@ -1,4 +1,1 @@
-timeout expiration
-sort by category.
-team separate tab
-transparency top donors drop down list of  they donated for the past 3 months
+delete uploaded images if the story is deleted to save space.
