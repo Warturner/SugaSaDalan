@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, X, Loader, ChevronLeft, ChevronRight, Clock, User, FileText, Upload, Trash2, Image as ImageIcon, Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, List, ListOrdered, Quote, AlignLeft, AlignCenter, AlignRight, Edit3, FileUp, Tag, Pin, Calendar, Search, ArrowUp, ArrowDown, ArrowUpDown, Paperclip } from 'lucide-react';
+import { Plus, X, Loader, ChevronLeft, ChevronRight, Clock, User, FileText, Upload, Trash2, Image as ImageIcon, Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, List, ListOrdered, Quote, AlignLeft, AlignCenter, AlignRight, Edit3, FileUp, Tag, Pin, Calendar, Search, ArrowUp, ArrowDown, ArrowUpDown, Paperclip, FileCheck } from 'lucide-react';
 import * as mammoth from 'mammoth';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -125,11 +125,14 @@ export default function CMSModule() {
   
   const [storyToEdit, setStoryToEdit] = useState<Story | null>(null);
   const [importedHtmlContent, setImportedHtmlContent] = useState<string | null>(null);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [initialPdfFile, setInitialPdfFile] = useState<File | null>(null);
   
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isCreationMenuOpen, setIsCreationMenuOpen] = useState(false);
   const [isExtractingDocx, setIsExtractingDocx] = useState(false);
+  
   const docxInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
   
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
@@ -172,6 +175,7 @@ export default function CMSModule() {
   const handleEdit = (story: Story) => {
     setStoryToEdit(story);
     setImportedHtmlContent(null);
+    setInitialPdfFile(null);
     setIsPreviewOpen(false);
     setIsEditorOpen(true);
   };
@@ -180,6 +184,7 @@ export default function CMSModule() {
     setIsEditorOpen(false);
     setStoryToEdit(null);
     setImportedHtmlContent(null);
+    setInitialPdfFile(null);
     if (didUpdate) {
       fetchStories();
       fetchCategories();
@@ -209,7 +214,21 @@ export default function CMSModule() {
     setIsCreationMenuOpen(false);
     setStoryToEdit(null);
     setImportedHtmlContent('');
+    setInitialPdfFile(null);
     setIsEditorOpen(true);
+  };
+
+  const handlePdfImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setInitialPdfFile(file);
+    setStoryToEdit(null);
+    setImportedHtmlContent('');
+    setIsCreationMenuOpen(false);
+    setIsEditorOpen(true);
+    
+    if (pdfInputRef.current) pdfInputRef.current.value = '';
   };
 
   const handleDocxImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -271,6 +290,7 @@ export default function CMSModule() {
           const result = await mammoth.convertToHtml({ arrayBuffer }, options);
           setImportedHtmlContent(result.value);
           setStoryToEdit(null);
+          setInitialPdfFile(null);
           setIsCreationMenuOpen(false);
           setIsEditorOpen(true);
 
@@ -453,7 +473,7 @@ export default function CMSModule() {
         {isCreationMenuOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !isExtractingDocx && setIsCreationMenuOpen(false)} className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="bg-white rounded-[32px] shadow-2xl p-8 max-w-2xl w-full">
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="bg-white rounded-[32px] shadow-2xl p-8 max-w-4xl w-full">
                 
                 <div className="flex justify-between items-center mb-8">
                   <h3 className="text-3xl font-serif italic text-stone-800">New Story</h3>
@@ -467,22 +487,31 @@ export default function CMSModule() {
                     <p className="text-stone-400 text-xs mt-2">This may take a moment depending on the file size.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <button onClick={handleCreateFromScratch} className="flex flex-col items-center justify-center p-10 border-2 border-stone-200 rounded-3xl hover:border-[#4b5e52] hover:bg-stone-50 transition-all group text-left w-full">
-                      <div className="w-16 h-16 bg-[#f7f5f2] rounded-full flex items-center justify-center mb-6 group-hover:bg-[#4b5e52] transition-colors">
-                        <Edit3 className="w-8 h-8 text-stone-600 group-hover:text-white transition-colors" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <button onClick={handleCreateFromScratch} className="flex flex-col items-center justify-center p-8 border-2 border-stone-200 rounded-3xl hover:border-[#4b5e52] hover:bg-stone-50 transition-all group text-left w-full">
+                      <div className="w-14 h-14 bg-[#f7f5f2] rounded-full flex items-center justify-center mb-6 group-hover:bg-[#4b5e52] transition-colors">
+                        <Edit3 className="w-6 h-6 text-stone-600 group-hover:text-white transition-colors" />
                       </div>
-                      <h4 className="text-lg font-bold text-stone-800 mb-2">Create from Scratch</h4>
-                      <p className="text-xs text-stone-500 text-center leading-relaxed">Open the rich-text editor to write your article directly on the site.</p>
+                      <h4 className="text-lg font-bold text-stone-800 mb-2">Write Article</h4>
+                      <p className="text-xs text-stone-500 text-center leading-relaxed">Open the rich-text editor to write your story directly.</p>
                     </button>
 
-                    <button onClick={() => docxInputRef.current?.click()} className="flex flex-col items-center justify-center p-10 border-2 border-stone-200 rounded-3xl hover:border-[#4b5e52] hover:bg-stone-50 transition-all group text-left w-full relative overflow-hidden">
-                      <input type="file" accept=".docx" className="hidden" ref={docxInputRef} onChange={handleDocxImport} />
-                      <div className="w-16 h-16 bg-[#f7f5f2] rounded-full flex items-center justify-center mb-6 group-hover:bg-[#4b5e52] transition-colors">
-                        <FileUp className="w-8 h-8 text-stone-600 group-hover:text-white transition-colors" />
+                    <button onClick={() => pdfInputRef.current?.click()} className="flex flex-col items-center justify-center p-8 border-2 border-stone-200 rounded-3xl hover:border-[#4b5e52] hover:bg-stone-50 transition-all group text-left w-full relative overflow-hidden">
+                      <input type="file" accept=".pdf" className="hidden" ref={pdfInputRef} onChange={handlePdfImport} />
+                      <div className="w-14 h-14 bg-[#f7f5f2] rounded-full flex items-center justify-center mb-6 group-hover:bg-[#4b5e52] transition-colors">
+                        <FileCheck className="w-6 h-6 text-stone-600 group-hover:text-white transition-colors" />
                       </div>
-                      <h4 className="text-lg font-bold text-stone-800 mb-2">Upload File (.docx)</h4>
-                      <p className="text-xs text-stone-500 text-center leading-relaxed">Import a Word document to preserve headings, lists, and images.</p>
+                      <h4 className="text-lg font-bold text-stone-800 mb-2">Upload PDF</h4>
+                      <p className="text-xs text-stone-500 text-center leading-relaxed">Upload a PDF Newsletter. <br/><span className="font-bold">Bypasses body text requirements.</span></p>
+                    </button>
+
+                    <button onClick={() => docxInputRef.current?.click()} className="flex flex-col items-center justify-center p-8 border-2 border-stone-200 rounded-3xl hover:border-[#4b5e52] hover:bg-stone-50 transition-all group text-left w-full relative overflow-hidden">
+                      <input type="file" accept=".docx" className="hidden" ref={docxInputRef} onChange={handleDocxImport} />
+                      <div className="w-14 h-14 bg-[#f7f5f2] rounded-full flex items-center justify-center mb-6 group-hover:bg-[#4b5e52] transition-colors">
+                        <FileUp className="w-6 h-6 text-stone-600 group-hover:text-white transition-colors" />
+                      </div>
+                      <h4 className="text-lg font-bold text-stone-800 mb-2">Convert .docx</h4>
+                      <p className="text-xs text-stone-500 text-center leading-relaxed">Extract text and images from a Microsoft Word Document.</p>
                     </button>
                   </div>
                 )}
@@ -502,6 +531,7 @@ export default function CMSModule() {
       <StoryEditorPanel 
         story={storyToEdit}
         importedContent={importedHtmlContent}
+        initialPdf={initialPdfFile}
         isOpen={isEditorOpen}
         categories={categories}
         onClose={handleEditorClose}
@@ -643,7 +673,7 @@ const editorExtensions = [
   Link.configure({ openOnClick: false }),
 ];
 
-function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose }: { story: Story | null, importedContent: string | null, isOpen: boolean, categories: Category[], onClose: (didUpdate: boolean) => void }) {
+function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categories, onClose }: { story: Story | null, importedContent: string | null, initialPdf: File | null, isOpen: boolean, categories: Category[], onClose: (didUpdate: boolean) => void }) {
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
   
@@ -667,16 +697,20 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  
+  // NEW: Dirty State Tracker to prevent accidental data loss
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const editor = useEditor({
     extensions: editorExtensions,
     editorProps: {
       attributes: {
-        class: 'prose prose-stone max-w-none p-6 min-h-[400px] focus:outline-none',
+        class: 'prose prose-stone max-w-none p-6 min-h-[300px] focus:outline-none',
       },
     },
     onUpdate: ({ editor }) => {
       setJsonContent(JSON.stringify(editor.getJSON()));
+      setHasUnsavedChanges(true); // Flag changes if text is edited
     },
   });
 
@@ -703,11 +737,13 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
       setIsRemovingImage(false);
       setSaveError(null);
       
-      setNewAttachments([]);
+      setNewAttachments(initialPdf ? [initialPdf] : []);
       setExistingAttachments([]);
       
+      // Reset dirty state tracker
+      setHasUnsavedChanges(false);
+      
       if (story) {
-        // Fetch existing attachments if editing
         fetch(`http://localhost/GuidingLight_Project/guiding_light_backend/get_story_attachments.php?post_id=${story.post_id}`)
           .then(res => res.json())
           .then(data => { if (!data.error) setExistingAttachments(data); })
@@ -721,12 +757,25 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
       } else if (importedContent) {
         editor.commands.setContent(importedContent);
         setJsonContent(JSON.stringify(editor.getJSON()));
+        setHasUnsavedChanges(true); // Flag changes for imported documents
       } else {
         editor.commands.setContent('');
         setJsonContent('');
+        if (initialPdf) setHasUnsavedChanges(true); // Flag changes if PDF was attached via creation menu
       }
     }
-  }, [isOpen, story, importedContent, editor]);
+  }, [isOpen, story, importedContent, initialPdf, editor]);
+
+  // NEW: Intercept closing to warn about unsaved changes
+  const handleCloseRequest = () => {
+    if (hasUnsavedChanges) {
+      const confirmClose = window.confirm("You have unsaved changes. Are you sure you want to discard them? All unsaved work will be lost.");
+      if (!confirmClose) return; // Stop closing if user hits Cancel on the prompt
+    }
+    onClose(false); // Proceed with closing if no changes, or if user confirms discard
+  };
+
+  const hasAttachments = newAttachments.length > 0 || existingAttachments.length > 0;
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -734,6 +783,7 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
       setIsRemovingImage(false);
+      setHasUnsavedChanges(true); // Flag changes
     }
   };
 
@@ -741,17 +791,20 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
     setImageFile(null);
     setImagePreview(null);
     setIsRemovingImage(true);
+    setHasUnsavedChanges(true); // Flag changes
   };
 
   const handleAttachmentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       setNewAttachments(prev => [...prev, ...filesArray]);
+      setHasUnsavedChanges(true); // Flag changes
     }
   };
 
   const handleRemoveNewAttachment = (index: number) => {
     setNewAttachments(prev => prev.filter((_, i) => i !== index));
+    setHasUnsavedChanges(true); // Flag changes
   };
 
   const handleDeleteExistingAttachment = async (id: number) => {
@@ -766,6 +819,7 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
       const data = await response.json();
       if (data.success) {
         setExistingAttachments(prev => prev.filter(att => att.id !== id));
+        setHasUnsavedChanges(true); // Flag changes
       } else {
         alert(data.error);
       }
@@ -789,6 +843,7 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
         setCategoryId(data.id.toString());
         setIsCreatingCategory(false);
         setNewCategoryName('');
+        setHasUnsavedChanges(true); // Flag changes
       } else {
         alert(data.error);
       }
@@ -800,8 +855,15 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
   };
 
   const handleSave = async () => {
-    if (!title.trim() || !jsonContent) {
-      setSaveError("Title and Content are required.");
+    const hasTextContent = editor?.getText().trim().length !== 0;
+    
+    if (!title.trim()) {
+      setSaveError("Title is required.");
+      return;
+    }
+    
+    if (!hasTextContent && !hasAttachments) {
+      setSaveError("You must provide either Story Content OR attach a PDF Document.");
       return;
     }
 
@@ -816,7 +878,10 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
     const formData = new FormData();
     formData.append('title', title);
     formData.append('excerpt', excerpt);
-    formData.append('content', jsonContent);
+    
+    const finalContent = jsonContent || '{"type":"doc","content":[{"type":"paragraph"}]}';
+    formData.append('content', finalContent);
+    
     formData.append('author_id', '1'); 
     
     formData.append('category_id', categoryId);
@@ -830,7 +895,6 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
     if (imageFile) formData.append('image', imageFile);
     if (isRemovingImage) formData.append('remove_image', 'true');
 
-    // Append new PDF attachments
     if (newAttachments.length > 0) {
       newAttachments.forEach(file => {
         formData.append('attachments[]', file);
@@ -848,7 +912,7 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
       
       if (data.error) throw new Error(data.error);
       
-      onClose(true);
+      onClose(true); // Close automatically bypasses warning on successful save
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save story.');
     } finally {
@@ -860,14 +924,16 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => onClose(false)} className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50" />
+          {/* UPDATED: Intercepting background clicks! */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={handleCloseRequest} className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50" />
           <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="fixed top-0 right-0 h-full w-full max-w-4xl bg-white z-[60] shadow-2xl flex flex-col">
             
             <header className="p-6 border-b border-stone-200 flex justify-between items-center bg-[#f7f5f2] shrink-0">
               <h3 className="text-2xl font-serif italic text-stone-800">
                 {story ? 'Edit Story' : importedContent ? 'Review Imported Article' : 'Create New Story'}
               </h3>
-              <button onClick={() => onClose(false)} className="p-2 rounded-full hover:bg-stone-200 transition-colors"><X className="w-5 h-5" /></button>
+              {/* UPDATED: Intercepting the 'X' button! */}
+              <button onClick={handleCloseRequest} className="p-2 rounded-full hover:bg-stone-200 transition-colors"><X className="w-5 h-5" /></button>
             </header>
 
             <div className="p-8 overflow-y-auto flex-1 bg-white space-y-6">
@@ -887,7 +953,10 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
                       value={categoryId} 
                       onChange={(e) => {
                         if (e.target.value === 'new') setIsCreatingCategory(true);
-                        else setCategoryId(e.target.value);
+                        else {
+                          setCategoryId(e.target.value);
+                          setHasUnsavedChanges(true); // Flag changes
+                        }
                       }}
                       className="w-full px-5 py-4 bg-white border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-stone-700 font-bold"
                     >
@@ -923,7 +992,10 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
                   </label>
                   <div className="flex items-center gap-4 bg-white px-5 py-4 border border-stone-200 rounded-2xl">
                     <button 
-                      onClick={() => setIsPinned(!isPinned)}
+                      onClick={() => {
+                        setIsPinned(!isPinned);
+                        setHasUnsavedChanges(true); // Flag changes
+                      }}
                       className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${isPinned ? 'bg-amber-500' : 'bg-stone-200'}`}
                     >
                       <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ${isPinned ? 'translate-x-6' : 'translate-x-0'}`} />
@@ -939,7 +1011,10 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
                           <input 
                             type="datetime-local" 
                             value={pinUntil}
-                            onChange={(e) => setPinUntil(e.target.value)}
+                            onChange={(e) => {
+                              setPinUntil(e.target.value);
+                              setHasUnsavedChanges(true); // Flag changes
+                            }}
                             title="Leave blank to pin forever"
                             className="w-full pl-10 pr-5 py-3 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-stone-600 text-sm"
                           />
@@ -977,7 +1052,10 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
                 <input 
                   type="text" 
                   value={title} 
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setHasUnsavedChanges(true); // Flag changes
+                  }}
                   className="w-full px-5 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-stone-800 font-serif italic text-xl"
                   placeholder="Enter a compelling title..."
                 />
@@ -987,15 +1065,17 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
                 <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Short Excerpt</label>
                 <textarea 
                   value={excerpt} 
-                  onChange={(e) => setExcerpt(e.target.value)}
+                  onChange={(e) => {
+                    setExcerpt(e.target.value);
+                    setHasUnsavedChanges(true); // Flag changes
+                  }}
                   rows={2}
                   className="w-full px-5 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-stone-600 resize-none"
                   placeholder="A brief summary that appears on the feed cards..."
                 />
               </div>
 
-              {/* NEW: PDF Attachments Section */}
-              <div className="bg-stone-50 p-6 rounded-3xl border border-stone-200">
+              <div className={`p-6 rounded-3xl border transition-colors ${hasAttachments ? 'bg-[#4b5e52]/5 border-[#4b5e52]/20' : 'bg-stone-50 border-stone-200'}`}>
                 <div className="flex justify-between items-center mb-4">
                   <label className="flex items-center text-[10px] font-bold text-stone-400 uppercase tracking-widest">
                     <Paperclip className="w-3 h-3 mr-2" /> PDF Document (Read-Only Embed)
@@ -1032,7 +1112,7 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
                   {newAttachments.map((file, index) => (
                     <div key={index} className="flex justify-between items-center bg-white border border-[#4b5e52]/30 px-4 py-3 rounded-xl shadow-sm">
                       <div className="flex items-center overflow-hidden">
-                        <Loader className="w-4 h-4 text-[#4b5e52] mr-3 shrink-0 animate-spin" />
+                        <FileText className="w-4 h-4 text-[#4b5e52] mr-3 shrink-0" />
                         <span className="text-sm text-[#4b5e52] font-bold truncate">{file.name}</span>
                         <span className="text-[10px] text-stone-400 uppercase tracking-widest ml-2">(Pending Save)</span>
                       </div>
@@ -1042,7 +1122,7 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
                     </div>
                   ))}
 
-                  {existingAttachments.length === 0 && newAttachments.length === 0 && (
+                  {!hasAttachments && (
                     <p className="text-xs text-stone-400 text-center py-4 border-2 border-dashed border-stone-200 rounded-xl">
                       No documents attached.
                     </p>
@@ -1051,23 +1131,28 @@ function StoryEditorPanel({ story, importedContent, isOpen, categories, onClose 
               </div>
 
               <div className="pb-12">
-                <div className="mb-2 flex justify-between items-end">
-                  <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest">Rich Story Content</label>
+                <div className="mb-2 flex items-center gap-2">
+                  <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Rich Story Content</label>
+                  {hasAttachments && (
+                    <span className="bg-amber-100 text-amber-700 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">
+                      Optional: PDF attached
+                    </span>
+                  )}
                 </div>
                 
-                <div className="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                <div className={`bg-white border rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all ${hasAttachments ? 'border-stone-200 opacity-60' : 'border-stone-200'}`}>
                   <MenuBar editor={editor} />
                   <div className="flex-1 bg-white cursor-text" onClick={() => editor?.commands.focus()}>
                     <EditorContent editor={editor} />
                   </div>
                 </div>
-
               </div>
             </div>
 
             <footer className="p-6 border-t border-stone-200 bg-[#f7f5f2] shrink-0 flex gap-4">
+              {/* UPDATED: Intercepting the 'Cancel' button! */}
               <button 
-                onClick={() => onClose(false)} 
+                onClick={handleCloseRequest} 
                 className="flex-1 bg-white text-stone-600 border border-stone-200 py-4 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-sm hover:bg-stone-50 transition-colors"
               >
                 Cancel
