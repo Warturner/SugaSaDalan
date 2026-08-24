@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Pin, Calendar, User, ChevronRight, ChevronLeft, Tag, Loader } from 'lucide-react';
+import { Search, Pin, Calendar, User, ChevronRight, ChevronLeft, Tag, Loader, Image as ImageIcon } from 'lucide-react';
 
 interface Category {
   id: number;
