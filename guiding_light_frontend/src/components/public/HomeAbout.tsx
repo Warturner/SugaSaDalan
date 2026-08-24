@@ -32,14 +32,36 @@ export default function HomeAbout({ setActivePage }: HomeAboutProps) {
               <h2 className="text-4xl md:text-5xl font-serif italic text-stone-800 mb-8 leading-tight">About Streetlight</h2>
               <div className="space-y-6 text-stone-600 leading-relaxed text-lg">
                 <p>
-                  In the southern Philippine city of Cagayan de Oro, there are dozens of minors who work as prostitutes. 
-                  Until now these children have fallen through the cracks of other social services and aid organizations. 
-                  Streetlight is an organization which wants to fill this gap through outreach work.
+                  Streetlight "Suga sa Dalan" was founded with a
+mission to bring light and hope to minors involved in
+prostitution and victims trafficking in Cagayan de Oro
+City, Philippines. The organization began its journey in
+Switzerland on May 1, 2022, founded by Esther
+Buehlmann and Kathrin Schelker, two Swiss
+nationals with a deep passion for helping vulnerable
+children and youth.
                 </p>
                 <p>
-                  On an appreciative and accepting basis, we aim to build trusting relationships with all of those involved. 
-                  The team of Streetlight works in the area of damage reduction, shows ways to exit prostitution, and 
-                  accompanies the girls, with the help of our local partners, on this journey.
+                  Recognizing the urgent need for intervention and
+support in the Philippines, Esther expanded the
+organization's reach and officially established
+Streetlight: Suga sa Dalan in Cagayan de Oro City in
+September 2022. Even before its formal founding in
+the city, Esther had been actively collaborating with
+local partner agencies, the City Social Welfare and
+Development Office (CSWDO), Cagayan de Oro City
+Police Office (COCPO), Barangays, and other
+organizations, laying the groundwork for what would
+become a vital support system for the community.
+                </p>
+                <p>
+                  Since its inception, Streetlight: Suga sa Dalan has
+been dedicated to rescuing and empowering minors,
+providing intervention programs, and ensuring access
+to future support services through strong partnerships
+with local agencies. The organization continues to
+grow, guided by the vision of creating safer
+environments and brighter futures for those in need.
                 </p>
               </div>
             </motion.div>

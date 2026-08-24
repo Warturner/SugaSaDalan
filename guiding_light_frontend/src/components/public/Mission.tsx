@@ -11,32 +11,32 @@ const VALUES = [
   {
     icon: Heart,
     title: 'Compassion',
-    description: 'Deep sympathy and concern for the sufferings or misfortunes of others.'
+    description: 'We respond with empathy, love, and care to every child we encounter, recognizing their inherent worth and dignity.'
   },
   {
     icon: Shield,
     title: 'Integrity',
-    description: 'The quality of being honest and having strong moral principles.'
+    description: 'We uphold transparency, honesty, and accountability in all our actions and relationsips with the children, partners, and the public'
   },
   {
     icon: Award,
-    title: 'Dignity',
-    description: 'The state or quality of being worthy of honor or respect.'
+    title: 'Dignity of the child',
+    description: 'Every child has the right to a life free from all forms of sexual exploitation. We advocate for their protection, restoration, and empowerment.'
   },
   {
     icon: Users,
     title: 'Collaboration',
-    description: 'Working together with partners and the community to achieve a common goal.'
+    description: 'We work hand-inhand with communities, government agencies, and partner organizations to ensure holistic and sutainable support for children.'
   },
   {
     icon: Zap,
     title: 'Empowerment',
-    description: 'Giving individuals the tools and confidence to take control of their lives.'
+    description: 'We aim not only to rescue, but to inspire and equip  everychild to dream, grow, and thrive beyond their past.'
   },
   {
     icon: Lightbulb,
     title: 'Faith & Hope',
-    description: 'Believing in a brighter future and the inherent goodness of humanity.'
+    description: 'We are grounded in the belief that transformation is possible. We brin light and hope to the darkest places.'
   }
 ];
 
@@ -63,7 +63,18 @@ export default function Mission() {
             </div>
             <h3 className="text-3xl font-serif italic text-stone-800 mb-6">Our Mission</h3>
             <p className="text-stone-600 leading-relaxed font-medium">
-              To provide holistic rehabilitation services, legal advocacy, and educational support to victims of abuse, fostering a community of resilience and hope.
+              To rescue, protect, and empower
+minors who are victims of
+prostitution, trafficking, and other
+sexual exploitation. Through holistic
+intervention, rehabilitation, and
+reintegration programs, we aim to
+restore their lives and potential. By
+working alongside communities,
+stakeholders, and governments, we
+strive to eliminate exploitation and
+create a society that nurtures and
+safeguards every child.
             </p>
           </motion.div>
 
@@ -77,7 +88,11 @@ export default function Mission() {
             </div>
             <h3 className="text-3xl font-serif italic text-[#d4c5b3] mb-6">Our Vision</h3>
             <p className="text-stone-300 leading-relaxed font-medium">
-              A society where the vulnerable are protected, the broken are restored, and the cycle of abuse is permanently broken through education and systemic change.
+              A world where every child thrives in
+a safe, supportive environment, free
+from exploitation, and where their
+dignity, safety, and rights are
+cherished and upheld by society.
             </p>
           </motion.div>
         </div>
