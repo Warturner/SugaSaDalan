@@ -63,7 +63,7 @@ try {
     
     $mail->Body    = "
         <div style='font-family: Arial, sans-serif; padding: 20px; color: #333;'>
-            <h2 style='color: #4b5e52;'>New Message from Website</h2>
+            <h2 style='color: #4b5e52;'>Message from Street Light</h2>
             <p><strong>Name:</strong> {$name}</p>
             <p><strong>Email:</strong> {$email}</p>
             <p><strong>Subject:</strong> {$subject}</p>
