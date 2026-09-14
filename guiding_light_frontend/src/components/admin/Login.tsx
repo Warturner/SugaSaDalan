@@ -40,7 +40,7 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
         setError(data.error || 'Invalid username or password.');
       }
     } catch (err) {
-      setError('Failed to connect to the server. Please check your XAMPP connection.');
+      setError('Unable to connect to the server. Please check your internet connection and try again.');
     } finally {
       setIsLoading(false);
     }
