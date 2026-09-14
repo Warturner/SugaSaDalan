@@ -117,7 +117,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, user }: Sid
             className="flex items-center text-stone-400 hover:text-[#d4c5b3] transition-colors w-full text-[10px] uppercase tracking-widest font-bold group"
           >
             <LogOut className="w-4 h-4 mr-3 group-hover:-translate-x-1 transition-transform" />
-            <span>Logout System</span>
+            <span>Logout</span>
           </button>
         </div>
       </aside>

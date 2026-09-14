@@ -1,7 +1,7 @@
 <?php
 require 'db_connect.php';
 
-header("Access-Control-Allow-Origin: http://localhost:3000"); 
+header("Access-Control-Allow-Origin: *"); 
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
@@ -25,7 +25,7 @@ try {
         // Build the full image URL.
         // Assuming your backend is running on localhost/GuidingLight_Project/guiding_light_backend/
         // and the image_path looks like 'uploads/stories/filename.jpg'
-        $baseUrl = "https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/";
+        $baseUrl = "/guiding_light_backend/";
         $imagePath = $story['image_path'] ? $baseUrl . $story['image_path'] : '';
 
         // Added fallback to retrieve the actual author name if possible, 

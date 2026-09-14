@@ -17,7 +17,7 @@ export default function ContactUs() {
 
     try {
       // UPDATED: Pointing to the new send_email.php script
-      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/send_email.php', {
+      const response = await fetch('/guiding_light_backend/send_email.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

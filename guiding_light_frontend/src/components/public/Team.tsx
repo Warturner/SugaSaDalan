@@ -22,7 +22,7 @@ export default function Team() {
   useEffect(() => {
     const fetchTeam = async () => {
       try {
-        const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_team.php');
+        const response = await fetch('/guiding_light_backend/get_team.php');
         const data = await response.json();
         if (!data.error) setMembers(data);
       } catch (err) {

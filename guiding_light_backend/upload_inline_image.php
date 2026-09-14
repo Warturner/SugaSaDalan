@@ -1,7 +1,7 @@
 <?php
 require 'db_connect.php';
 
-header("Access-Control-Allow-Origin: http://localhost:3000"); 
+header("Access-Control-Allow-Origin: *"); 
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
@@ -35,7 +35,7 @@ try {
 
     if (move_uploaded_file($file['tmp_name'], $destination)) {
         // Return the full public URL so Tiptap can display it
-        $baseUrl = "https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/";
+        $baseUrl = "/guiding_light_backend/";
         echo json_encode([
             'success' => true,
             'url' => $baseUrl . $destination

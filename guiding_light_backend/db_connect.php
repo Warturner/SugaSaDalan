@@ -1,7 +1,6 @@
 <?php
-// Define the allowed origin for CORS. For production, this should be your frontend's domain.
-// For local development, 'http://localhost:3000' is a common default for React apps.
-$allowed_origin = 'http://localhost:3000'; // <-- Replace with your frontend URL in production
+
+$allowed_origin = '*'; // <-- Replace with your frontend URL in production
 
 // Set up CORS (Cross-Origin Resource Sharing)
 header("Access-Control-Allow-Origin: " . $allowed_origin);

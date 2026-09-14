@@ -10,7 +10,7 @@ try {
     $stmt->execute([$post_id]);
     $attachments = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    $base_url = "https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/";
+    $base_url = "/guiding_light_backend/";
     
     // Attach the full public URL so React can create download links
     foreach ($attachments as &$att) {

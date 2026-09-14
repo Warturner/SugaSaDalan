@@ -4,52 +4,81 @@ header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
-// Handle preflight requests
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') { exit(0); }
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    exit(0);
+}
 
-// Get the JSON data sent from React
-$data = json_decode(file_get_contents("php://input"), true);
+// Load the PHPMailer files
+require 'PHPMailer/Exception.php';
+require 'PHPMailer/PHPMailer.php';
+require 'PHPMailer/SMTP.php';
 
-$name = trim($data['name'] ?? '');
-$email = trim($data['email'] ?? '');
-$subject = trim($data['subject'] ?? '');
-$message = trim($data['message'] ?? '');
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-// Basic validation
+// Get the React form data
+$data = json_decode(file_get_contents("php://input"));
+
+// Capture all 4 fields from ContactUs.tsx
+$name = htmlspecialchars($data->name ?? '');
+$email = filter_var($data->email ?? '', FILTER_SANITIZE_EMAIL);
+$subject = htmlspecialchars($data->subject ?? 'New Contact Form Inquiry');
+$message = htmlspecialchars($data->message ?? '');
+
 if (empty($name) || empty($email) || empty($subject) || empty($message)) {
     echo json_encode(['error' => 'All fields are required.']);
     exit;
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['error' => 'Invalid email address format.']);
-    exit;
-}
+$mail = new PHPMailer(true);
 
-// =========================================================
-// EMAIL CONFIGURATION
-// =========================================================
-$to_email = "your_ngo_email@example.com"; // <--- CHANGE THIS TO THE REAL NGO EMAIL
-$email_subject = "New Website Contact: " . $subject;
+try {
+    // --- 1. SERVER SETTINGS ---
+    $mail->isSMTP();
+    $mail->Host       = 'smtp.gmail.com';
+    $mail->SMTPAuth   = true;
+    
+    // THE GMAIL ACCOUNT SENDING THE EMAIL:
+    $mail->Username   = 'jcsucaldito17762@liceo.edu.ph'; 
+    $mail->Password   = 'lokbzqhaqgudiohp'; // No spaces!
+    
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+    $mail->Port       = 587;
 
-// Construct the email body
-$email_body = "You have received a new message from the Guiding Light website contact form.\n\n";
-$email_body .= "Name: {$name}\n";
-$email_body .= "Email Address: {$email}\n";
-$email_body .= "Subject: {$subject}\n\n";
-$email_body .= "Message:\n-----------------------------------\n";
-$email_body .= "{$message}\n";
-$email_body .= "-----------------------------------\n";
+    // --- 2. EMAIL ADDRESSES ---
+    // The "From" email MUST match the Username above
+    $mail->setFrom('jcsucaldito17762@liceo.edu.ph', 'Guiding Light Website'); 
+    
+    // The email address where the client actually WANTS to receive the messages
+    $mail->addAddress('jcsucaldito17762@liceo.edu.ph', 'Guiding Light Admin'); 
+    
+    // If the client hits "Reply", it goes straight to the person who filled out the form
+    $mail->addReplyTo($email, $name); 
 
-// Headers
-$headers = "From: noreply@guidinglight.org\r\n"; // Make this look official
-$headers .= "Reply-To: {$email}\r\n"; // This allows the NGO to hit "Reply" and email the user directly
-$headers .= "X-Mailer: PHP/" . phpversion();
+    // --- 3. THE EMAIL CONTENT ---
+    $mail->isHTML(true);
+    
+    // Use the Subject from the React form!
+    $mail->Subject = 'Guiding Light Website: ' . $subject;
+    
+    $mail->Body    = "
+        <div style='font-family: Arial, sans-serif; padding: 20px; color: #333;'>
+            <h2 style='color: #4b5e52;'>New Message from Website</h2>
+            <p><strong>Name:</strong> {$name}</p>
+            <p><strong>Email:</strong> {$email}</p>
+            <p><strong>Subject:</strong> {$subject}</p>
+            <hr>
+            <p><strong>Message:</strong><br/>" . nl2br($message) . "</p>
+        </div>
+    ";
+    
+    $mail->AltBody = "Name: {$name}\nEmail: {$email}\nSubject: {$subject}\nMessage:\n{$message}";
 
-// Send the email
-if (mail($to_email, $email_subject, $email_body, $headers)) {
-    echo json_encode(['success' => true, 'message' => 'Email sent successfully.']);
-} else {
-    echo json_encode(['error' => 'Failed to send email. Please check server configuration.']);
+    $mail->send();
+    echo json_encode(['success' => true]);
+
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['error' => "Message could not be sent. Mailer Error: {$mail->ErrorInfo}"]);
 }
 ?>

@@ -45,8 +45,8 @@ export default function Stories({ onStoryClick }: StoriesProps) {
       setIsLoading(true);
       try {
         const [storiesRes, categoriesRes] = await Promise.all([
-          fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_stories.php'),
-          fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_categories.php')
+          fetch('/guiding_light_backend/get_stories.php'),
+          fetch('/guiding_light_backend/get_categories.php')
         ]);
         
         const storiesData = await storiesRes.json();

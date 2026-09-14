@@ -1,7 +1,7 @@
 <?php
 require 'db_connect.php';
 
-header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
@@ -54,8 +54,8 @@ try {
                 ],
                 'payment_method_types' => ['gcash', 'paymaya', 'card'],
                 'reference_number' => $reference_number,
-                'success_url' => 'http://localhost:3000/?status=success', // Redirect after payment
-                'cancel_url' => 'http://localhost:3000/?status=cancelled'
+                'success_url' => '*/?status=success', // Redirect after payment
+                'cancel_url' => '*/?status=cancelled'
             ]
         ]
     ];

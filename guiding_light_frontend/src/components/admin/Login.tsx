@@ -24,7 +24,7 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
     setError(null);
 
     try {
-      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/login.php', {
+      const response = await fetch('/guiding_light_backend/login.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,8 +1,13 @@
 <?php
+// 1. Force InfinityFree to show us any hidden fatal errors
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require 'db_connect.php';
 
 // Set headers for CORS and content type
-header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
@@ -17,7 +22,7 @@ try {
     $postId = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
     if ($postId) {
-        // Fetch a single story (Added category and pin fields)
+        // Fetch a single story 
         $sql = "SELECT 
                     s.post_id, 
                     s.title, 
@@ -37,7 +42,7 @@ try {
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(':post_id', $postId, PDO::PARAM_INT);
     } else {
-        // Fetch all stories (Added active_pin calculation for proper sorting)
+        // Fetch all stories 
         $sql = "SELECT 
                     s.post_id, 
                     s.title, 
@@ -63,15 +68,16 @@ try {
 
     $stmt->execute();
 
-    $base_url = "https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/";
+    $base_url = "/guiding_light_backend/";
 
     if ($postId) {
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($result && !empty($result['image_path'])) {
             $result['image'] = $base_url . $result['image_path'];
         }
-        // Return the single story object, or null if not found
-        echo json_encode($result);
+        
+        // 2. Safe JSON Encode that won't crash on special characters
+        $json = json_encode($result, JSON_INVALID_UTF8_SUBSTITUTE);
     } else {
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($results as &$row) {
@@ -79,9 +85,17 @@ try {
                 $row['image'] = $base_url . $row['image_path'];
             }
         }
-        unset($row); // break the reference with the last element
-        // Return the array of all stories
-        echo json_encode($results);
+        unset($row); 
+        
+        // 2. Safe JSON Encode that won't crash on special characters
+        $json = json_encode($results, JSON_INVALID_UTF8_SUBSTITUTE);
+    }
+
+    // 3. If JSON still fails, tell us exactly WHY instead of a blank screen
+    if ($json === false) {
+        echo json_encode(["error" => "JSON Encoding Failed: " . json_last_error_msg()]);
+    } else {
+        echo $json;
     }
 
 } catch (PDOException $e) {

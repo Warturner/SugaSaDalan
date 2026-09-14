@@ -2,7 +2,7 @@
 require 'db_connect.php';
 
 // Set headers for CORS and content type
-header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
@@ -49,7 +49,7 @@ try {
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Construct the full image URL for the frontend
-    $base_url = "https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/";
+    $base_url = "/guiding_light_backend/";
     foreach ($results as &$row) {
         if (!empty($row['image_path'])) {
             $row['image'] = $base_url . $row['image_path'];

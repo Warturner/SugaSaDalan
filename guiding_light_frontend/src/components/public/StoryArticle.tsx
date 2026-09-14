@@ -53,8 +53,8 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
       try {
         // Fetch both the story content and its attachments simultaneously
         const [storyRes, attRes] = await Promise.all([
-          fetch(`https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_story.php?id=${storyId}`),
-          fetch(`https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_story_attachments.php?post_id=${storyId}`)
+          fetch(`/guiding_light_backend/get_story.php?id=${storyId}`),
+          fetch(`/guiding_light_backend/get_story_attachments.php?post_id=${storyId}`)
         ]);
         
         const storyData = await storyRes.json();

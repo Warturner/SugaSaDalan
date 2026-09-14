@@ -55,7 +55,7 @@ export default function DonationForm() {
     };
 
     try {
-      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/process_donation.php', {
+      const response = await fetch('/guiding_light_backend/process_donation.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
