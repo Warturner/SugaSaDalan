@@ -51,7 +51,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
   const fetchUsers = async () => {
     try {
       // 4. APPENDED admin_id TO THE FETCH URL
-      const response = await fetch(`http://localhost/GuidingLight_Project/guiding_light_backend/get_users.php?admin_id=${currentUser?.id}`);
+      const response = await fetch(`https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_users.php?admin_id=${currentUser?.id}`);
       const data = await response.json();
       if (data.success) {
         setAccounts(data.users);
@@ -83,7 +83,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/create_user.php', {
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/create_user.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, role })
@@ -118,7 +118,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/edit_user.php', {
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/edit_user.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -152,7 +152,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
     }
 
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/delete_user.php', {
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/delete_user.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: id })

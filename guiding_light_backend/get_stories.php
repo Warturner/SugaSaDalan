@@ -63,7 +63,7 @@ try {
 
     $stmt->execute();
 
-    $base_url = "http://localhost/GuidingLight_Project/guiding_light_backend/";
+    $base_url = "https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/";
 
     if ($postId) {
         $result = $stmt->fetch(PDO::FETCH_ASSOC);

@@ -35,7 +35,7 @@ try {
 
     if (move_uploaded_file($file['tmp_name'], $destination)) {
         // Return the full public URL so Tiptap can display it
-        $baseUrl = "http://localhost/GuidingLight_Project/guiding_light_backend/";
+        $baseUrl = "https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/";
         echo json_encode([
             'success' => true,
             'url' => $baseUrl . $destination

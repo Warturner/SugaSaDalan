@@ -44,7 +44,7 @@ export default function DonationVerification({ currentUser }: DonationVerificati
     
     try {
       // Secure URL with the admin_id badge!
-      const response = await fetch(`http://localhost/GuidingLight_Project/guiding_light_backend/get_donations.php?admin_id=${currentUser.id}`);
+      const response = await fetch(`https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_donations.php?admin_id=${currentUser.id}`);
       const data = await response.json();
       
       if (data.success) {

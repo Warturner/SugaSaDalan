@@ -42,7 +42,7 @@ export default function SettingsModule({ user, onUpdateUser }: SettingsProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/update_profile.php', {
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/update_profile.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

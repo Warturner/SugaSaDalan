@@ -6,6 +6,12 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    server: {
+      allowedHosts: true
+    },
+    preview: {
+      allowedHosts: true // <-- Added this to allow the tunnel in preview mode!
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

@@ -8,7 +8,7 @@ try {
     $stmt = $conn->query("SELECT * FROM team_members ORDER BY display_order ASC, id ASC");
     $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $base_url = "http://localhost/GuidingLight_Project/guiding_light_backend/";
+    $base_url = "https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/";
     
     foreach ($members as &$member) {
         if (!empty($member['image_path'])) {

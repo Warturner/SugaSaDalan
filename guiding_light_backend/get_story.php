@@ -25,7 +25,7 @@ try {
         // Build the full image URL.
         // Assuming your backend is running on localhost/GuidingLight_Project/guiding_light_backend/
         // and the image_path looks like 'uploads/stories/filename.jpg'
-        $baseUrl = "http://localhost/GuidingLight_Project/guiding_light_backend/";
+        $baseUrl = "https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/";
         $imagePath = $story['image_path'] ? $baseUrl . $story['image_path'] : '';
 
         // Added fallback to retrieve the actual author name if possible, 

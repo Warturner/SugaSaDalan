@@ -37,7 +37,7 @@ export default function TeamManagement() {
   const fetchTeam = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/get_team.php');
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_team.php');
       const data = await response.json();
       if (!data.error) setMembers(data);
     } catch (err) {
@@ -59,7 +59,7 @@ export default function TeamManagement() {
     setMembers(members.map(m => m.id === id ? { ...m, display_order: newRow } : m));
 
     try {
-      await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/update_team_order.php', {
+      await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/update_team_order.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify([{ id, display_order: newRow }])
@@ -116,7 +116,7 @@ export default function TeamManagement() {
     if (imageFile) formData.append('image', imageFile);
 
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/save_team_member.php', {
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/save_team_member.php', {
         method: 'POST',
         body: formData
       });
@@ -138,7 +138,7 @@ export default function TeamManagement() {
     if (!window.confirm(`Are you sure you want to remove ${memberName} from the team?`)) return;
 
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/delete_team_member.php', {
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/delete_team_member.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })

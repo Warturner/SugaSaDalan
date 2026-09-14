@@ -49,7 +49,7 @@ try {
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Construct the full image URL for the frontend
-    $base_url = "http://localhost/GuidingLight_Project/guiding_light_backend/";
+    $base_url = "https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/";
     foreach ($results as &$row) {
         if (!empty($row['image_path'])) {
             $row['image'] = $base_url . $row['image_path'];

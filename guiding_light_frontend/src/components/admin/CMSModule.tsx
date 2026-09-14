@@ -68,7 +68,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
     formData.append('image', file);
 
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/upload_inline_image.php', {
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/upload_inline_image.php', {
         method: 'POST',
         body: formData,
       });
@@ -141,7 +141,7 @@ export default function CMSModule() {
   const fetchStories = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/get_stories.php');
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_stories.php');
       const data = await response.json();
       if (data.error) throw new Error(data.error);
       setStories(data);
@@ -154,7 +154,7 @@ export default function CMSModule() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/get_categories.php');
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_categories.php');
       const data = await response.json();
       if (!data.error) setCategories(data);
     } catch (err) {
@@ -195,7 +195,7 @@ export default function CMSModule() {
     const isConfirmed = window.confirm(`Are you sure you want to permanently delete "${story.title}"? This action cannot be undone.`);
     if (!isConfirmed) return;
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/delete_story.php', {
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/delete_story.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ post_id: story.post_id })
@@ -273,7 +273,7 @@ export default function CMSModule() {
                 formData.append('image', blob, `imported-docx-img-${Date.now()}.${ext}`);
 
                 try {
-                  const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/upload_inline_image.php', {
+                  const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/upload_inline_image.php', {
                     method: 'POST',
                     body: formData,
                   });
@@ -553,7 +553,7 @@ function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | 
       const fetchHistory = async () => {
         setIsLoadingHistory(true);
         try {
-          const response = await fetch(`http://localhost/GuidingLight_Project/guiding_light_backend/get_story_history.php?post_id=${story.post_id}`);
+          const response = await fetch(`https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_story_history.php?post_id=${story.post_id}`);
           const data = await response.json();
           if (data.error) throw new Error(data.error);
           setHistory(data);
@@ -744,7 +744,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
       setHasUnsavedChanges(false);
       
       if (story) {
-        fetch(`http://localhost/GuidingLight_Project/guiding_light_backend/get_story_attachments.php?post_id=${story.post_id}`)
+        fetch(`https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_story_attachments.php?post_id=${story.post_id}`)
           .then(res => res.json())
           .then(data => { if (!data.error) setExistingAttachments(data); })
           .catch(err => console.error("Failed to load attachments:", err));
@@ -811,7 +811,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
     if (!window.confirm("Are you sure you want to delete this attachment permanently?")) return;
     
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/delete_attachment.php', {
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/delete_attachment.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
@@ -832,7 +832,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
     if (!newCategoryName.trim()) return;
     setIsSavingCategory(true);
     try {
-      const response = await fetch('http://localhost/GuidingLight_Project/guiding_light_backend/create_category.php', {
+      const response = await fetch('https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/create_category.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newCategoryName })
@@ -904,7 +904,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
     const endpoint = story ? 'update_story.php' : 'create_story.php';
 
     try {
-      const response = await fetch(`http://localhost/GuidingLight_Project/guiding_light_backend/${endpoint}`, {
+      const response = await fetch(`https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/${endpoint}`, {
         method: 'POST',
         body: formData,
       });

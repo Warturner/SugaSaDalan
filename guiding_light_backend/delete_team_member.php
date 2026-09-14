@@ -15,9 +15,16 @@ try {
     $member = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($member) {
-        if (!empty($member['image_path']) && file_exists($member['image_path'])) {
-            unlink($member['image_path']);
+        if (!empty($member['image_path'])) {
+            $filename = basename($member['image_path']);
+            // Targets guiding_light_backend/uploads/team/
+            $filepath = __DIR__ . "/uploads/team/" . $filename;
+            
+            if (file_exists($filepath)) {
+                unlink($filepath);
+            }
         }
+        
         $del = $conn->prepare("DELETE FROM team_members WHERE id = ?");
         $del->execute([$id]);
     }

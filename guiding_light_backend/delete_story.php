@@ -1,8 +1,7 @@
 <?php
 require 'db_connect.php';
 
-// Set headers for CORS
-header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
@@ -25,13 +24,19 @@ try {
         exit;
     }
 
-    // Step 1: Fetch the image path so we can delete the file from the server
+    // Step 1: Fetch the image path
     $stmt = $conn->prepare("SELECT image_path FROM stories WHERE post_id = :post_id");
     $stmt->execute([':post_id' => $post_id]);
     $story = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($story && !empty($story['image_path']) && file_exists($story['image_path'])) {
-        unlink($story['image_path']); // Delete the image file
+    if ($story && !empty($story['image_path'])) {
+        $filename = basename($story['image_path']);
+        // Targets guiding_light_backend/uploads/stories/
+        $filepath = __DIR__ . "/uploads/stories/" . $filename; 
+        
+        if (file_exists($filepath)) {
+            unlink($filepath); 
+        }
     }
 
     // Step 2: Delete the record from the database. 

@@ -25,7 +25,7 @@ export default function Hero({ setActivePage }: HeroProps) {
   // ==========================================
   useEffect(() => {
     fetch(
-      'http://localhost/GuidingLight_Project/guiding_light_backend/get_home_pictures.php'
+      'https://thirty-dragons-appear.loca.lt/GuidingLight_Project/guiding_light_backend/get_home_pictures.php'
     )
       .then((res) => res.json())
       .then((data) => {
