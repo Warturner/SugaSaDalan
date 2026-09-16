@@ -73,7 +73,7 @@ environments and brighter futures for those in need.
             >
               <div className="aspect-[4/5] rounded-[48px] overflow-hidden shadow-2xl border-[12px] border-stone-50">
                 <img 
-                  src="https://petapixel.com/assets/uploads/2024/01/The-Star-of-System-Sol-Rectangle-640x800.jpg" 
+                  src="/media/1.jpg" 
                   alt="Streetlight Outreach" 
                   className="w-full h-full object-cover"
                 />
@@ -96,7 +96,7 @@ environments and brighter futures for those in need.
             >
               <div className="aspect-[4/3] rounded-[48px] overflow-hidden shadow-2xl border-[12px] border-white">
                 <img 
-                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRj1kvjG1UFrLa01L8ZwBoD3bapZgco4x2oPddy_HqAgQPHLdE0PH3lVCJ1&s=10" 
+                  src="/media/2.png" 
                   alt="Children at school" 
                   className="w-full h-full object-cover"
                 />

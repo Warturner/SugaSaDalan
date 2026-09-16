@@ -7,7 +7,7 @@ export const SERVICES = [
   {
     id: 'outreach',
     image: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?auto=format&fit=crop&q=80&w=800',
-    title: 'Outreach Work',
+    title: 'Outreach Work jeff',
     description: 'Identifying and reaching out to minors in vulnerable situations on the streets.',
     longDescription: 'Once or twice a week, Streetlight conducts night monitoring in the areas where the girls are waiting for customers. We build a trust relationship with them and offer them or help: enrolling them in school again, accompany them to medical check-ups, and referral to residential based institutions.\n\nStreetlight thematizes the risks of their activities with the young sex workers and shows ways to exit prostitution. The individual cases are monitored closely and if a girl is very young or otherwise highly endangered, rescued from the streets in collaboration with the City Social Welfare and Development CSWD and the police for her own safety.'
   },
