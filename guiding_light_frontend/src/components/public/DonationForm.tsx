@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ServiceCategory, PaymentMethod } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { CreditCard, Wallet, Landmark, CheckCircle2, AlertCircle } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const CATEGORIES: ServiceCategory[] = [
   'Trauma Counseling',
@@ -22,8 +23,6 @@ const METHODS: { id: PaymentMethod, label: string, icon: any }[] = [
   { id: 'Manual Bank Transfer', label: 'Manual Bank', icon: Landmark },
 ];
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-
 const ALLOCATION_DATA = [
   { name: 'Trauma Counseling', value: 30, color: '#f2ede4' },
   { name: 'Educational Support', value: 25, color: '#4b5e52' },
@@ -37,7 +36,45 @@ export default function DonationForm() {
   const [method, setMethod] = React.useState<PaymentMethod>('E-wallet');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
+  const [isVerifying, setIsVerifying] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  // LISTEN FOR PAYMONGO REDIRECTS ON PAGE LOAD
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment');
+    const sessionId = params.get('session_id');
+
+    if (paymentStatus === 'success' && sessionId) {
+      verifyPayment(sessionId);
+      // Clean up the URL so it looks nice
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (paymentStatus === 'cancelled') {
+      setError('Payment was cancelled.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  const verifyPayment = async (sessionId: string) => {
+    setIsVerifying(true);
+    try {
+      const response = await fetch('/guiding_light_backend/verify_donation.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+      const result = await response.json();
+      if (result.success) {
+        setIsSuccess(true);
+      } else {
+        setError(result.error || 'Failed to verify payment with PayMongo.');
+      }
+    } catch (err) {
+      setError('Connection error while verifying payment.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,34 +85,40 @@ export default function DonationForm() {
 
     const donationData = {
       amount: parseFloat(amount),
-      payment_method: method,
-      // In a real app, you'd get donor info from a form or user session
-      donor_name: 'Anonymous Donor', 
-      donor_email: 'anonymous@example.com'
+      payment_method: method
     };
 
     try {
       const response = await fetch('/guiding_light_backend/process_donation.php', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(donationData),
       });
 
       const result = await response.json();
 
-      if (result.success) {
-        setIsSuccess(true);
+      if (result.success && result.checkout_url) {
+        // REDIRECT USER TO PAYMONGO
+        window.location.href = result.checkout_url;
       } else {
-        setError(result.error || 'An unknown error occurred during donation processing.');
+        setError(result.error || 'Failed to create payment link.');
+        setIsSubmitting(false);
       }
     } catch (err) {
       setError('Failed to connect to the server. Please try again later.');
-    } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isVerifying) {
+    return (
+      <div className="py-32 text-center">
+        <div className="w-12 h-12 border-4 border-stone-200 border-t-[#4b5e52] rounded-full animate-spin mx-auto mb-6"></div>
+        <h2 className="text-2xl font-serif italic text-stone-800">Verifying your donation...</h2>
+        <p className="text-stone-500">Please wait, checking PayMongo records.</p>
+      </div>
+    );
+  }
 
   if (isSuccess) {
     return (
@@ -88,8 +131,8 @@ export default function DonationForm() {
           <CheckCircle2 className="w-12 h-12" />
         </div>
         <h2 className="text-4xl font-serif italic text-stone-800 mb-6">Salamat kaayo!</h2>
-<p className="text-stone-600 mb-10 leading-relaxed">
-          Your donation of <span className="font-bold text-stone-800">PHP {parseFloat(amount).toLocaleString()}</span> has been received and is pending verification. 
+        <p className="text-stone-600 mb-10 leading-relaxed">
+          Your donation has been verified and safely received. 
           Thank you for your generous support in helping us empower the unheard!
         </p>
         <button 
@@ -115,7 +158,7 @@ export default function DonationForm() {
           <p className="text-lg text-stone-600 max-w-2xl mx-auto">See how your contributions are distributed and make a direct impact today.</p>
         </div>
 
-        {/* Transparency Pie Chart Box */}
+        {/* Transparency Pie Chart Box (Unchanged) */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -213,7 +256,7 @@ export default function DonationForm() {
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="0.00"
-                        required
+                        required={method !== 'Manual Bank Transfer'}
                         className="w-full pl-14 pr-6 py-6 bg-stone-50 border-none rounded-[24px] focus:ring-2 focus:ring-[#d4c5b3] font-mono text-2xl"
                       />
                     </div>
@@ -291,7 +334,7 @@ export default function DonationForm() {
                       {isSubmitting ? (
                         <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                       ) : (
-                        <span>Submit via PayMongo</span>
+                        <span>Proceed to Secure Checkout</span>
                       )}
                     </button>
                   </motion.div>
