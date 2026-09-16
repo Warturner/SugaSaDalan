@@ -4,21 +4,22 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, ShieldCheck, Check, Loader, AlertTriangle } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Search, Filter, ShieldCheck, Loader, AlertTriangle, Clock } from 'lucide-react';
 
 interface DonationVerificationProps {
   currentUser: { id: number; username: string; role?: string } | null;
 }
 
-// Ensure your donation type matches what your PHP script returns
+// Updated to perfectly match the new merged SQL database structure
 interface Donation {
-  id: string; // The database might return a string or number depending on your schema. Adjust if needed.
-  donor_name: string; // Using snake_case to match standard PHP/MySQL output
-  transaction_date: string;
+  donation_id: number;
+  donor_name: string;
+  contact_email: string;
   amount: string;
-  payment_method: string;
-  status: string;
+  reference_number: string;
+  transaction_date: string;
+  payment_method: number;
+  status: number;
 }
 
 export default function DonationVerification({ currentUser }: DonationVerificationProps) {
@@ -26,9 +27,6 @@ export default function DonationVerification({ currentUser }: DonationVerificati
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Verification states
-  const [verifyingId, setVerifyingId] = useState<string | null>(null);
-
   // Search filter state
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -43,12 +41,12 @@ export default function DonationVerification({ currentUser }: DonationVerificati
     setError(null);
     
     try {
-      // Secure URL with the admin_id badge!
       const response = await fetch(`/guiding_light_backend/get_donations.php?admin_id=${currentUser.id}`);
       const data = await response.json();
       
       if (data.success) {
-        setDonations(data.donations);
+        // MATCHED WITH PHP: The PHP script returns json_encode(['success' => true, 'data' => $donations])
+        setDonations(data.data || []);
       } else {
         setError(data.error || 'Failed to load donations.');
       }
@@ -60,30 +58,29 @@ export default function DonationVerification({ currentUser }: DonationVerificati
     }
   };
 
-  const handleVerify = async (id: string) => {
-    // In a real application, you would send a fetch POST request here to update the database status.
-    // For this capstone demo, if you don't have an update script yet, we will just simulate it in the UI.
-    
-    setVerifyingId(id);
-    
-    setTimeout(() => {
-      setDonations(prev => prev.map(d => d.id === id ? { ...d, status: 'Verified' } : d));
-      setVerifyingId(null);
-    }, 1000);
+  // Helper to map database numeric payment methods to readable text
+const getPaymentMethodName = (method: number | string) => {
+    switch (Number(method)) {
+      case 1: return 'Bank Card';
+      case 2: return 'Manual Bank';
+      case 3: return 'E-Wallet / Card';
+      default: return 'Unknown';
+    }
   };
 
-  // Filter the donations based on the search query
+  // Filter the donations based on the search query (Checks Name, Email, or TXN ID)
   const filteredDonations = donations.filter(donation => 
-    donation.id?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    donation.donor_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    donation.reference_number?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    donation.donor_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    donation.contact_email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <div className="space-y-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-10">
         <div>
-          <h2 className="text-3xl font-serif italic text-stone-800">Donation Verification</h2>
-          <p className="text-stone-400 text-sm">Monitor and verify incoming transactions from PayMongo.</p>
+          <h2 className="text-3xl font-serif italic text-stone-800">Donation Ledger</h2>
+          <p className="text-stone-400 text-sm">Read-only audit trail of all incoming transactions.</p>
         </div>
         
         <div className="flex items-center space-x-4">
@@ -114,12 +111,12 @@ export default function DonationVerification({ currentUser }: DonationVerificati
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="border-b border-stone-50">
+                  <th className="px-8 py-6 text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">Date</th>
                   <th className="px-8 py-6 text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">TXN ID</th>
                   <th className="px-8 py-6 text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">Donor Profile</th>
                   <th className="px-8 py-6 text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] text-right">Amount</th>
                   <th className="px-8 py-6 text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">Method</th>
                   <th className="px-8 py-6 text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-8 py-6 text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em] text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-50">
@@ -140,47 +137,56 @@ export default function DonationVerification({ currentUser }: DonationVerificati
                   </tr>
                 ) : (
                   filteredDonations.map((donation) => (
-                    <tr key={donation.id} className="hover:bg-stone-50/50 transition-colors group">
-                      <td className="px-8 py-6 text-[11px] font-mono font-bold text-stone-400 group-hover:text-stone-800">#{donation.id}</td>
+                    <tr key={donation.donation_id} className="hover:bg-stone-50/50 transition-colors group">
+                      
+                      {/* Date */}
                       <td className="px-8 py-6">
-                        <p className="text-xs font-bold text-stone-800 uppercase tracking-widest mb-1">{donation.donor_name}</p>
-                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-tighter">
-                           {/* Formatting the date nicely if it exists */}
-                           {donation.transaction_date ? new Date(donation.transaction_date).toLocaleDateString() : 'N/A'}
+                        <p className="text-xs font-bold text-stone-800 uppercase tracking-widest mb-1">
+                           {new Date(donation.transaction_date).toLocaleDateString()}
+                        </p>
+                        <p className="text-[10px] text-stone-400 uppercase tracking-tighter">
+                           {new Date(donation.transaction_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </td>
-                      <td className="px-8 py-6 text-sm font-bold text-stone-800 text-right">
-                        {/* Make sure we safely parse the amount string to a number for formatting */}
+
+                      {/* Transaction ID */}
+                      <td className="px-8 py-6">
+                        <span className="text-[10px] font-mono font-bold text-stone-400 bg-stone-100 px-2 py-1 rounded">
+                          {donation.reference_number}
+                        </span>
+                      </td>
+
+                      {/* Donor Name & Email */}
+                      <td className="px-8 py-6">
+                        <p className="text-xs font-bold text-stone-800 uppercase tracking-widest mb-1">{donation.donor_name}</p>
+                        <p className="text-[10px] font-bold text-stone-400 tracking-tighter">
+                           {donation.contact_email}
+                        </p>
+                      </td>
+
+                      {/* Amount */}
+                      <td className="px-8 py-6 text-sm font-bold text-[#4b5e52] text-right whitespace-nowrap">
                         ₱ {parseFloat(donation.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="px-8 py-6 text-[10px] font-bold uppercase tracking-widest text-stone-500">{donation.payment_method}</td>
+
+                      {/* Payment Method */}
+                      <td className="px-8 py-6 text-[10px] font-bold uppercase tracking-widest text-stone-500">
+                        {getPaymentMethodName(donation.payment_method)}
+                      </td>
+
+                      {/* Status Badge */}
                       <td className="px-8 py-6">
-                        {donation.status === 'Verified' ? (
+                        {donation.status === 2 ? (
                           <span className="inline-flex items-center px-4 py-1.5 rounded-full text-[9px] font-bold bg-[#3a4740]/10 text-[#3a4740] uppercase tracking-widest border border-[#3a4740]/20">
-                            <Check className="w-3 h-3 mr-2" /> Verified
+                            <ShieldCheck className="w-3 h-3 mr-2" /> Successful
                           </span>
                         ) : (
                           <span className="inline-flex items-center px-4 py-1.5 rounded-full text-[9px] font-bold bg-[#d4a373]/10 text-[#d4a373] uppercase tracking-widest border border-[#d4a373]/20">
-                            Pending
+                            <Clock className="w-3 h-3 mr-2" /> Pending
                           </span>
                         )}
                       </td>
-                      <td className="px-8 py-6 text-right">
-                        {donation.status === 'Pending' && (
-                          <button
-                            onClick={() => handleVerify(donation.id)}
-                            disabled={verifyingId === donation.id}
-                            className="px-6 py-2.5 bg-[#4b5e52] text-white text-[9px] font-bold rounded-full hover:bg-[#3a4740] transition-all disabled:bg-stone-200 uppercase tracking-[0.2em] shadow-md shadow-stone-100"
-                          >
-                            {verifyingId === donation.id ? 'Verifying...' : 'Verify'}
-                          </button>
-                        )}
-                        {donation.status === 'Verified' && (
-                          <div className="text-[#3a4740] flex justify-end">
-                            <ShieldCheck className="w-6 h-6 opacity-60" />
-                          </div>
-                        )}
-                      </td>
+
                     </tr>
                   ))
                 )}

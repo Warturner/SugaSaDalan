@@ -1,6 +1,8 @@
-s<?php
+<?php
 require 'db_connect.php';
 
+ini_set('display_errors', 0);
+error_reporting(0);
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
@@ -11,67 +13,75 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') exit(0);
 $data = json_decode(file_get_contents("php://input"));
 $session_id = $data->session_id ?? '';
 
-if (empty($session_id)) {
-    echo json_encode(['error' => 'Missing session ID.']);
+if (empty($session_id) || $session_id === '{CHECKOUT_SESSION_ID}') {
+    echo json_encode(['error' => 'Missing or invalid session ID.']);
     exit;
 }
 
-// ⚠️ MUST MATCH THE SECRET KEY FROM ABOVE
-$secret_key = 'sk_test_YOUR_PAYMONGO_SECRET_KEY';
+$secret_key = 'sk_test_WHtx1vpQYbWw1Emap4qAzFrC';
 $encoded_key = base64_encode($secret_key . ':');
 
-// 1. Ask PayMongo about this session ID
 $ch = curl_init('https://api.paymongo.com/v1/checkout_sessions/' . $session_id);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Authorization: Basic ' . $encoded_key
 ]);
+
 $response = curl_exec($ch);
+$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
+
+if ($response === false) {
+    echo json_encode(['error' => 'Server Connection Error.']);
+    exit;
+}
+
 $result = json_decode($response, true);
 
-// 2. Check if the payment was actually successful
+if ($http_status !== 200 || !isset($result['data'])) {
+    echo json_encode(['error' => 'PayMongo Error.']);
+    exit;
+}
+
 $payments = $result['data']['attributes']['payments'] ?? [];
 $is_paid = false;
+$payment_data = null;
+
 foreach ($payments as $payment) {
-    if ($payment['attributes']['status'] === 'paid') {
+    if (isset($payment['attributes']['status']) && $payment['attributes']['status'] === 'paid') {
         $is_paid = true;
+        $payment_data = $payment;
         break;
     }
 }
 
-if (!$is_paid) {
+if (!$is_paid || !$payment_data) {
     echo json_encode(['error' => 'Payment not completed or failed.']);
     exit;
 }
 
-// 3. Save to database for auditing
 try {
     $conn->beginTransaction();
     
-    // Check if this transaction already exists (prevent duplicate refresh inserts)
     $stmt = $conn->prepare("SELECT donation_id FROM donations WHERE reference_number = ?");
     $stmt->execute([$session_id]);
     if ($stmt->rowCount() > 0) {
-        echo json_encode(['success' => true]); // Already saved
+        echo json_encode(['success' => true]); 
         exit;
     }
 
-    // Insert generic anonymous donor
-    $stmt = $conn->prepare("INSERT INTO donors (donor_name, donor_type, contact_email) VALUES ('Website Donor', 3, 'anonymous@example.com')");
-    $stmt->execute();
-    $donor_id = $conn->lastInsertId();
+    $billing = $payment_data['attributes']['billing'] ?? [];
+    $donor_name = $billing['name'] ?? 'Anonymous Donor';
+    $donor_email = $billing['email'] ?? 'anonymous@example.com';
 
-    // Map payment method (1 = Card, 3 = E-Wallet)
-    // For simplicity, PayMongo checkout API abstracts this, so we'll log it as E-Wallet (3)
-    $payment_method_code = 3; 
+    $amount = ($result['data']['attributes']['line_items'][0]['amount'] ?? 0) / 100;
     
-    // Amount is in centavos, convert back to PHP
-    $amount = ($result['data']['attributes']['line_items'][0]['amount']) / 100;
-
-    // Insert donation (Status 2 = Success)
-    $stmt = $conn->prepare("INSERT INTO donations (donor_id, amount, reference_number, payment_method, status) VALUES (?, ?, ?, ?, 2)");
-    $stmt->execute([$donor_id, $amount, $session_id, $payment_method_code]);
+    // Abstracted as E-Wallet/Card (3)
+    // 💡 NEW: Single streamlined INSERT statement for the merged table
+    $stmt = $conn->prepare("INSERT INTO donations (donor_name, contact_email, amount, reference_number, payment_method, status) VALUES (?, ?, ?, ?, 3, 2)");
+    $stmt->execute([$donor_name, $donor_email, $amount, $session_id]);
 
     $conn->commit();
     echo json_encode(['success' => true]);

@@ -4,9 +4,7 @@ header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    exit(0);
-}
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') exit(0);
 
 $data = json_decode(file_get_contents("php://input"));
 $amount = (float)($data->amount ?? 0);
@@ -17,30 +15,22 @@ if ($amount <= 0) {
     exit;
 }
 
-// ⚠️ REPLACE THIS WITH YOUR PAYMONGO SECRET KEY (starts with sk_...)
-$secret_key = 'sk_test_YOUR_PAYMONGO_SECRET_KEY';
+$secret_key = 'sk_test_WHtx1vpQYbWw1Emap4qAzFrC';
 $encoded_key = base64_encode($secret_key . ':');
-
-// PayMongo requires amounts in centavos (e.g. PHP 500 = 50000)
 $amount_centavos = $amount * 100;
-
-// Grab the exact URL the user is currently on, so we can send them back there
 $base_url = strtok($_SERVER['HTTP_REFERER'] ?? 'http://yourdomain.com', '?');
-
-// Determine payment method types for PayMongo
-$payment_methods = ['gcash', 'paymaya', 'card']; // Allow all by default
 
 $payload = [
     'data' => [
         'attributes' => [
             'billing' => [
-                'name' => 'Streetlight Donor',
-                'email' => 'finance@streetlight.org'
+                'name' => 'Anonymous',
+                'email' => 'finance@streetlight.org' // TO-DO: Change for client later
             ],
-            'send_email_receipt' => false,
+            'send_email_receipt' => true,
             'show_description' => true,
             'show_line_items' => true,
-            'payment_method_types' => $payment_methods,
+            'payment_method_types' => ['gcash', 'paymaya', 'card'],
             'line_items' => [
                 [
                     'currency' => 'PHP',
@@ -50,7 +40,7 @@ $payload = [
                     'quantity' => 1
                 ]
             ],
-            // PayMongo will automatically append "?session_id=cs_xxx" to this URL
+            // 💡 FIXED: We removed the {CHECKOUT_SESSION_ID} trap!
             'success_url' => $base_url . '?payment=success', 
             'cancel_url' => $base_url . '?payment=cancelled'
         ]
@@ -60,6 +50,8 @@ $payload = [
 $ch = curl_init('https://api.paymongo.com/v1/checkout_sessions');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // InfinityFree SSL bypass
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json',
@@ -75,7 +67,8 @@ $result = json_decode($response, true);
 if ($http_status === 200 && isset($result['data']['attributes']['checkout_url'])) {
     echo json_encode([
         'success' => true, 
-        'checkout_url' => $result['data']['attributes']['checkout_url']
+        'checkout_url' => $result['data']['attributes']['checkout_url'],
+        'session_id' => $result['data']['id'] // 💡 EXPORT THE REAL ID DIRECTLY TO REACT!
     ]);
 } else {
     echo json_encode(['error' => 'Failed to connect to PayMongo.']);

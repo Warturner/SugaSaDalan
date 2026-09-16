@@ -4,9 +4,9 @@
  */
 
 import React, { useEffect } from 'react';
-import { ServiceCategory, PaymentMethod } from '../../types';
+import { ServiceCategory } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { CreditCard, Wallet, Landmark, CheckCircle2, AlertCircle } from 'lucide-react';
+import { CreditCard, Landmark, CheckCircle2, AlertCircle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const CATEGORIES: ServiceCategory[] = [
@@ -17,9 +17,9 @@ const CATEGORIES: ServiceCategory[] = [
   'Legal Assistance'
 ];
 
-const METHODS: { id: PaymentMethod, label: string, icon: any }[] = [
-  { id: 'E-wallet', label: 'E-wallet', icon: Wallet },
-  { id: 'Bank Card', label: 'Bank Card', icon: CreditCard },
+// COMBINED PAYMENT METHODS (2 Options instead of 3)
+const METHODS = [
+  { id: 'PayMongo', label: 'E-Wallet / Card', icon: CreditCard },
   { id: 'Manual Bank Transfer', label: 'Manual Bank', icon: Landmark },
 ];
 
@@ -33,7 +33,7 @@ const ALLOCATION_DATA = [
 
 export default function DonationForm() {
   const [amount, setAmount] = React.useState<string>('');
-  const [method, setMethod] = React.useState<PaymentMethod>('E-wallet');
+  const [method, setMethod] = React.useState<string>('PayMongo');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
   const [isVerifying, setIsVerifying] = React.useState(false);
@@ -43,11 +43,13 @@ export default function DonationForm() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const paymentStatus = params.get('payment');
-    const sessionId = params.get('session_id');
+    
+    // Grab the real ID from memory instead of the URL
+    const sessionId = sessionStorage.getItem('paymongo_session_id');
 
     if (paymentStatus === 'success' && sessionId) {
       verifyPayment(sessionId);
-      // Clean up the URL so it looks nice
+      sessionStorage.removeItem('paymongo_session_id'); // Clean up memory
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (paymentStatus === 'cancelled') {
       setError('Payment was cancelled.');
@@ -98,7 +100,8 @@ export default function DonationForm() {
       const result = await response.json();
 
       if (result.success && result.checkout_url) {
-        // REDIRECT USER TO PAYMONGO
+        // Save the REAL PayMongo ID to memory right before we redirect!
+        sessionStorage.setItem('paymongo_session_id', result.session_id);
         window.location.href = result.checkout_url;
       } else {
         setError(result.error || 'Failed to create payment link.');
@@ -158,7 +161,7 @@ export default function DonationForm() {
           <p className="text-lg text-stone-600 max-w-2xl mx-auto">See how your contributions are distributed and make a direct impact today.</p>
         </div>
 
-        {/* Transparency Pie Chart Box (Unchanged) */}
+        {/* Transparency Pie Chart Box */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -267,7 +270,7 @@ export default function DonationForm() {
               {/* Payment Method Selector */}
               <div>
                 <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Payment Method</label>
-                <div className="grid grid-cols-3 gap-3 bg-stone-50 p-2 rounded-[24px]">
+                <div className="grid grid-cols-2 gap-3 bg-stone-50 p-2 rounded-[24px]">
                   {METHODS.map((m) => (
                     <button
                       key={m.id}

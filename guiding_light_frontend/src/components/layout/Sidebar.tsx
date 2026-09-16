@@ -36,7 +36,6 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, user }: Sid
     // Only Admin can see these
     { id: 'Team' as AdminTab, icon: UserSquare, label: 'Team Profiles', allowedRoles: ['admin'] },
     { id: 'Donations' as AdminTab, icon: LayoutDashboard, label: 'Donations', allowedRoles: ['admin'] },
-    { id: 'Reconciliation' as AdminTab, icon: Landmark, label: 'Bank Reconciliation', allowedRoles: ['admin'] },
     { id: 'Accounts' as AdminTab, icon: Users, label: 'User Accounts', allowedRoles: ['admin'] },
     
     // Both roles should be able to change their own password

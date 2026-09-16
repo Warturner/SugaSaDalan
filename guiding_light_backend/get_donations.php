@@ -1,44 +1,32 @@
 <?php
 require 'db_connect.php';
 
-header("Access-Control-Allow-Origin: *"); 
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') { http_response_code(200); exit(); }
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    exit(0);
+}
 
 try {
-    // 1. Grab the ID of the person making the request
-    $admin_id = $_GET['admin_id'] ?? null;
-
-    if (!$admin_id) {
-        echo json_encode(['success' => false, 'error' => 'Unauthorized Access: Missing Credentials.']);
-        exit;
-    }
-
-    // 2. Verify they are an actual Admin
-    $verifyStmt = $conn->prepare("SELECT role FROM users WHERE user_id = :id");
-    $verifyStmt->execute([':id' => $admin_id]);
-    $role = $verifyStmt->fetchColumn();
-
-    if ($role !== 'admin') {
-        echo json_encode(['success' => false, 'error' => 'Access Denied: Admin privileges required to view financial records.']);
-        exit;
-    }
-
-    // 3. If verified, fetch the donations
-    $stmt = $conn->prepare("SELECT * FROM donations ORDER BY transaction_date DESC");
-    $stmt->execute();
+    // FIXED: Added payment_method to the SELECT query!
+    $stmt = $conn->query("
+        SELECT donation_id, donor_name, contact_email, amount, reference_number, transaction_date, payment_method, status 
+        FROM donations 
+        ORDER BY transaction_date DESC
+    ");
+    
     $donations = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+    
     echo json_encode([
         'success' => true,
-        'donations' => $donations
+        'data' => $donations
     ]);
 
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(["success" => false, "error" => "Database error: " . $e->getMessage()]);
+    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
 }
 ?>

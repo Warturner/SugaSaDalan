@@ -14,11 +14,11 @@ import SuccessStories from './components/public/SuccessStories';
 import StoryArticle from './components/public/StoryArticle';
 import DonationForm from './components/public/DonationForm';
 import Mission from './components/public/Mission';
-import Services from './components/public/Services.tsx';
+import Services from './components/public/Services'; // Removed .tsx extension for consistency
 import ContactUs from './components/public/ContactUs';
 import HomeAbout from './components/public/HomeAbout';
 import Footer from './components/public/Footer';
-import Team from './components/public/Team'; // ADDED: Public Team Page
+import Team from './components/public/Team';
 
 // Admin Components
 import UserAccounts from './components/admin/UserAccounts';
@@ -26,9 +26,8 @@ import Login from './components/admin/Login';
 import SettingsModule from './components/admin/SettingsModule';
 import Sidebar from './components/layout/Sidebar';
 import CMSModule from './components/admin/CMSModule';
-import TeamManagement from './components/admin/TeamManagement'; // ADDED: Admin Team Management
+import TeamManagement from './components/admin/TeamManagement';
 import DonationVerification from './components/admin/DonationVerification';
-import BankReconciliation from './components/admin/BankReconciliation';
 
 interface User {
   id: number;
@@ -38,8 +37,38 @@ interface User {
 
 export default function App() {
   const [isAdmin, setIsAdmin] = React.useState(false);
-  const [activePage, setActivePage] = React.useState<PublicPage>('Home');
-  const [selectedStoryId, setSelectedStoryId] = React.useState<number | null>(null);
+  
+  // --- 1. MEMORY-AWARE ACTIVE PAGE STATE ---
+  const [activePage, setActivePage] = React.useState<PublicPage>(() => {
+    // If returning from PayMongo, force the Donate page
+    if (window.location.search.includes('payment=')) {
+      return 'Donate';
+    }
+    // Otherwise check memory, fallback to Home
+    const savedPage = sessionStorage.getItem('guidingLightLastPage');
+    return (savedPage as PublicPage) || 'Home';
+  });
+
+  // --- 2. MEMORY-AWARE STORY STATE ---
+  const [selectedStoryId, setSelectedStoryId] = React.useState<number | null>(() => {
+    const savedStory = sessionStorage.getItem('guidingLightLastStory');
+    return savedStory ? parseInt(savedStory, 10) : null;
+  });
+
+  // --- 3. SAVE TO MEMORY EFFECTS ---
+  React.useEffect(() => {
+    sessionStorage.setItem('guidingLightLastPage', activePage);
+  }, [activePage]);
+
+  React.useEffect(() => {
+    if (selectedStoryId !== null) {
+      sessionStorage.setItem('guidingLightLastStory', selectedStoryId.toString());
+    } else {
+      sessionStorage.removeItem('guidingLightLastStory');
+    }
+  }, [selectedStoryId]);
+
+
   const [activeAdminTab, setActiveAdminTab] = React.useState<AdminTab>('CMS');
   const [storyToEdit, setStoryToEdit] = React.useState<number | null>(null);
   
@@ -191,7 +220,6 @@ export default function App() {
             {activeAdminTab === 'Team' && <TeamManagement />}
             
             {activeAdminTab === 'Donations' && <DonationVerification currentUser={currentUser} />}
-            {activeAdminTab === 'Reconciliation' && <BankReconciliation currentUser={currentUser} />}
             
             {activeAdminTab === 'Accounts' && <UserAccounts currentUser={currentUser} />}
             {activeAdminTab === 'Settings' && <SettingsModule user={currentUser} onUpdateUser={setCurrentUser} />}
