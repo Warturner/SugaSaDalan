@@ -1101,7 +1101,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
               <div className={`p-6 rounded-3xl border transition-colors ${hasAttachments ? 'bg-[#4b5e52]/5 border-[#4b5e52]/20' : 'bg-stone-50 border-stone-200'}`}>
                 <div className="flex justify-between items-center mb-4">
                   <label className="flex items-center text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-                    <Paperclip className="w-3 h-3 mr-2" /> PDF Document (Read-Only Embed)
+                    <Paperclip className="w-3 h-3 mr-2" /> Publication PDF
                   </label>
                   <button
                     onClick={() => attachmentInputRef.current?.click()}
