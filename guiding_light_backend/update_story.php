@@ -90,8 +90,6 @@ if (
         ':post_id' => $post_id
     ]);
 
-    // NEW: Handle PDF/DOCX Attachments
-
     if (isset($_FILES['attachments'])) {
         $att_upload_dir = 'uploads/stories/attachments/';
         if (!is_dir($att_upload_dir)) mkdir($att_upload_dir, 0777, true);
@@ -104,7 +102,7 @@ if (
                 $file_size = $_FILES['attachments']['size'][$i];
                 $file_type = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
                 
-                $allowed = ['pdf', 'doc', 'docx'];
+                $allowed = ['pdf'];
                 if (in_array($file_type, $allowed)) {
                     $new_filename = uniqid('doc_') . '_' . time() . '.' . $file_type;
                     $target_path = $att_upload_dir . $new_filename;

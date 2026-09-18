@@ -107,7 +107,7 @@ if (
                 $file_type = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
                 
                 // Security: Only allow safe document types
-                $allowed = ['pdf', 'doc', 'docx'];
+                $allowed = ['pdf'];
                 if (in_array($file_type, $allowed)) {
                     $new_filename = uniqid('doc_') . '_' . time() . '.' . $file_type;
                     $target_path = $att_upload_dir . $new_filename;

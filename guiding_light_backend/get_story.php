@@ -1,9 +1,6 @@
 <?php
 require 'db_connect.php';
 
-header("Access-Control-Allow-Origin: *"); 
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') { http_response_code(200); exit(); }
@@ -22,14 +19,9 @@ try {
     $story = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($story) {
-        // Build the full image URL.
-        // Assuming your backend is running on localhost/GuidingLight_Project/guiding_light_backend/
-        // and the image_path looks like 'uploads/stories/filename.jpg'
         $baseUrl = "/guiding_light_backend/";
         $imagePath = $story['image_path'] ? $baseUrl . $story['image_path'] : '';
 
-        // Added fallback to retrieve the actual author name if possible, 
-        // but for now we'll default to 'Admin' if author_id exists.
         $authorName = 'Admin';
         if ($story['author_id']) {
             $authorStmt = $conn->prepare("SELECT username FROM users WHERE user_id = :author_id");
@@ -44,11 +36,10 @@ try {
             'success' => true,
             'story' => [
                 'title' => $story['title'],
+                'content_type' => $story['content_type'],
                 'content' => $story['content'],
-                // Fixed: The column name is `image_path`
                 'image' => $imagePath, 
                 'author' => $authorName,
-                // Fixed: The column name is `published_date`
                 'date' => date('F j, Y', strtotime($story['published_date'])) 
             ]
         ]);

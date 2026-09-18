@@ -1,15 +1,7 @@
 <?php
-// 1. Force InfinityFree to show us any hidden fatal errors
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 require 'db_connect.php';
 
-// Set headers for CORS and content type
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
 // Handle preflight OPTIONS request
@@ -25,7 +17,8 @@ try {
         // Fetch a single story 
         $sql = "SELECT 
                     s.post_id, 
-                    s.title, 
+                    s.title,
+                    s.content_type,
                     s.excerpt,
                     s.content, 
                     s.image_path,
@@ -46,6 +39,7 @@ try {
         $sql = "SELECT 
                     s.post_id, 
                     s.title, 
+                    s.content_type,
                     s.content,
                     s.excerpt, 
                     s.image_path,
