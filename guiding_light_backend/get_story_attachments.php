@@ -1,6 +1,6 @@
 <?php
 require 'db_connect.php';
-header("Access-Control-Allow-Origin: *");
+
 header("Content-Type: application/json; charset=UTF-8");
 
 $post_id = isset($_GET['post_id']) ? (int)$_GET['post_id'] : 0;

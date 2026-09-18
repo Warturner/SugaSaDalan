@@ -57,38 +57,65 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // Fetch both the story content and its attachments simultaneously
-        const [storyRes, attRes] = await Promise.all([
-          fetch(`/guiding_light_backend/get_story.php?id=${storyId}`),
-          fetch(`/guiding_light_backend/get_story_attachments.php?post_id=${storyId}`)
-        ]);
 
-        const storyData = await storyRes.json();
-        const attData = await attRes.json();
+    setActivePublicationId(null);
+    setAttachments([]);
+    setOriginalStory(null);
+
+    const fetchData = async () => {
+
+      setIsLoading(true);
+
+      try {
+
+        const [storyRes, attRes] =
+          await Promise.all([
+            fetch(
+              `/guiding_light_backend/get_story.php?id=${storyId}`
+            ),
+            fetch(
+              `/guiding_light_backend/get_story_attachments.php?post_id=${storyId}`
+            )
+          ]);
+
+        const storyData =
+          await storyRes.json();
+
+        const attData =
+          await attRes.json();
 
         if (storyData.success) {
-          setOriginalStory(storyData.story);
+          setOriginalStory(
+            storyData.story
+          );
         } else {
-          console.error(storyData.error);
+          console.error(
+            storyData.error
+          );
         }
 
         if (!attData.error) {
-          setAttachments(attData);
+          setAttachments(
+            attData
+          );
         }
 
       } catch (error) {
-        console.error("Failed to fetch the story data:", error);
+
+        console.error(
+          'Failed to fetch the story data:',
+          error
+        );
+
       } finally {
+
         setIsLoading(false);
+
       }
     };
 
     fetchData();
-    setActivePublicationId(null);
-    setAttachments([]);
+
   }, [storyId]);
 
   const translateText = async (text: string, lang: string) => {
@@ -267,21 +294,21 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
 
               <div
                 className={`w-full p-10 rounded-3xl border border-dashed text-center ${isDarkMode
-                    ? 'border-white/10 bg-white/5'
-                    : 'border-stone-300 bg-white'
+                  ? 'border-white/10 bg-white/5'
+                  : 'border-stone-300 bg-white'
                   }`}
               >
                 <FileText
                   className={`w-12 h-12 mx-auto mb-4 ${isDarkMode
-                      ? 'text-stone-500'
-                      : 'text-stone-300'
+                    ? 'text-stone-500'
+                    : 'text-stone-300'
                     }`}
                 />
 
                 <p
                   className={`font-bold ${isDarkMode
-                      ? 'text-stone-300'
-                      : 'text-stone-600'
+                    ? 'text-stone-300'
+                    : 'text-stone-600'
                     }`}
                 >
                   Publication PDF unavailable
@@ -289,8 +316,8 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
 
                 <p
                   className={`text-sm mt-2 ${isDarkMode
-                      ? 'text-stone-500'
-                      : 'text-stone-400'
+                    ? 'text-stone-500'
+                    : 'text-stone-400'
                     }`}
                 >
                   No PDF is currently attached to this publication.
@@ -310,8 +337,8 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
                     <div
                       key={att.id}
                       className={`rounded-[32px] border overflow-hidden ${isDarkMode
-                          ? 'border-white/10 bg-white/5'
-                          : 'border-stone-200 bg-white'
+                        ? 'border-white/10 bg-white/5'
+                        : 'border-stone-200 bg-white'
                         }`}
                     >
 
@@ -321,14 +348,14 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
 
                           <div
                             className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${isDarkMode
-                                ? 'bg-white/10'
-                                : 'bg-[#f7f5f2]'
+                              ? 'bg-white/10'
+                              : 'bg-[#f7f5f2]'
                               }`}
                           >
                             <FileText
                               className={`w-5 h-5 ${isDarkMode
-                                  ? 'text-[#d4c5b3]'
-                                  : 'text-[#4b5e52]'
+                                ? 'text-[#d4c5b3]'
+                                : 'text-[#4b5e52]'
                                 }`}
                             />
                           </div>
@@ -336,8 +363,8 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
                           <div className="min-w-0">
                             <p
                               className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isDarkMode
-                                  ? 'text-stone-500'
-                                  : 'text-stone-400'
+                                ? 'text-stone-500'
+                                : 'text-stone-400'
                                 }`}
                             >
                               Publication PDF
@@ -345,8 +372,8 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
 
                             <p
                               className={`font-bold truncate ${isDarkMode
-                                  ? 'text-stone-200'
-                                  : 'text-stone-700'
+                                ? 'text-stone-200'
+                                : 'text-stone-700'
                                 }`}
                             >
                               {att.file_name}
@@ -381,8 +408,8 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
                             height: 'auto'
                           }}
                           className={`border-t ${isDarkMode
-                              ? 'border-white/10'
-                              : 'border-stone-200'
+                            ? 'border-white/10'
+                            : 'border-stone-200'
                             }`}
                         >
 
@@ -415,8 +442,8 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className={`prose prose-stone prose-lg max-w-none leading-relaxed tiptap-content transition-colors duration-300 ${isDarkMode
-                ? 'prose-invert text-stone-300'
-                : 'text-stone-600'
+              ? 'prose-invert text-stone-300'
+              : 'text-stone-600'
               }`}
             dangerouslySetInnerHTML={{
               __html: displayContent
