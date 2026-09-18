@@ -1,5 +1,9 @@
 <?php
 require 'db_connect.php';
+require 'auth.php';
+
+$currentUser = requireRole(['admin', 'media']);
+
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");

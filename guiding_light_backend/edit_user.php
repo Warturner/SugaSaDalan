@@ -17,7 +17,6 @@ try {
     $username = $data->username ?? '';
     $role = $data->role ?? 'media';
     $password = $data->password ?? ''; 
-    $admin_id = $data->admin_id ?? null;
     $admin_password = $data->admin_password ?? '';
 
     if (!$user_id || empty($username) || !$admin_id || empty($admin_password)) {
@@ -27,7 +26,7 @@ try {
 
     // 1. VERIFY THE ADMIN'S PASSWORD FIRST
     $adminStmt = $conn->prepare("SELECT password_hash FROM users WHERE user_id = :admin_id AND role = 'admin'");
-    $adminStmt->execute([':admin_id' => $admin_id]);
+    $adminStmt->execute([':admin_id' => $currentUser['id']]);
     $adminData = $adminStmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$adminData || !password_verify($admin_password, $adminData['password_hash'])) {

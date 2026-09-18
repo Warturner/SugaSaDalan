@@ -71,6 +71,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
       const response = await fetch('/guiding_light_backend/upload_inline_image.php', {
         method: 'POST',
         body: formData,
+        credentials: 'include'
       });
       const data = await response.json();
 
@@ -275,6 +276,7 @@ export default function CMSModule() {
                 try {
                   const response = await fetch('/guiding_light_backend/upload_inline_image.php', {
                     method: 'POST',
+                    credentials: 'include',
                     body: formData,
                   });
                   const data = await response.json();
@@ -813,6 +815,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
     try {
       const response = await fetch('/guiding_light_backend/delete_attachment.php', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
       });
@@ -834,6 +837,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
     try {
       const response = await fetch('/guiding_light_backend/create_category.php', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newCategoryName })
       });
@@ -904,6 +908,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
     try {
       const response = await fetch(`/guiding_light_backend/${endpoint}`, {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       });
       const data = await response.json();

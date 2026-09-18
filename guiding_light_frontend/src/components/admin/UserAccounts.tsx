@@ -51,7 +51,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
   const fetchUsers = async () => {
     try {
       // 4. APPENDED admin_id TO THE FETCH URL
-      const response = await fetch(`/guiding_light_backend/get_users.php?admin_id=${currentUser?.id}`);
+      const response = await fetch(`/guiding_light_backend/get_users.php`, { credentials: 'include' });
       const data = await response.json();
       if (data.success) {
         setAccounts(data.users);
@@ -121,6 +121,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
     try {
       const response = await fetch('/guiding_light_backend/edit_user.php', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           user_id: userId, 
@@ -155,6 +156,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
     try {
       const response = await fetch('/guiding_light_backend/delete_user.php', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: id })
       });
