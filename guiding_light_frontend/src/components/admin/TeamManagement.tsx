@@ -2,6 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
+
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, X, Loader, Trash2, Edit3, Image as ImageIcon, Mail, Users, Upload, User, Layers } from 'lucide-react';
@@ -19,17 +20,17 @@ export default function TeamManagement() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // Form State
   const [editingId, setEditingId] = useState<number | null>(null);
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
   const [email, setEmail] = useState('');
   const [displayOrder, setDisplayOrder] = useState(1); // Row Number
-  
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,23 +53,78 @@ export default function TeamManagement() {
   }, []);
 
   // Instantly move a member to a different row
-  const handleRowChange = async (id: number, newRow: number) => {
+  const handleRowChange = async (
+    id: number,
+    newRow: number
+  ) => {
+
     setIsUpdatingOrder(true);
-    
-    // Optimistic UI Update
-    setMembers(members.map(m => m.id === id ? { ...m, display_order: newRow } : m));
+
+    const previousMembers = members;
+
+    // Optimistic UI update
+    setMembers(
+      members.map(member =>
+        member.id === id
+          ? {
+            ...member,
+            display_order: newRow
+          }
+          : member
+      )
+    );
 
     try {
-      await fetch('/guiding_light_backend/update_team_order.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify([{ id, display_order: newRow }])
-      });
+
+      const response = await fetch(
+        '/guiding_light_backend/update_team_order.php',
+        {
+          method: 'POST',
+
+          credentials: 'include',
+
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+
+          body: JSON.stringify([
+            {
+              id,
+              display_order: newRow
+            }
+          ])
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+
+        throw new Error(
+          data.error ||
+          'Failed to update team order.'
+        );
+      }
+
     } catch (err) {
-      console.error("Failed to sync row change", err);
-      alert("Network error while moving team member.");
-      fetchTeam(); // Revert on failure
+
+      console.error(
+        'Failed to sync row change:',
+        err
+      );
+
+      // Immediately restore old state
+      setMembers(previousMembers);
+
+      alert(
+        err instanceof Error
+          ? err.message
+          : 'Unable to move team member.'
+      );
+
     } finally {
+
       setIsUpdatingOrder(false);
     }
   };
@@ -116,20 +172,41 @@ export default function TeamManagement() {
     if (imageFile) formData.append('image', imageFile);
 
     try {
-      const response = await fetch('/guiding_light_backend/save_team_member.php', {
-        method: 'POST',
-        body: formData
-      });
+      const response = await fetch(
+        '/guiding_light_backend/save_team_member.php',
+        {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        }
+      );
+
       const data = await response.json();
-      if (data.success) {
-        setIsModalOpen(false);
-        fetchTeam();
-      } else {
-        alert(data.error);
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.error || 'Failed to save team member.'
+        );
       }
+
+      setIsModalOpen(false);
+      fetchTeam();
+
     } catch (err) {
-      alert("Failed to save team member.");
+
+      console.error(
+        'Save team member failed:',
+        err
+      );
+
+      alert(
+        err instanceof Error
+          ? err.message
+          : 'Failed to save team member.'
+      );
+
     } finally {
+
       setIsSaving(false);
     }
   };
@@ -140,6 +217,7 @@ export default function TeamManagement() {
     try {
       const response = await fetch('/guiding_light_backend/delete_team_member.php', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
       });
@@ -170,7 +248,7 @@ export default function TeamManagement() {
         </div>
         <div className="flex items-center gap-4">
           {isUpdatingOrder && <Loader className="w-4 h-4 text-stone-400 animate-spin" />}
-          <button 
+          <button
             onClick={() => handleOpenModal()}
             className="flex items-center bg-[#4b5e52] text-white px-5 py-3 rounded-full transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg hover:bg-[#3a4740] hover:scale-105"
           >
@@ -198,11 +276,11 @@ export default function TeamManagement() {
                   ({groupedMembers[rowNum].length} Member{groupedMembers[rowNum].length !== 1 ? 's' : ''})
                 </span>
               </div>
-              
+
               <div className="flex flex-wrap justify-center gap-6">
                 {groupedMembers[rowNum].map((member) => (
                   <motion.div layout key={member.id} className="bg-white rounded-[24px] p-6 border border-stone-200 shadow-sm flex flex-col items-center text-center relative group w-64 transition-shadow hover:shadow-md">
-                    
+
                     {/* Floating Action Buttons */}
                     <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                       <button onClick={() => handleOpenModal(member)} className="p-2 bg-stone-100 text-stone-600 hover:bg-[#4b5e52] hover:text-white rounded-full transition-colors shadow-sm" title="Edit Profile">
@@ -221,10 +299,10 @@ export default function TeamManagement() {
                         <User className="w-8 h-8 text-stone-300" />
                       )}
                     </div>
-                    
+
                     <h3 className="text-md font-bold text-stone-800">{member.name}</h3>
                     <p className="text-[10px] text-[#4b5e52] font-bold uppercase tracking-widest mb-4">{member.role}</p>
-                    
+
                     {/* Quick Row Assignment */}
                     <div className="mt-auto w-full pt-4 border-t border-stone-100 flex items-center justify-between">
                       <span className="text-[10px] uppercase font-bold text-stone-400">Move to:</span>
@@ -252,17 +330,17 @@ export default function TeamManagement() {
         {isModalOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-white rounded-[32px] shadow-2xl p-8 max-w-md w-full my-auto">
-              
+
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-2xl font-serif italic text-stone-800">{editingId ? 'Edit Member' : 'Add Team Member'}</h3>
                 <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-full hover:bg-stone-100 transition-colors"><X className="w-5 h-5 text-stone-400" /></button>
               </div>
 
               <form onSubmit={handleSave} className="space-y-6">
-                
+
                 {/* Avatar Uploader */}
                 <div className="flex flex-col items-center justify-center mb-6">
-                  <div 
+                  <div
                     onClick={() => fileInputRef.current?.click()}
                     className="w-32 h-32 rounded-full border-4 border-dashed border-stone-200 overflow-hidden relative cursor-pointer group hover:border-[#4b5e52] transition-colors flex items-center justify-center bg-stone-50"
                   >
@@ -292,8 +370,8 @@ export default function TeamManagement() {
 
                   <div className="col-span-2 md:col-span-1">
                     <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Row Assignment</label>
-                    <select 
-                      value={displayOrder} 
+                    <select
+                      value={displayOrder}
                       onChange={(e) => setDisplayOrder(parseInt(e.target.value))}
                       className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-stone-700 text-sm font-bold appearance-none cursor-pointer"
                     >

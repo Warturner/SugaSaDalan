@@ -128,7 +128,6 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
           username, 
           password, 
           role,
-          admin_id: currentUser?.id,
           admin_password: adminPassword
         })
       });
