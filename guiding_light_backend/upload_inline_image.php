@@ -4,9 +4,9 @@ require 'auth.php';
 
 header("Content-Type: application/json; charset=UTF-8");
 
-$currentUser = requireRole(['admin', 'media']);
-
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') { http_response_code(200); exit(); }
+
+$currentUser = requireRole(['admin', 'media']);
 
 try {
     if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
