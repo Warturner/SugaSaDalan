@@ -85,6 +85,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
     try {
       const response = await fetch('/guiding_light_backend/create_user.php', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, role })
       });

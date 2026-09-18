@@ -41,7 +41,11 @@ export default function DonationVerification({ currentUser }: DonationVerificati
     setError(null);
     
     try {
-      const response = await fetch(`/guiding_light_backend/get_donations.php?admin_id=${currentUser.id}`);
+      const response = await fetch(
+        '/guiding_light_backend/get_donations.php', {
+          credentials: 'include'
+        }
+      );
       const data = await response.json();
       
       if (data.success) {

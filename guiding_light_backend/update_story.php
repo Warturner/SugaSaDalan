@@ -1,5 +1,6 @@
 <?php
 require 'db_connect.php';
+require 'auth.php';
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
@@ -7,15 +8,18 @@ header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
     exit(0);
 }
+
+$currentUser = requireRole(['admin', 'media']);
 
 try {
     $post_id = $_POST['post_id'] ?? null;
     $title = $_POST['title'] ?? '';
     $excerpt = $_POST['excerpt'] ?? '';
     $content = $_POST['content'] ?? '';
-    $author_id = $_POST['author_id'] ?? 1;
+    $author_id = $currentUser['id'];
     $remove_image = $_POST['remove_image'] ?? 'false';
 
     $category_id = !empty($_POST['category_id']) ? $_POST['category_id'] : null;

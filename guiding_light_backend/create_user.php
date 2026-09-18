@@ -1,5 +1,8 @@
 <?php
 require 'db_connect.php';
+require 'auth.php';
+
+$currentUser = requireRAdmin();
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");

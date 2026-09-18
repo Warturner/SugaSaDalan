@@ -882,8 +882,6 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
     const finalContent = jsonContent || '{"type":"doc","content":[{"type":"paragraph"}]}';
     formData.append('content', finalContent);
     
-    formData.append('author_id', '1'); 
-    
     formData.append('category_id', categoryId);
     formData.append('is_pinned', isPinned ? 'true' : 'false');
     if (isPinned && pinUntil) {

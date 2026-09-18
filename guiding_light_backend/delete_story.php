@@ -1,5 +1,6 @@
 <?php
 require 'db_connect.php';
+reuire 'auth.php';
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
@@ -9,6 +10,8 @@ header("Content-Type: application/json; charset=UTF-8");
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
+
+$currentUser = requireRole(['admin', 'media']);
 
 try {
     $post_id = $_POST['post_id'] ?? null;
