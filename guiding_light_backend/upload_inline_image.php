@@ -2,12 +2,9 @@
 require 'db_connect.php';
 require 'auth.php';
 
-$currentUser = requireRole(['admin', 'media']);
-
-header("Access-Control-Allow-Origin: *"); 
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
+
+$currentUser = requireRole(['admin', 'media']);
 
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') { http_response_code(200); exit(); }
 
