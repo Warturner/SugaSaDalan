@@ -16,6 +16,18 @@ try {
     $excerpt = $_POST['excerpt'] ?? '';
     $content = $_POST['content'] ?? '';
     $author_id = $currentUser['id'];
+    $content_type =
+    $_POST['content_type'] ?? 'article';
+
+if (
+    !in_array(
+        $content_type,
+        ['article', 'publication'],
+        true
+    )
+) {
+    $content_type = 'article';
+}
 
     $category_id = !empty($_POST['category_id']) ? $_POST['category_id'] : null;
     $is_pinned = ($_POST['is_pinned'] ?? 'false') === 'true' ? 1 : 0;
@@ -41,19 +53,41 @@ try {
         }
     }
 
-    $sql = "INSERT INTO stories (title, excerpt, content, author_id, image_path, category_id, is_pinned, pin_until) 
-            VALUES (:title, :excerpt, :content, :author_id, :image_path, :category_id, :is_pinned, :pin_until)";
+    $sql = "INSERT INTO stories (
+        title,
+        content_type,
+        excerpt,
+        content,
+        author_id,
+        image_path,
+        category_id,
+        is_pinned,
+        pin_until
+    )
+    VALUES (
+        :title,
+        :content_type,
+        :excerpt,
+        :content,
+        :author_id,
+        :image_path,
+        :category_id,
+        :is_pinned,
+        :pin_until
+    )
+";
     $stmt = $conn->prepare($sql);
     $stmt->execute([
-        ':title' => $title,
-        ':excerpt' => $excerpt,
-        ':content' => $content,
-        ':author_id' => $author_id,
-        ':image_path' => $image_path,
-        ':category_id' => $category_id,
-        ':is_pinned' => $is_pinned,
-        ':pin_until' => $pin_until
-    ]);
+    ':title' => $title,
+    ':content_type' => $content_type,
+    ':excerpt' => $excerpt,
+    ':content' => $content,
+    ':author_id' => $author_id,
+    ':image_path' => $image_path,
+    ':category_id' => $category_id,
+    ':is_pinned' => $is_pinned,
+    ':pin_until' => $pin_until
+]);
     
     $post_id = $conn->lastInsertId();
 

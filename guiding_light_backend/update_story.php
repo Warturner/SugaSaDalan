@@ -16,6 +16,18 @@ try {
     $title = $_POST['title'] ?? '';
     $excerpt = $_POST['excerpt'] ?? '';
     $content = $_POST['content'] ?? '';
+    $content_type =
+    $_POST['content_type'] ?? 'article';
+
+if (
+    !in_array(
+        $content_type,
+        ['article', 'publication'],
+        true
+    )
+) {
+    $content_type = 'article';
+}
     $author_id = $currentUser['id'];
     $remove_image = $_POST['remove_image'] ?? 'false';
 
@@ -55,20 +67,31 @@ try {
     }
 
     $sql = "UPDATE stories SET 
-            title = :title, excerpt = :excerpt, content = :content, image_path = :image_path,
-            category_id = :category_id, is_pinned = :is_pinned, pin_until = :pin_until
+            title = :title,
+            content_type = :content_type,
+            excerpt = :excerpt,
+            content = :content,
+            image_path = :image_path,
+            category_id = :category_id,
+            is_pinned = :is_pinned,
+            pin_until = :pin_until
             WHERE post_id = :post_id";
             
     $stmt = $conn->prepare($sql);
     $stmt->execute([
-        ':title' => $title, ':excerpt' => $excerpt, ':content' => $content,
-        ':image_path' => $image_path, ':category_id' => $category_id,
-        ':is_pinned' => $is_pinned, ':pin_until' => $pin_until, ':post_id' => $post_id
+        ':title' => $title,
+        ':content_type' => $content_type,
+        ':excerpt' => $excerpt,
+        ':content' => $content, 
+        ':image_path' => $image_path,
+        ':category_id' => $category_id,
+        ':is_pinned' => $is_pinned,
+        ':pin_until' => $pin_until,
+        ':post_id' => $post_id
     ]);
 
-    // ==========================================
     // NEW: Handle PDF/DOCX Attachments
-    // ==========================================
+
     if (isset($_FILES['attachments'])) {
         $att_upload_dir = 'uploads/stories/attachments/';
         if (!is_dir($att_upload_dir)) mkdir($att_upload_dir, 0777, true);

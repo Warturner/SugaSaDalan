@@ -23,6 +23,7 @@ interface Story {
   post_id: number;
   title: string;
   author: string;
+  content_type: 'article' | 'publication';
   published_date: string;
   content: string;
   excerpt: string;
@@ -120,21 +121,21 @@ export default function CMSModule() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  
+
   const [storyToEdit, setStoryToEdit] = useState<Story | null>(null);
   const [importedHtmlContent, setImportedHtmlContent] = useState<string | null>(null);
   const [initialPdfFile, setInitialPdfFile] = useState<File | null>(null);
-  
+
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isCreationMenuOpen, setIsCreationMenuOpen] = useState(false);
   const [isExtractingDocx, setIsExtractingDocx] = useState(false);
-  
+
   const docxInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof Story | 'category_name', direction: 'asc' | 'desc' } | null>(null);
@@ -142,7 +143,7 @@ export default function CMSModule() {
   const fetchStories = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/guiding_light_backend/get_stories.php');
+      const response = await fetch('/guiding_light_backend/get_stories.php')
       const data = await response.json();
       if (data.error) throw new Error(data.error);
       setStories(data);
@@ -198,6 +199,7 @@ export default function CMSModule() {
     try {
       const response = await fetch('/guiding_light_backend/delete_story.php', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ post_id: story.post_id })
       });
@@ -228,7 +230,7 @@ export default function CMSModule() {
     setImportedHtmlContent('');
     setIsCreationMenuOpen(false);
     setIsEditorOpen(true);
-    
+
     if (pdfInputRef.current) pdfInputRef.current.value = '';
   };
 
@@ -243,13 +245,13 @@ export default function CMSModule() {
     }
 
     setIsExtractingDocx(true);
-    
+
     try {
       const reader = new FileReader();
       reader.onload = async (event) => {
         try {
           const arrayBuffer = event.target?.result as ArrayBuffer;
-          
+
           const options = {
             styleMap: [
               "p[style-name='Title'] => h1",
@@ -260,13 +262,13 @@ export default function CMSModule() {
               "p[style-name='Quote'] => blockquote",
               "p[style-name='List Paragraph'] => ul > li:fresh"
             ],
-            convertImage: mammoth.images.imgElement(function(image) {
-              return image.read("base64").then(async function(imageBuffer) {
+            convertImage: mammoth.images.imgElement(function (image) {
+              return image.read("base64").then(async function (imageBuffer) {
                 const byteString = atob(imageBuffer);
                 const ab = new ArrayBuffer(byteString.length);
                 const ia = new Uint8Array(ab);
                 for (let i = 0; i < byteString.length; i++) {
-                    ia[i] = byteString.charCodeAt(i);
+                  ia[i] = byteString.charCodeAt(i);
                 }
                 const blob = new Blob([ab], { type: image.contentType });
                 const formData = new FormData();
@@ -309,7 +311,7 @@ export default function CMSModule() {
       alert("Failed to read the file.");
       setIsExtractingDocx(false);
     }
-    
+
     if (docxInputRef.current) docxInputRef.current.value = '';
   };
 
@@ -330,7 +332,7 @@ export default function CMSModule() {
 
   if (searchQuery) {
     const lowerQuery = searchQuery.toLowerCase();
-    processedStories = processedStories.filter(story => 
+    processedStories = processedStories.filter(story =>
       story.title.toLowerCase().includes(lowerQuery) ||
       (story.category_name && story.category_name.toLowerCase().includes(lowerQuery)) ||
       (story.author && story.author.toLowerCase().includes(lowerQuery))
@@ -363,23 +365,23 @@ export default function CMSModule() {
     <div className="relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <h2 className="text-2xl font-serif italic text-stone-700">Story Management</h2>
-        
+
         <div className="flex items-center gap-4 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-            <input 
-              type="text" 
-              placeholder="Search by title, author, or category..." 
+            <input
+              type="text"
+              placeholder="Search by title, author, or category..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                setCurrentPage(1); 
+                setCurrentPage(1);
               }}
               className="w-full pl-10 pr-4 py-3 bg-white border border-stone-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-sm text-stone-700 shadow-sm"
             />
           </div>
 
-          <button 
+          <button
             onClick={handleOpenCreationMenu}
             className="flex items-center bg-[#4b5e52] text-white px-5 py-3 rounded-full transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg hover:bg-[#3a4740] shrink-0"
           >
@@ -459,7 +461,7 @@ export default function CMSModule() {
             ))}
           </tbody>
         </table>
-        
+
         {!isLoading && !error && processedStories.length > 0 && (
           <div className="p-4 flex justify-between items-center bg-stone-50/50">
             <span className="text-xs text-stone-500 font-bold uppercase tracking-widest">Page {currentPage} of {totalPages}</span>
@@ -476,7 +478,7 @@ export default function CMSModule() {
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !isExtractingDocx && setIsCreationMenuOpen(false)} className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
               <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="bg-white rounded-[32px] shadow-2xl p-8 max-w-4xl w-full">
-                
+
                 <div className="flex justify-between items-center mb-8">
                   <h3 className="text-3xl font-serif italic text-stone-800">New Story</h3>
                   <button onClick={() => setIsCreationMenuOpen(false)} disabled={isExtractingDocx} className="p-2 rounded-full hover:bg-stone-100 transition-colors disabled:opacity-50"><X className="w-6 h-6 text-stone-400" /></button>
@@ -504,7 +506,7 @@ export default function CMSModule() {
                         <FileCheck className="w-6 h-6 text-stone-600 group-hover:text-white transition-colors" />
                       </div>
                       <h4 className="text-lg font-bold text-stone-800 mb-2">Upload PDF</h4>
-                      <p className="text-xs text-stone-500 text-center leading-relaxed">Upload a PDF Newsletter. <br/><span className="font-bold">Bypasses body text requirements.</span></p>
+                      <p className="text-xs text-stone-500 text-center leading-relaxed">Upload a PDF Newsletter. <br /><span className="font-bold">Bypasses body text requirements.</span></p>
                     </button>
 
                     <button onClick={() => docxInputRef.current?.click()} className="flex flex-col items-center justify-center p-8 border-2 border-stone-200 rounded-3xl hover:border-[#4b5e52] hover:bg-stone-50 transition-all group text-left w-full relative overflow-hidden">
@@ -530,7 +532,7 @@ export default function CMSModule() {
         onEdit={() => selectedStory && handleEdit(selectedStory)}
       />
 
-      <StoryEditorPanel 
+      <StoryEditorPanel
         story={storyToEdit}
         importedContent={importedHtmlContent}
         initialPdf={initialPdfFile}
@@ -596,20 +598,20 @@ function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | 
             </header>
 
             <div className="p-6 border-b border-stone-200 shrink-0 bg-white">
-                <div className="flex gap-3">
-                    <button onClick={() => setActiveTab('preview')} className={`px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'preview' ? 'bg-[#4b5e52] text-white shadow-md' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>
-                        <FileText className="w-3 h-3 mr-2 inline"/>Preview
-                    </button>
-                    <button onClick={() => setActiveTab('history')} className={`px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'history' ? 'bg-[#4b5e52] text-white shadow-md' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>
-                        <Clock className="w-3 h-3 mr-2 inline"/>History
-                    </button>
-                </div>
+              <div className="flex gap-3">
+                <button onClick={() => setActiveTab('preview')} className={`px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'preview' ? 'bg-[#4b5e52] text-white shadow-md' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>
+                  <FileText className="w-3 h-3 mr-2 inline" />Preview
+                </button>
+                <button onClick={() => setActiveTab('history')} className={`px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'history' ? 'bg-[#4b5e52] text-white shadow-md' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>
+                  <Clock className="w-3 h-3 mr-2 inline" />History
+                </button>
+              </div>
             </div>
 
             <div className="p-8 overflow-y-auto flex-1">
               <AnimatePresence mode="wait">
                 {activeTab === 'preview' && (
-                  <motion.div key="preview" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="prose prose-stone max-w-none">
+                  <motion.div key="preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="prose prose-stone max-w-none">
                     {story.image && (
                       <div className="w-full h-64 rounded-2xl overflow-hidden mb-8">
                         <img src={story.image} alt={story.title} className="w-full h-full object-cover" />
@@ -622,7 +624,7 @@ function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | 
                   </motion.div>
                 )}
                 {activeTab === 'history' && (
-                  <motion.div key="history" initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}}>
+                  <motion.div key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     {isLoadingHistory && <div className="flex justify-center p-10"><Loader className="animate-spin text-[#4b5e52]" /></div>}
                     {!isLoadingHistory && history.length === 0 && (
                       <div className="text-center p-10 border-2 border-dashed border-stone-200 rounded-3xl">
@@ -634,14 +636,14 @@ function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | 
                         {history.map((entry, index) => (
                           <li key={index} className="flex items-start gap-4 p-5 bg-white rounded-[24px] border border-stone-100 shadow-sm">
                             <div className="w-10 h-10 bg-[#f7f5f2] rounded-full flex items-center justify-center shrink-0">
-                                <User className="w-4 h-4 text-stone-500"/>
+                              <User className="w-4 h-4 text-stone-500" />
                             </div>
                             <div>
-                                <p className="font-bold text-stone-700 text-sm">{entry.username} <span className="font-normal text-stone-500">made an edit</span></p>
-                                <p className="text-[10px] text-stone-400 font-mono uppercase tracking-widest mt-1 mb-2">
-                                    {new Date(entry.edit_timestamp).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
-                                </p>
-                                <p className="text-sm text-stone-600 bg-stone-50 p-3 rounded-xl">{entry.changes_made}</p>
+                              <p className="font-bold text-stone-700 text-sm">{entry.username} <span className="font-normal text-stone-500">made an edit</span></p>
+                              <p className="text-[10px] text-stone-400 font-mono uppercase tracking-widest mt-1 mb-2">
+                                {new Date(entry.edit_timestamp).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
+                              </p>
+                              <p className="text-sm text-stone-600 bg-stone-50 p-3 rounded-xl">{entry.changes_made}</p>
                             </div>
                           </li>
                         ))}
@@ -653,9 +655,9 @@ function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | 
             </div>
 
             <footer className="p-6 border-t border-stone-200 shrink-0 bg-white">
-                <button onClick={onEdit} className="w-full bg-stone-800 text-white py-4 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-lg hover:bg-stone-900 transition-all hover:scale-[1.02] active:scale-100">
-                    Edit Story
-                </button>
+              <button onClick={onEdit} className="w-full bg-stone-800 text-white py-4 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-lg hover:bg-stone-900 transition-all hover:scale-[1.02] active:scale-100">
+                Edit Story
+              </button>
             </footer>
           </motion.div>
         </>
@@ -676,13 +678,14 @@ const editorExtensions = [
 ];
 
 function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categories, onClose }: { story: Story | null, importedContent: string | null, initialPdf: File | null, isOpen: boolean, categories: Category[], onClose: (didUpdate: boolean) => void }) {
+  const [contentType, setContentType] = useState<'article' | 'publication'>('article');
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
-  
+
   const [categoryId, setCategoryId] = useState<string>('');
   const [isPinned, setIsPinned] = useState(false);
   const [pinUntil, setPinUntil] = useState<string>('');
-  
+
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isSavingCategory, setIsSavingCategory] = useState(false);
@@ -691,7 +694,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isRemovingImage, setIsRemovingImage] = useState(false);
-  
+
   // PDF Attachment States
   const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
@@ -699,7 +702,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  
+
   // NEW: Dirty State Tracker to prevent accidental data loss
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -720,9 +723,16 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
     if (isOpen && editor) {
       setTitle(story?.title || '');
       setExcerpt(story?.excerpt || '');
+
+      setContentType(
+        initialPdf
+          ? 'publication'
+          : story?.content_type ?? 'article'
+      );
+
       setCategoryId(story?.category_id ? story.category_id.toString() : '');
       setIsPinned(story?.is_pinned === 1);
-      
+
       if (story?.pin_until) {
         const date = new Date(story.pin_until);
         date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
@@ -738,13 +748,13 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
       setImageFile(null);
       setIsRemovingImage(false);
       setSaveError(null);
-      
+
       setNewAttachments(initialPdf ? [initialPdf] : []);
       setExistingAttachments([]);
-      
+
       // Reset dirty state tracker
       setHasUnsavedChanges(false);
-      
+
       if (story) {
         fetch(`/guiding_light_backend/get_story_attachments.php?post_id=${story.post_id}`)
           .then(res => res.json())
@@ -752,7 +762,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
           .catch(err => console.error("Failed to load attachments:", err));
 
         let parsed = '';
-        try { parsed = story.content ? JSON.parse(story.content) : ''; } 
+        try { parsed = story.content ? JSON.parse(story.content) : ''; }
         catch (e) { parsed = story.content || ''; }
         editor.commands.setContent(parsed);
         setJsonContent(story.content || '');
@@ -763,12 +773,14 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
       } else {
         editor.commands.setContent('');
         setJsonContent('');
-        if (initialPdf) setHasUnsavedChanges(true); // Flag changes if PDF was attached via creation menu
+
+        if (initialPdf) {
+          setHasUnsavedChanges(true);
+        }
       }
     }
   }, [isOpen, story, importedContent, initialPdf, editor]);
 
-  // NEW: Intercept closing to warn about unsaved changes
   const handleCloseRequest = () => {
     if (hasUnsavedChanges) {
       const confirmClose = window.confirm("You have unsaved changes. Are you sure you want to discard them? All unsaved work will be lost.");
@@ -811,7 +823,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
 
   const handleDeleteExistingAttachment = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this attachment permanently?")) return;
-    
+
     try {
       const response = await fetch('/guiding_light_backend/delete_attachment.php', {
         method: 'POST',
@@ -860,20 +872,27 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
 
   const handleSave = async () => {
     const hasTextContent = editor?.getText().trim().length !== 0;
-    
+
     if (!title.trim()) {
       setSaveError("Title is required.");
       return;
     }
-    
-    if (!hasTextContent && !hasAttachments) {
-      setSaveError("You must provide either Story Content OR attach a PDF Document.");
+
+    if (contentType === 'article' && !hasTextContent) {
+      setSaveError('Article content is required.');
+      return;
+    }
+
+    if (
+      contentType === 'publication' && !hasAttachments
+    ) {
+      setSaveError('A publication must have a PDF attachment.');
       return;
     }
 
     const actionText = story ? "save changes to this story" : "publish this new story";
     const isConfirmed = window.confirm(`Are you sure you want to ${actionText}?`);
-    
+
     if (!isConfirmed) return;
 
     setIsSaving(true);
@@ -881,18 +900,19 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
 
     const formData = new FormData();
     formData.append('title', title);
+    formData.append('content_type', contentType);
     formData.append('excerpt', excerpt);
-    
+
     const finalContent = jsonContent || '{"type":"doc","content":[{"type":"paragraph"}]}';
     formData.append('content', finalContent);
-    
+
     formData.append('category_id', categoryId);
     formData.append('is_pinned', isPinned ? 'true' : 'false');
     if (isPinned && pinUntil) {
       const mysqlDate = pinUntil.replace('T', ' ') + ':00';
       formData.append('pin_until', mysqlDate);
     }
-    
+
     if (story?.post_id) formData.append('post_id', story.post_id.toString());
     if (imageFile) formData.append('image', imageFile);
     if (isRemovingImage) formData.append('remove_image', 'true');
@@ -912,9 +932,9 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
         body: formData,
       });
       const data = await response.json();
-      
+
       if (data.error) throw new Error(data.error);
-      
+
       onClose(true); // Close automatically bypasses warning on successful save
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save story.');
@@ -930,7 +950,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
           {/* UPDATED: Intercepting background clicks! */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={handleCloseRequest} className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50" />
           <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="fixed top-0 right-0 h-full w-full max-w-4xl bg-white z-[60] shadow-2xl flex flex-col">
-            
+
             <header className="p-6 border-b border-stone-200 flex justify-between items-center bg-[#f7f5f2] shrink-0">
               <h3 className="text-2xl font-serif italic text-stone-800">
                 {story ? 'Edit Story' : importedContent ? 'Review Imported Article' : 'Create New Story'}
@@ -952,8 +972,8 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
                     <Tag className="w-3 h-3 mr-2" /> Article Category
                   </label>
                   {!isCreatingCategory ? (
-                    <select 
-                      value={categoryId} 
+                    <select
+                      value={categoryId}
                       onChange={(e) => {
                         if (e.target.value === 'new') setIsCreatingCategory(true);
                         else {
@@ -971,9 +991,9 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
                     </select>
                   ) : (
                     <div className="flex gap-2">
-                      <input 
-                        type="text" 
-                        value={newCategoryName} 
+                      <input
+                        type="text"
+                        value={newCategoryName}
                         onChange={(e) => setNewCategoryName(e.target.value)}
                         placeholder="New category name..."
                         className="w-full px-4 py-4 bg-white border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-stone-700 font-bold"
@@ -994,7 +1014,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
                     <Pin className="w-3 h-3 mr-2" /> Featured Story
                   </label>
                   <div className="flex items-center gap-4 bg-white px-5 py-4 border border-stone-200 rounded-2xl">
-                    <button 
+                    <button
                       onClick={() => {
                         setIsPinned(!isPinned);
                         setHasUnsavedChanges(true); // Flag changes
@@ -1011,8 +1031,8 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mt-3">
                         <div className="relative">
                           <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                          <input 
-                            type="datetime-local" 
+                          <input
+                            type="datetime-local"
                             value={pinUntil}
                             onChange={(e) => {
                               setPinUntil(e.target.value);
@@ -1052,9 +1072,9 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
 
               <div>
                 <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Story Title</label>
-                <input 
-                  type="text" 
-                  value={title} 
+                <input
+                  type="text"
+                  value={title}
                   onChange={(e) => {
                     setTitle(e.target.value);
                     setHasUnsavedChanges(true); // Flag changes
@@ -1066,8 +1086,8 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
 
               <div>
                 <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Short Excerpt</label>
-                <textarea 
-                  value={excerpt} 
+                <textarea
+                  value={excerpt}
                   onChange={(e) => {
                     setExcerpt(e.target.value);
                     setHasUnsavedChanges(true); // Flag changes
@@ -1083,19 +1103,19 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
                   <label className="flex items-center text-[10px] font-bold text-stone-400 uppercase tracking-widest">
                     <Paperclip className="w-3 h-3 mr-2" /> PDF Document (Read-Only Embed)
                   </label>
-                  <button 
+                  <button
                     onClick={() => attachmentInputRef.current?.click()}
                     className="text-[#4b5e52] font-bold text-[10px] uppercase tracking-widest hover:underline"
                   >
                     + Add File
                   </button>
-                  <input 
-                    type="file" 
-                    accept=".pdf,.doc,.docx" 
-                    multiple 
-                    className="hidden" 
-                    ref={attachmentInputRef} 
-                    onChange={handleAttachmentSelect} 
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    multiple
+                    className="hidden"
+                    ref={attachmentInputRef}
+                    onChange={handleAttachmentSelect}
                   />
                 </div>
 
@@ -1142,7 +1162,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
                     </span>
                   )}
                 </div>
-                
+
                 <div className={`bg-white border rounded-2xl shadow-sm overflow-hidden flex flex-col transition-all ${hasAttachments ? 'border-stone-200 opacity-60' : 'border-stone-200'}`}>
                   <MenuBar editor={editor} />
                   <div className="flex-1 bg-white cursor-text" onClick={() => editor?.commands.focus()}>
@@ -1154,14 +1174,14 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
 
             <footer className="p-6 border-t border-stone-200 bg-[#f7f5f2] shrink-0 flex gap-4">
               {/* UPDATED: Intercepting the 'Cancel' button! */}
-              <button 
-                onClick={handleCloseRequest} 
+              <button
+                onClick={handleCloseRequest}
                 className="flex-1 bg-white text-stone-600 border border-stone-200 py-4 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-sm hover:bg-stone-50 transition-colors"
               >
                 Cancel
               </button>
-              <button 
-                onClick={handleSave} 
+              <button
+                onClick={handleSave}
                 disabled={isSaving}
                 className="flex-[2] flex items-center justify-center bg-[#4b5e52] text-white py-4 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-lg hover:bg-[#3a4740] hover:scale-[1.02] active:scale-100 transition-all disabled:opacity-70 disabled:hover:scale-100"
               >
