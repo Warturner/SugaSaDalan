@@ -90,10 +90,8 @@ if (
 ]);
     
     $post_id = $conn->lastInsertId();
-
-    // ==========================================
-    // NEW: Handle PDF/DOCX Attachments
-    // ==========================================
+    
+// Handle PDF attachments
     if (isset($_FILES['attachments'])) {
         $att_upload_dir = 'uploads/stories/attachments/';
         if (!is_dir($att_upload_dir)) mkdir($att_upload_dir, 0777, true);
