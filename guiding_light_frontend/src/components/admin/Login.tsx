@@ -24,13 +24,23 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
     setError(null);
 
     try {
-      const response = await fetch('/guiding_light_backend/login.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
+      const response = await fetch(
+        '/guiding_light_backend/login.php',
+        {
+          method: 'POST',
+
+          credentials: 'include',
+
+          headers: {
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+            username,
+            password
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -52,12 +62,12 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
       <div className="absolute top-0 right-0 w-96 h-96 bg-white/40 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#d4c5b3]/30 blur-3xl rounded-full -translate-x-1/2 translate-y-1/2"></div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white p-10 md:p-14 rounded-[48px] shadow-2xl max-w-md w-full relative z-10 border border-white/50"
       >
-        <button 
+        <button
           onClick={onBack}
           className="flex items-center text-stone-400 hover:text-stone-800 transition-colors mb-12 group text-[10px] font-bold uppercase tracking-widest"
         >
@@ -99,8 +109,8 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
                 placeholder="••••••••"
               />
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-300" />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
               >
@@ -110,7 +120,7 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
           </div>
 
           {error && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs flex items-start font-medium"

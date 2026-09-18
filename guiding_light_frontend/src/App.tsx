@@ -14,7 +14,7 @@ import SuccessStories from './components/public/SuccessStories';
 import StoryArticle from './components/public/StoryArticle';
 import DonationForm from './components/public/DonationForm';
 import Mission from './components/public/Mission';
-import Services from './components/public/Services'; // Removed .tsx extension for consistency
+import Services from './components/public/Services';
 import ContactUs from './components/public/ContactUs';
 import HomeAbout from './components/public/HomeAbout';
 import Footer from './components/public/Footer';
@@ -37,7 +37,7 @@ interface User {
 
 export default function App() {
   const [isAdmin, setIsAdmin] = React.useState(false);
-  
+
   // --- 1. MEMORY-AWARE ACTIVE PAGE STATE ---
   const [activePage, setActivePage] = React.useState<PublicPage>(() => {
     // If returning from PayMongo, force the Donate page
@@ -69,23 +69,99 @@ export default function App() {
   }, [selectedStoryId]);
 
 
-  const [activeAdminTab, setActiveAdminTab] = React.useState<AdminTab>('CMS');
+  const [activeAdminTab, setActiveAdminTab] = React.useState<AdminTab>('Stories');
   const [storyToEdit, setStoryToEdit] = React.useState<number | null>(null);
-  
+
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
-  
+  const [checkingAuth, setCheckingAuth] = React.useState(true);
+  React.useEffect(() => {
+
+    const restoreSession = async () => {
+
+      try {
+
+        const response = await fetch(
+          '/guiding_light_backend/check_session.php',
+          {
+            credentials: 'include'
+          }
+        );
+
+        if (!response.ok) {
+          setIsAdmin(false);
+          setCurrentUser(null);
+          return;
+        }
+
+        const data = await response.json();
+
+        if (
+          data.success &&
+          data.authenticated &&
+          data.user
+        ) {
+
+          setCurrentUser(data.user);
+          setIsAdmin(true);
+
+        } else {
+
+          setCurrentUser(null);
+          setIsAdmin(false);
+        }
+
+      } catch (error) {
+
+        console.error(
+          'Unable to restore session:',
+          error
+        );
+
+        setCurrentUser(null);
+        setIsAdmin(false);
+
+      } finally {
+
+        setCheckingAuth(false);
+      }
+    };
+
+
+    restoreSession();
+
+  }, []);
+
   const [logoutTimer, setLogoutTimer] = React.useState<number>(3);
-  
+
   const [showWarning, setShowWarning] = React.useState(false);
   const [countdown, setCountdown] = React.useState(30);
 
-  const toggleAdmin = () => {
-    setIsAdmin(!isAdmin);
-    if (!isAdmin) {
-      setActiveAdminTab('Stories');
-    } else {
+  const handleLogout = async () => {
+
+    try {
+
+      await fetch(
+        '/guiding_light_backend/logout.php',
+        {
+          method: 'POST',
+          credentials: 'include'
+        }
+      );
+
+    } catch (error) {
+
+      console.error(
+        'Logout request failed:',
+        error
+      );
+
+    } finally {
+
+      setIsAdmin(false);
       setCurrentUser(null);
       setActivePage('Login');
+      setActiveAdminTab('Stories');
+
     }
   };
 
@@ -96,21 +172,21 @@ export default function App() {
   }, [activePage]);
 
   React.useEffect(() => {
-    let warningTimeout: NodeJS.Timeout;
-    let logoutTimeout: NodeJS.Timeout;
-    let countdownInterval: NodeJS.Timeout;
+    let warningTimeout: ReturnType<typeof setTimeout>;
+    let logoutTimeout: ReturnType<typeof setTimeout>;
+    let countdownInterval: ReturnType<typeof setInterval>;
 
     const resetTimer = () => {
       clearTimeout(warningTimeout);
       clearTimeout(logoutTimeout);
       clearInterval(countdownInterval);
-      
+
       setShowWarning(false);
       setCountdown(30);
 
       if (isAdmin) {
         const warningDelay = (logoutTimer * 60 * 1000) - 30000;
-        
+
         warningTimeout = setTimeout(() => {
           setShowWarning(true);
 
@@ -121,11 +197,13 @@ export default function App() {
           }, 1000);
 
           logoutTimeout = setTimeout(() => {
+
             clearInterval(countdownInterval);
+
             setShowWarning(false);
-            setIsAdmin(false);
-            setCurrentUser(null);
-            setActivePage('Login');
+
+            handleLogout();
+
           }, 30000);
 
         }, warningDelay);
@@ -137,7 +215,7 @@ export default function App() {
       window.addEventListener('keydown', resetTimer);
       window.addEventListener('mousedown', resetTimer);
       window.addEventListener('touchstart', resetTimer);
-      resetTimer(); 
+      resetTimer();
     }
 
     return () => {
@@ -150,6 +228,25 @@ export default function App() {
       window.removeEventListener('touchstart', resetTimer);
     };
   }, [isAdmin, logoutTimer]);
+
+  if (checkingAuth) {
+
+    return (
+      <div className="min-h-screen bg-[#f7f5f2] flex items-center justify-center">
+
+        <div className="text-center">
+
+          <div className="w-10 h-10 border-4 border-stone-200 border-t-[#3a4740] rounded-full animate-spin mx-auto mb-4" />
+
+          <p className="text-sm text-stone-500">
+            Checking session...
+          </p>
+
+        </div>
+
+      </div>
+    );
+  }
 
   if (isAdmin) {
     return (
@@ -173,8 +270,8 @@ export default function App() {
                 </div>
                 <h3 className="text-2xl font-serif italic text-stone-800 mb-2">Inactivity Warning</h3>
                 <p className="text-stone-600 mb-8 leading-relaxed">
-                  You will be automatically logged out in <br/>
-                  <span className="font-bold text-amber-600 text-3xl">{countdown}</span> <br/>
+                  You will be automatically logged out in <br />
+                  <span className="font-bold text-amber-600 text-3xl">{countdown}</span> <br />
                   seconds due to inactivity.
                 </p>
                 <button
@@ -188,11 +285,11 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        <Sidebar 
-          activeTab={activeAdminTab} 
-          setActiveTab={setActiveAdminTab} 
-          onLogout={toggleAdmin}
-          user={currentUser} 
+        <Sidebar
+          activeTab={activeAdminTab}
+          setActiveTab={setActiveAdminTab}
+          onLogout={handleLogout}
+          user={currentUser}
         />
         <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-10">
           <header className="mb-8 lg:mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 sm:p-8 rounded-[24px] sm:rounded-[32px] border border-stone-100 shadow-sm gap-4">
@@ -215,12 +312,12 @@ export default function App() {
 
           <div className="mt-4">
             {activeAdminTab === 'Stories' && <CMSModule />}
-            
+
             {/* ADDED: Team Management Module */}
             {activeAdminTab === 'Team' && <TeamManagement />}
-            
+
             {activeAdminTab === 'Donations' && <DonationVerification currentUser={currentUser} />}
-            
+
             {activeAdminTab === 'Accounts' && <UserAccounts currentUser={currentUser} />}
             {activeAdminTab === 'Settings' && <SettingsModule user={currentUser} onUpdateUser={setCurrentUser} />}
           </div>
@@ -231,9 +328,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f7f5f2] text-stone-800 selection:bg-[#d4c5b3] selection:text-[#3a4740]">
-      <Navbar 
-        activePage={activePage} 
-        setActivePage={setActivePage} 
+      <Navbar
+        activePage={activePage}
+        setActivePage={setActivePage}
       />
 
       <main className="pt-20">
@@ -269,18 +366,23 @@ export default function App() {
               exit={{ opacity: 0 }}
             >
               {selectedStoryId ? (
-                <StoryArticle 
+                <StoryArticle
                   storyId={selectedStoryId}
                   isAdmin={isAdmin}
                   onEdit={(id) => {
+
+                    if (!currentUser) {
+                      setActivePage('Login');
+                      return;
+                    }
+
                     setStoryToEdit(id);
                     setActiveAdminTab('Stories');
-                    setIsAdmin(true);
                   }}
                   onBack={() => {
-                    setSelectedStoryId(null); 
+                    setSelectedStoryId(null);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }} 
+                  }}
                 />
               ) : (
                 <>
@@ -344,15 +446,15 @@ export default function App() {
               <ContactUs />
             </motion.div>
           )}
-          
+
           {activePage === 'Login' && (
             <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Login 
+              <Login
                 onLoginSuccess={(user) => {
                   setIsAdmin(true);
                   setActiveAdminTab('Stories');
                   setCurrentUser(user);
-                }} 
+                }}
                 onBack={() => setActivePage('Home')}
               />
             </motion.div>

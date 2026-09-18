@@ -1,13 +1,42 @@
 <?php
 
-$allowed_origin = '*'; // <-- Replace with your frontend URL in production
+$allowed_origin = '*';
 
-// Set up CORS (Cross-Origin Resource Sharing)
-header("Access-Control-Allow-Origin: " . $allowed_origin);
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+$allowed_origins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://suga-sa-dalan.vercel.app'
+];
 
-// Database credentials
+$origin =
+    $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if (in_array($origin, $allowed_origins, true)) {
+
+    header(
+        "Access-Control-Allow-Origin: " .
+        $origin
+    );
+
+    header(
+        "Access-Control-Allow-Credentials: true"
+    );
+}
+
+header(
+    "Access-Control-Allow-Headers: Content-Type, Authorization"
+);
+
+header(
+    "Access-Control-Allow-Methods: GET, POST, OPTIONS"
+);
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+
+    http_response_code(200);
+    exit;
+}
+
 $host = "sql112.infinityfree.com";
 $db_name = "if0_42909551_guiding_light_db";
 $username = "if0_42909551"; 
