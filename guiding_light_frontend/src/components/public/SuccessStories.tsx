@@ -16,6 +16,7 @@ interface Story {
   post_id: number;
   title: string;
   author: string;
+  content_type: 'article' | 'publication';
   published_date: string;
   excerpt: string;
   image?: string;

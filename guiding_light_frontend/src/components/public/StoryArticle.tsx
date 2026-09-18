@@ -37,13 +37,22 @@ const tiptapExtensions = [
 
 export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: StoryArticleProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const [originalStory, setOriginalStory] = useState<{title: string, content: string, image: string, author: string, date: string} | null>(null);
+  interface StoryData {
+    title: string;
+    content_type: 'article' | 'publication';
+    content: string;
+    image: string;
+    author: string;
+    date: string;
+  }
+  const [originalStory, setOriginalStory] = useState<StoryData | null>(null);
+  const [activePublicationId, setActivePublicationId] = useState<number | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
-  
+
   const [targetLang, setTargetLang] = useState('en');
   const [isTranslating, setIsTranslating] = useState(false);
   const [displayContent, setDisplayContent] = useState('');
-  
+
   // Theme toggle state (defaulting to false / light mode)
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -56,10 +65,10 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
           fetch(`/guiding_light_backend/get_story.php?id=${storyId}`),
           fetch(`/guiding_light_backend/get_story_attachments.php?post_id=${storyId}`)
         ]);
-        
+
         const storyData = await storyRes.json();
         const attData = await attRes.json();
-        
+
         if (storyData.success) {
           setOriginalStory(storyData.story);
         } else {
@@ -78,10 +87,12 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
     };
 
     fetchData();
+    setActivePublicationId(null);
+    setAttachments([]);
   }, [storyId]);
 
   const translateText = async (text: string, lang: string) => {
-    if (lang === 'en' || !text.trim()) return text; 
+    if (lang === 'en' || !text.trim()) return text;
     try {
       const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${lang}&dt=t&q=${encodeURIComponent(text)}`;
       const response = await fetch(url);
@@ -89,13 +100,18 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
       return data[0].map((item: any) => item[0]).join('');
     } catch (error) {
       console.error("Translation failed:", error);
-      return text; 
+      return text;
     }
   };
 
   useEffect(() => {
     const handleTranslation = async () => {
       if (!originalStory) return;
+      if (originalStory.content_type === 'publication') {
+        setDisplayContent('');
+        setIsTranslating(false);
+        return;
+      }
 
       let isJson = false;
       let parsedJson: any = null;
@@ -154,13 +170,13 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
 
   return (
     <div className={`min-h-screen w-full transition-colors duration-300 selection:bg-[#4b5e52] selection:text-white ${isDarkMode ? 'bg-[#242c28]' : 'bg-[#f7f5f2]'}`}>
-      <motion.article 
+      <motion.article
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="pt-32 pb-20 max-w-4xl mx-auto px-4"
       >
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <button 
+          <button
             onClick={onBack}
             className={`flex items-center transition-colors text-[10px] font-bold uppercase tracking-widest group ${isDarkMode ? 'text-stone-400 hover:text-[#f7f5f2]' : 'text-stone-500 hover:text-stone-800'}`}
           >
@@ -170,22 +186,21 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
 
           <div className="flex items-center gap-3">
             {/* Theme Toggle Button */}
-            <button 
+            <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`p-2 rounded-full border shadow-sm backdrop-blur-sm transition-colors ${
-                isDarkMode 
-                  ? 'bg-white/5 border-white/10 text-stone-400 hover:text-white' 
-                  : 'bg-white border-stone-200 text-stone-500 hover:text-stone-800'
-              }`}
+              className={`p-2 rounded-full border shadow-sm backdrop-blur-sm transition-colors ${isDarkMode
+                ? 'bg-white/5 border-white/10 text-stone-400 hover:text-white'
+                : 'bg-white border-stone-200 text-stone-500 hover:text-stone-800'
+                }`}
               title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
 
             {/* Language Selector */}
-            <div className={`relative flex items-center border rounded-full px-4 py-2 shadow-sm backdrop-blur-sm transition-colors ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-white border-stone-200'}`}>
+            {originalStory.content_type === 'article' && (<div className={`relative flex items-center border rounded-full px-4 py-2 shadow-sm backdrop-blur-sm transition-colors ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-white border-stone-200'}`}>
               <Languages className={`w-4 h-4 mr-2 ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`} />
-              <select 
+              <select
                 value={targetLang}
                 onChange={(e) => setTargetLang(e.target.value)}
                 disabled={isTranslating}
@@ -205,9 +220,10 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
               </select>
               {isTranslating && <Loader className={`w-3 h-3 animate-spin absolute right-4 ${isDarkMode ? 'text-[#d4c5b3]' : 'text-[#4b5e52]'}`} />}
             </div>
+            )}
 
             {isAdmin && (
-              <button 
+              <button
                 onClick={() => onEdit(storyId)}
                 className="flex items-center px-4 py-2 bg-[#4b5e52] text-[#f7f5f2] rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-[#3a4740] transition-colors shadow-lg"
               >
@@ -222,7 +238,7 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
           <h1 className={`text-4xl md:text-5xl font-serif italic mb-6 leading-tight drop-shadow-sm transition-colors ${isDarkMode ? 'text-[#f7f5f2]' : 'text-stone-800'}`}>
             {originalStory.title}
           </h1>
-          
+
           <div className={`flex items-center text-xs font-bold uppercase tracking-widest transition-colors ${isDarkMode ? 'text-[#d4c5b3]' : 'text-stone-500'}`}>
             <span>By {originalStory.author}</span>
             <span className={`mx-3 border-l h-3 transition-colors ${isDarkMode ? 'border-[#4b5e52]' : 'border-stone-300'}`}></span>
@@ -232,8 +248,8 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
 
         {originalStory.image && (
           <div className={`aspect-[21/9] rounded-[32px] overflow-hidden mb-12 shadow-2xl ring-1 transition-colors ${isDarkMode ? 'ring-white/10' : 'ring-black/5'}`}>
-            <img 
-              src={originalStory.image} 
+            <img
+              src={originalStory.image}
               alt={originalStory.title}
               className="w-full h-full object-cover"
             />
@@ -241,35 +257,172 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
         )}
 
         {/* CONDITIONALLY RENDER: EITHER the Attachments OR the Tiptap Content */}
-        {attachments.length > 0 ? (
-          <div className="space-y-12">
-            {attachments.map((att) => (
-              att.file_type === 'pdf' ? (
-                <div key={att.id} className={`w-full h-[500px] md:h-[800px] rounded-3xl overflow-hidden shadow-xl border ${isDarkMode ? 'border-white/10' : 'border-stone-200'}`}>
-                  <iframe 
-                    src={`${att.file_url}#view=FitH`} 
-                    className="w-full h-full" 
-                    title={att.file_name} 
-                  />
-                </div>
-              ) : (
-                <div key={att.id} className={`w-full p-8 rounded-3xl border border-dashed flex flex-col items-center justify-center text-center ${isDarkMode ? 'border-white/10 bg-white/5' : 'border-stone-300 bg-stone-50'}`}>
-                  <FileText className={`w-12 h-12 mb-4 opacity-20 ${isDarkMode ? 'text-stone-300' : 'text-stone-600'}`} />
-                  <p className={`text-sm font-bold uppercase tracking-widest mb-2 ${isDarkMode ? 'text-stone-400' : 'text-stone-500'}`}>Document Preview Not Available</p>
-                  <p className={`text-xs ${isDarkMode ? 'text-stone-500' : 'text-stone-400'}`}>This file type cannot be previewed in the browser.</p>
-                </div>
-              )
-            ))}
+        {originalStory.content_type === 'publication' ? (
+
+          <div className="space-y-6">
+
+            {attachments.filter(
+              att => att.file_type === 'pdf'
+            ).length === 0 ? (
+
+              <div
+                className={`w-full p-10 rounded-3xl border border-dashed text-center ${isDarkMode
+                    ? 'border-white/10 bg-white/5'
+                    : 'border-stone-300 bg-white'
+                  }`}
+              >
+                <FileText
+                  className={`w-12 h-12 mx-auto mb-4 ${isDarkMode
+                      ? 'text-stone-500'
+                      : 'text-stone-300'
+                    }`}
+                />
+
+                <p
+                  className={`font-bold ${isDarkMode
+                      ? 'text-stone-300'
+                      : 'text-stone-600'
+                    }`}
+                >
+                  Publication PDF unavailable
+                </p>
+
+                <p
+                  className={`text-sm mt-2 ${isDarkMode
+                      ? 'text-stone-500'
+                      : 'text-stone-400'
+                    }`}
+                >
+                  No PDF is currently attached to this publication.
+                </p>
+              </div>
+
+            ) : (
+
+              attachments
+                .filter(att => att.file_type === 'pdf')
+                .map(att => {
+
+                  const isOpen =
+                    activePublicationId === att.id;
+
+                  return (
+                    <div
+                      key={att.id}
+                      className={`rounded-[32px] border overflow-hidden ${isDarkMode
+                          ? 'border-white/10 bg-white/5'
+                          : 'border-stone-200 bg-white'
+                        }`}
+                    >
+
+                      <div className="p-6 md:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+
+                        <div className="flex items-center gap-4 min-w-0">
+
+                          <div
+                            className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${isDarkMode
+                                ? 'bg-white/10'
+                                : 'bg-[#f7f5f2]'
+                              }`}
+                          >
+                            <FileText
+                              className={`w-5 h-5 ${isDarkMode
+                                  ? 'text-[#d4c5b3]'
+                                  : 'text-[#4b5e52]'
+                                }`}
+                            />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p
+                              className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isDarkMode
+                                  ? 'text-stone-500'
+                                  : 'text-stone-400'
+                                }`}
+                            >
+                              Publication PDF
+                            </p>
+
+                            <p
+                              className={`font-bold truncate ${isDarkMode
+                                  ? 'text-stone-200'
+                                  : 'text-stone-700'
+                                }`}
+                            >
+                              {att.file_name}
+                            </p>
+                          </div>
+
+                        </div>
+
+                        <button
+                          onClick={() =>
+                            setActivePublicationId(
+                              isOpen ? null : att.id
+                            )
+                          }
+                          className="shrink-0 px-6 py-3 bg-[#4b5e52] text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-[#3a4740] transition-colors shadow-md"
+                        >
+                          {isOpen
+                            ? 'Close Publication'
+                            : 'View Publication'}
+                        </button>
+
+                      </div>
+
+                      {isOpen && (
+                        <motion.div
+                          initial={{
+                            opacity: 0,
+                            height: 0
+                          }}
+                          animate={{
+                            opacity: 1,
+                            height: 'auto'
+                          }}
+                          className={`border-t ${isDarkMode
+                              ? 'border-white/10'
+                              : 'border-stone-200'
+                            }`}
+                        >
+
+                          <div className="w-full h-[500px] md:h-[800px]">
+
+                            <iframe
+                              src={`${att.file_url}#view=FitH`}
+                              className="w-full h-full"
+                              title={att.file_name}
+                              loading="lazy"
+                            />
+
+                          </div>
+
+                        </motion.div>
+                      )}
+
+                    </div>
+                  );
+                })
+
+            )}
+
           </div>
+
         ) : (
-          /* Renders the beautifully generated HTML from Tiptap ONLY if there are no attachments */
-          <motion.div 
-            key={displayContent} 
+
+          <motion.div
+            key={displayContent}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className={`prose prose-stone prose-lg max-w-none leading-relaxed tiptap-content transition-colors duration-300 ${isDarkMode ? 'prose-invert text-stone-300' : 'text-stone-600'}`}
-            dangerouslySetInnerHTML={{ __html: displayContent }}
+            className={`prose prose-stone prose-lg max-w-none leading-relaxed tiptap-content transition-colors duration-300 ${isDarkMode
+                ? 'prose-invert text-stone-300'
+                : 'text-stone-600'
+              }`}
+            dangerouslySetInnerHTML={{
+              __html: displayContent
+            }}
           />
+
         )}
 
       </motion.article>
