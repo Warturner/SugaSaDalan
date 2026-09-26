@@ -935,7 +935,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
       setSaveError('A publication must have a PDF attachment.');
       return;
     }
-4
+    
     const actionText = story ? "save changes to this story" : "publish this new story";
     const isConfirmed = window.confirm(`Are you sure you want to ${actionText}?`);
 
@@ -969,22 +969,24 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
       });
     }
 
-    try {
-      const response = await fetch(`/guiding_light_backend/${endpoint}`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-      const data = await response.json();
+try {
+  await saveStory(
+    formData,
+    Boolean(story)
+  );
 
-      if (data.error) throw new Error(data.error);
+  onClose(true);
 
-      onClose(true); // Close automatically bypasses warning on successful save
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save story.');
-    } finally {
-      setIsSaving(false);
-    }
+} catch (err) {
+  setSaveError(
+    err instanceof Error
+      ? err.message
+      : 'Failed to save story.'
+  );
+
+} finally {
+  setIsSaving(false);
+}
   };
 
   return (
