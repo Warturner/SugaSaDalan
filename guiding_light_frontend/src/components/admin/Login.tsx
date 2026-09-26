@@ -5,9 +5,14 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Lock, User, ArrowLeft, Loader, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import type { User as UserType } from '../../types';
+import { loginUser } from '../../services/authService';
 
 interface LoginProps {
-  onLoginSuccess: (user: { id: number; username: string; role?: string }) => void;
+  onLoginSuccess: (
+    user: UserType
+  ) => void;
+
   onBack: () => void;
 }
 
@@ -24,34 +29,27 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
     setError(null);
 
     try {
-      const response = await fetch(
-        '/guiding_light_backend/login.php',
-        {
-          method: 'POST',
 
-          credentials: 'include',
+      const data =
+        await loginUser(
+          username,
+          password
+        );
 
-          headers: {
-            'Content-Type': 'application/json',
-          },
-
-          body: JSON.stringify({
-            username,
-            password
-          }),
-        }
+      onLoginSuccess(
+        data.user
       );
 
-      const data = await response.json();
-
-      if (data.success) {
-        onLoginSuccess(data.user);
-      } else {
-        setError(data.error || 'Invalid username or password.');
-      }
     } catch (err) {
-      setError('Unable to connect to the server. Please check your internet connection and try again.');
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to connect to the server. Please check your internet connection and try again.'
+      );
+
     } finally {
+
       setIsLoading(false);
     }
   };

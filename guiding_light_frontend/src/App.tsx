@@ -4,7 +4,8 @@
  */
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { PublicPage, AdminTab } from './types';
+import type { PublicPage, AdminTab, User } from './types';
+import { checkSession, logoutUser } from './services/authService';
 import { AlertTriangle } from 'lucide-react';
 
 // Components
@@ -28,12 +29,6 @@ import Sidebar from './components/layout/Sidebar';
 import CMSModule from './components/admin/CMSModule';
 import TeamManagement from './components/admin/TeamManagement';
 import DonationVerification from './components/admin/DonationVerification';
-
-interface User {
-  id: number;
-  username: string;
-  role?: string;
-}
 
 export default function App() {
   const [isAdmin, setIsAdmin] = React.useState(false);
@@ -80,23 +75,10 @@ export default function App() {
 
       try {
 
-        const response = await fetch(
-          '/guiding_light_backend/check_session.php',
-          {
-            credentials: 'include'
-          }
-        );
-
-        if (!response.ok) {
-          setIsAdmin(false);
-          setCurrentUser(null);
-          return;
-        }
-
-        const data = await response.json();
+        const data =
+          await checkSession();
 
         if (
-          data.success &&
           data.authenticated &&
           data.user
         ) {
@@ -126,7 +108,6 @@ export default function App() {
       }
     };
 
-
     restoreSession();
 
   }, []);
@@ -140,13 +121,7 @@ export default function App() {
 
     try {
 
-      await fetch(
-        '/guiding_light_backend/logout.php',
-        {
-          method: 'POST',
-          credentials: 'include'
-        }
-      );
+      await logoutUser();
 
     } catch (error) {
 
