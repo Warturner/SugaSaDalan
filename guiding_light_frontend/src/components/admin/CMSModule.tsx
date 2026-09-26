@@ -266,27 +266,37 @@ export default function CMSModule() {
                 for (let i = 0; i < byteString.length; i++) {
                   ia[i] = byteString.charCodeAt(i);
                 }
-                const blob = new Blob([ab], { type: image.contentType });
-                const formData = new FormData();
-
-                formData.append(
-                  'image',
-                  blob,
-                  `imported-docx-img-${Date.now()}.${ext}`
+                const blob = new Blob(
+                  [ab],
+                  { type: image.contentType }
                 );
 
+                const ext =
+                  image.contentType.split('/')[1] ||
+                  'png';
+
                 try {
-                  const response = await fetch('/guiding_light_backend/upload_inline_image.php', {
-                    method: 'POST',
-                    credentials: 'include',
-                    body: formData,
-                  });
-                  const data = await response.json();
-                  if (data.success) return { src: data.url };
+                  const data =
+                    await uploadInlineImage(
+                      blob,
+                      `imported-docx-img-${Date.now()}.${ext}`
+                    );
+
+                  return {
+                    src: data.url
+                  };
+
                 } catch (error) {
-                  console.error("Word document image upload failed:", error);
+                  console.error(
+                    'Word document image upload failed:',
+                    error
+                  );
                 }
-                return { src: `data:${image.contentType};base64,${imageBuffer}` };
+
+                return {
+                  src:
+                    `data:${image.contentType};base64,${imageBuffer}`
+                };
               });
             })
           };
@@ -925,7 +935,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
       setSaveError('A publication must have a PDF attachment.');
       return;
     }
-
+4
     const actionText = story ? "save changes to this story" : "publish this new story";
     const isConfirmed = window.confirm(`Are you sure you want to ${actionText}?`);
 
@@ -957,25 +967,6 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
       newAttachments.forEach(file => {
         formData.append('attachments[]', file);
       });
-    }
-
-    try {
-      await saveStory(
-        formData,
-        Boolean(story)
-      );
-
-      onClose(true);
-
-    } catch (err) {
-      setSaveError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to save story.'
-      );
-
-    } finally {
-      setIsSaving(false);
     }
 
     try {
