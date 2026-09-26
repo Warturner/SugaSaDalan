@@ -62,16 +62,6 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
 
       try {
 
-        const [storyRes, attRes] =
-          await Promise.all([
-            fetch(
-              `/guiding_light_backend/get_story.php?id=${storyId}`
-            ),
-            fetch(
-              `/guiding_light_backend/get_story_attachments.php?post_id=${storyId}`
-            )
-          ]);
-
         const [
           storyData,
           attachmentData
