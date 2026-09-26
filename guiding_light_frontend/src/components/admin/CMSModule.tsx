@@ -14,9 +14,6 @@ import StoryEditorPanel from './cms/StoryEditorPanel';
 
 const STORIES_PER_PAGE = 9;
 
-
-// TIPTAP MENU BAR COMPONENT
-
 export default function CMSModule() {
   const [stories, setStories] = useState<Story[]>([]);
   const [categories, setCategories] = useState<StoryCategory[]>([]);
