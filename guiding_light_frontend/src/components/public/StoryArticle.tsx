@@ -12,6 +12,16 @@ import TextAlign from '@tiptap/extension-text-align';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 
+import type {
+  StoryDetail,
+  StoryAttachment
+} from '../../types';
+
+import {
+  getStory,
+  getStoryAttachments
+} from '../../services/storyService';
+
 interface StoryArticleProps {
   storyId: number;
   isAdmin: boolean;
@@ -19,14 +29,6 @@ interface StoryArticleProps {
   onBack: () => void;
 }
 
-interface Attachment {
-  id: number;
-  file_name: string;
-  file_url: string;
-  file_type: string;
-}
-
-// Ensure these exactly match the extensions used in CMSModule
 const tiptapExtensions = [
   StarterKit,
   Underline,
@@ -37,17 +39,9 @@ const tiptapExtensions = [
 
 export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: StoryArticleProps) {
   const [isLoading, setIsLoading] = useState(true);
-  interface StoryData {
-    title: string;
-    content_type: 'article' | 'publication';
-    content: string;
-    image: string;
-    author: string;
-    date: string;
-  }
-  const [originalStory, setOriginalStory] = useState<StoryData | null>(null);
+  const [originalStory, setOriginalStory] = useState<StoryDetail | null>(null);
   const [activePublicationId, setActivePublicationId] = useState<number | null>(null);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachments, setAttachments] = useState<StoryAttachment[]>([]);
 
   const [targetLang, setTargetLang] = useState('en');
   const [isTranslating, setIsTranslating] = useState(false);
@@ -78,27 +72,21 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
             )
           ]);
 
-        const storyData =
-          await storyRes.json();
+        const [
+          storyData,
+          attachmentData
+        ] = await Promise.all([
+          getStory(storyId),
+          getStoryAttachments(storyId)
+        ]);
 
-        const attData =
-          await attRes.json();
+        setOriginalStory(
+          storyData.story
+        );
 
-        if (storyData.success) {
-          setOriginalStory(
-            storyData.story
-          );
-        } else {
-          console.error(
-            storyData.error
-          );
-        }
-
-        if (!attData.error) {
-          setAttachments(
-            attData
-          );
-        }
+        setAttachments(
+          attachmentData
+        );
 
       } catch (error) {
 
