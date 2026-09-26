@@ -45,6 +45,15 @@ export interface StoryAttachment {
   uploaded_at?: string;
 }
 
+export interface StoryDetail {
+  title: string;
+  content_type: ContentType;
+  content: string;
+  image: string;
+  author: string;
+  date: string;
+}
+
 export interface StoryCategory {
   id: number;
   name: string;

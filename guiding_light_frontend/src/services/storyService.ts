@@ -1,9 +1,10 @@
 import {
   Story,
+  StoryDetail,
   StoryAttachment,
   StoryCategory,
   StoryEditHistory
-} from '../types';
+} from '../types'; 
 
 import { apiFetch } from './api';
 
@@ -18,7 +19,7 @@ export function getStory(
 ) {
   return apiFetch<{
     success: boolean;
-    story: Story;
+    story: StoryDetail;
   }>(
     `get_story.php?id=${postId}`
   );
@@ -72,7 +73,7 @@ export function deleteAttachment(
   return apiFetch<{
     success: boolean;
   }>(
-    'delete_attachment.php',
+    'delete_attachments.php',
     {
       method: 'POST',
       headers: {
