@@ -151,6 +151,14 @@ export default function CMSModule() {
       );
     }
   };
+  const handleCategoryCreated = (
+    category: StoryCategory
+  ) => {
+    setCategories(prev => [
+      ...prev,
+      category
+    ]);
+  };
 
   useEffect(() => {
     fetchStories();
@@ -548,6 +556,7 @@ export default function CMSModule() {
         initialPdf={initialPdfFile}
         isOpen={isEditorOpen}
         categories={categories}
+        onCategoryCreated={handleCategoryCreated}
         onClose={handleEditorClose}
       />
     </div>
@@ -888,13 +897,10 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
             trimmedName
           );
 
-        setCategories(prev => [
-          ...prev,
-          {
-            id: data.id,
-            name: data.name
-          }
-        ]);
+        onCategoryCreated({
+          id: data.id,
+          name: data.name
+        });
 
         setCategoryId(
           data.id.toString()
@@ -935,7 +941,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
       setSaveError('A publication must have a PDF attachment.');
       return;
     }
-    
+
     const actionText = story ? "save changes to this story" : "publish this new story";
     const isConfirmed = window.confirm(`Are you sure you want to ${actionText}?`);
 
@@ -969,24 +975,24 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
       });
     }
 
-try {
-  await saveStory(
-    formData,
-    Boolean(story)
-  );
+    try {
+      await saveStory(
+        formData,
+        Boolean(story)
+      );
 
-  onClose(true);
+      onClose(true);
 
-} catch (err) {
-  setSaveError(
-    err instanceof Error
-      ? err.message
-      : 'Failed to save story.'
-  );
+    } catch (err) {
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to save story.'
+      );
 
-} finally {
-  setIsSaving(false);
-}
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
