@@ -14,7 +14,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import type { Story, StoryCategory, StoryAttachment } from '../../types';
-import { getStories, getCategories, getStoryHistory, getStoryAttachments, deleteStory, deleteAttachment, createCategory, saveStory, uploadInlineImage } from '../../services/storyService';
+import { getStories, getCategories, getStoryAttachments, deleteStory, deleteAttachment, createCategory, saveStory, uploadInlineImage } from '../../services/storyService';
 import StoryEditorToolbar from './cms/StoryEditorToolbar';
 import StoryPreviewPanel from './cms/StoryPreviewPanel';
 
