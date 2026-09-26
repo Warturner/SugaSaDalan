@@ -7,14 +7,53 @@ export interface User {
   username: string;
   role: 'admin' | 'media';
 }
+
+export type ContentType =
+  | 'article'
+  | 'publication';
+
 export interface Story {
-  id: string;
+  post_id: number;
   title: string;
-  excerpt: string;
-  content: string;
   author: string;
-  date: string;
-  image: string;
+  content_type: ContentType;
+
+  published_date: string;
+
+  content: string;
+  excerpt: string;
+
+  image?: string;
+  image_path?: string;
+
+  category_id?: number | null;
+  category_name?: string | null;
+
+  is_pinned?: number;
+  active_pin?: number;
+
+  pin_until?: string | null;
+}
+
+export interface StoryAttachment {
+  id: number;
+  post_id?: number;
+  file_name: string;
+  file_url: string;
+  file_type: string;
+  file_size?: number;
+  uploaded_at?: string;
+}
+
+export interface StoryCategory {
+  id: number;
+  name: string;
+}
+
+export interface StoryEditHistory {
+  edit_timestamp: string;
+  username: string;
+  changes_made: string;
 }
 
 export interface Donation {
