@@ -563,9 +563,9 @@ export default function CMSModule() {
   );
 }
 
-// ==========================================
+
 // PREVIEW PANEL
-// ==========================================
+
 function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | null, isOpen: boolean, onClose: () => void, onEdit: () => void }) {
   const [activeTab, setActiveTab] = useState<'preview' | 'history'>('preview');
   const [history, setHistory] = useState<StoryEditHistory[]>([]);
@@ -697,7 +697,29 @@ const editorExtensions = [
   Link.configure({ openOnClick: false }),
 ];
 
-function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categories, onClose }: { story: Story | null, importedContent: string | null, initialPdf: File | null, isOpen: boolean, categories: StoryCategory[], onClose: (didUpdate: boolean) => void }) {
+interface StoryEditorPanelProps {
+  story: Story | null;
+  importedContent: string | null;
+  initialPdf: File | null;
+  isOpen: boolean;
+  categories: StoryCategory[];
+  onCategoryCreated: (
+    category: StoryCategory
+  ) => void;
+  onClose: (
+    didUpdate: boolean
+  ) => void;
+}
+
+function StoryEditorPanel({
+  story,
+  importedContent,
+  initialPdf,
+  isOpen,
+  categories,
+  onCategoryCreated,
+  onClose
+}: StoryEditorPanelProps) {
   const [contentType, setContentType] = useState<'article' | 'publication'>('article');
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
