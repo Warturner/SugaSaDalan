@@ -63,8 +63,13 @@ export default function Stories({ onStoryClick }: StoriesProps) {
 
   // Apply Search and Category Filters
   const filteredStories = stories.filter(story => {
-    const matchesSearch = story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      story.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      story.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (story.excerpt ?? '')
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || story.category_name === selectedCategory;
     return matchesSearch && matchesCategory;
   });

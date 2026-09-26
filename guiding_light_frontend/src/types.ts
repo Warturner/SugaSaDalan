@@ -21,7 +21,7 @@ export interface Story {
   published_date: string;
 
   content: string;
-  excerpt: string;
+  excerpt: string | null;
 
   image?: string;
   image_path?: string;
