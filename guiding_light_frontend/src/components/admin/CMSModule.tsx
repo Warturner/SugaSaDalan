@@ -5,17 +5,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, X, Loader, ChevronLeft, ChevronRight, FileText, Upload, Trash2, Image as ImageIcon, Edit3, FileUp, Tag, Pin, Calendar, Search, ArrowUp, ArrowDown, ArrowUpDown, Paperclip, FileCheck } from 'lucide-react';
+import { Plus, X, Loader, ChevronLeft, ChevronRight, Upload, Edit3, FileUp, Pin, Search, ArrowUp, ArrowDown, ArrowUpDown, FileCheck } from 'lucide-react';
 import * as mammoth from 'mammoth';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import TextAlign from '@tiptap/extension-text-align';
-import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link';
-import type { Story, StoryCategory, StoryAttachment } from '../../types';
-import { getStories, getCategories, getStoryAttachments, deleteStory, deleteAttachment, createCategory, saveStory, uploadInlineImage } from '../../services/storyService';
-import StoryEditorToolbar from './cms/StoryEditorToolbar';
+import type { Story, StoryCategory } from '../../types';
+import { getStories, getCategories, deleteStory, uploadInlineImage } from '../../services/storyService';
 import StoryPreviewPanel from './cms/StoryPreviewPanel';
 import StoryEditorPanel from './cms/StoryEditorPanel';
 
@@ -491,28 +484,3 @@ export default function CMSModule() {
     </div>
   );
 }
-
-// ==========================================
-// EDITOR PANEL
-// ==========================================
-const editorExtensions = [
-  StarterKit,
-  Underline,
-  TextAlign.configure({ types: ['heading', 'paragraph'] }),
-  Image,
-  Link.configure({ openOnClick: false }),
-];
-
-interface StoryEditorPanelProps {
-  story: Story | null;
-  importedContent: string | null;
-  initialPdf: File | null;
-  isOpen: boolean;
-  categories: StoryCategory[];
-  onCategoryCreated: (
-    category: StoryCategory
-  ) => void;
-  onClose: (
-    didUpdate: boolean
-  ) => void;
-} 
