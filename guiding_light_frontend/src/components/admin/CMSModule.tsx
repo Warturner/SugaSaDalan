@@ -13,38 +13,9 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
+import type { Story, StoryCategory, StoryEditHistory, StoryAttachment } from '../../types';
+import { getStories, getCategories, getStoryHistory, getStoryAttachments } from '../../services/storyService';
 
-interface Category {
-  id: number;
-  name: string;
-}
-
-interface Story {
-  post_id: number;
-  title: string;
-  author: string;
-  content_type: 'article' | 'publication';
-  published_date: string;
-  content: string;
-  excerpt: string;
-  image?: string;
-  category_id?: number;
-  category_name?: string;
-  is_pinned?: number;
-  pin_until?: string | null;
-}
-
-interface EditHistory {
-  edit_timestamp: string;
-  username: string;
-  changes_made: string;
-}
-
-interface Attachment {
-  id: number;
-  file_name: string;
-  file_url: string;
-}
 
 const STORIES_PER_PAGE = 9;
 
@@ -118,7 +89,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
 
 export default function CMSModule() {
   const [stories, setStories] = useState<Story[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<StoryCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -142,13 +113,19 @@ export default function CMSModule() {
 
   const fetchStories = async () => {
     setIsLoading(true);
+    setError(null);
+
     try {
-      const response = await fetch('/guiding_light_backend/get_stories.php')
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
+      const data = await getStories();
       setStories(data);
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch stories.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to fetch stories.'
+      );
+
     } finally {
       setIsLoading(false);
     }
@@ -156,11 +133,14 @@ export default function CMSModule() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/guiding_light_backend/get_categories.php');
-      const data = await response.json();
-      if (!data.error) setCategories(data);
+      const data = await getCategories();
+      setCategories(data);
+
     } catch (err) {
-      console.error("Failed to fetch categories", err);
+      console.error(
+        'Failed to fetch categories:',
+        err
+      );
     }
   };
 
@@ -549,7 +529,7 @@ export default function CMSModule() {
 // ==========================================
 function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | null, isOpen: boolean, onClose: () => void, onEdit: () => void }) {
   const [activeTab, setActiveTab] = useState<'preview' | 'history'>('preview');
-  const [history, setHistory] = useState<EditHistory[]>([]);
+  const [history, setHistory] = useState<StoryEditHistory[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   useEffect(() => {
@@ -557,9 +537,10 @@ function StoryPreviewPanel({ story, isOpen, onClose, onEdit }: { story: Story | 
       const fetchHistory = async () => {
         setIsLoadingHistory(true);
         try {
-          const response = await fetch(`/guiding_light_backend/get_story_history.php?post_id=${story.post_id}`);
-          const data = await response.json();
-          if (data.error) throw new Error(data.error);
+          const data =
+            await getStoryHistory(
+              story.post_id
+            );
           setHistory(data);
         } catch (error) {
           console.error("Failed to fetch history:", error);
@@ -677,7 +658,7 @@ const editorExtensions = [
   Link.configure({ openOnClick: false }),
 ];
 
-function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categories, onClose }: { story: Story | null, importedContent: string | null, initialPdf: File | null, isOpen: boolean, categories: Category[], onClose: (didUpdate: boolean) => void }) {
+function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categories, onClose }: { story: Story | null, importedContent: string | null, initialPdf: File | null, isOpen: boolean, categories: StoryCategory[], onClose: (didUpdate: boolean) => void }) {
   const [contentType, setContentType] = useState<'article' | 'publication'>('article');
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
@@ -696,7 +677,7 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
   const [isRemovingImage, setIsRemovingImage] = useState(false);
 
   // PDF Attachment States
-  const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<StoryAttachment[]>([]);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
 
@@ -756,10 +737,18 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
       setHasUnsavedChanges(false);
 
       if (story) {
-        fetch(`/guiding_light_backend/get_story_attachments.php?post_id=${story.post_id}`)
-          .then(res => res.json())
-          .then(data => { if (!data.error) setExistingAttachments(data); })
-          .catch(err => console.error("Failed to load attachments:", err));
+        getStoryAttachments(
+          story.post_id
+        )
+          .then(data => {
+            setExistingAttachments(data);
+          })
+          .catch(err => {
+            console.error(
+              'Failed to load attachments:',
+              err
+            );
+          });
 
         let parsed = '';
         try { parsed = story.content ? JSON.parse(story.content) : ''; }
