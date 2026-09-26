@@ -14,7 +14,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import type { Story, StoryCategory, StoryEditHistory, StoryAttachment } from '../../types';
-import { getStories, getCategories, getStoryHistory, getStoryAttachments } from '../../services/storyService';
+import { getStories, getCategories, getStoryHistory, getStoryAttachments, deleteStory, deleteAttachment, createCategory, saveStory, uploadInlineImage } from '../../services/storyService';
 
 
 const STORIES_PER_PAGE = 9;
@@ -36,28 +36,36 @@ const MenuBar = ({ editor }: { editor: any }) => {
     if (!file) return;
 
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('image', file);
-
     try {
-      const response = await fetch('/guiding_light_backend/upload_inline_image.php', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
-      const data = await response.json();
+      const data =
+        await uploadInlineImage(file);
 
-      if (data.success) {
-        editor.chain().focus().setImage({ src: data.url }).run();
-      } else {
-        alert(data.error || 'Failed to upload image.');
-      }
+      editor
+        .chain()
+        .focus()
+        .setImage({
+          src: data.url
+        })
+        .run();
+
     } catch (error) {
-      console.error("Image upload failed:", error);
-      alert('Network error while uploading image.');
+      console.error(
+        'Image upload failed:',
+        error
+      );
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Network error while uploading image.'
+      );
+
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -173,21 +181,29 @@ export default function CMSModule() {
     }
   };
 
-  const handleDelete = async (story: Story) => {
-    const isConfirmed = window.confirm(`Are you sure you want to permanently delete "${story.title}"? This action cannot be undone.`);
+  const handleDelete = async (
+    story: Story
+  ) => {
+    const isConfirmed =
+      window.confirm(
+        `Are you sure you want to permanently delete "${story.title}"? This action cannot be undone.`
+      );
+
     if (!isConfirmed) return;
+
     try {
-      const response = await fetch('/guiding_light_backend/delete_story.php', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ post_id: story.post_id })
-      });
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-      fetchStories();
+      await deleteStory(
+        story.post_id
+      );
+
+      await fetchStories();
+
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete story.');
+      alert(
+        err instanceof Error
+          ? err.message
+          : 'Failed to delete story.'
+      );
     }
   };
 
@@ -252,8 +268,12 @@ export default function CMSModule() {
                 }
                 const blob = new Blob([ab], { type: image.contentType });
                 const formData = new FormData();
-                const ext = image.contentType.split('/')[1] || 'png';
-                formData.append('image', blob, `imported-docx-img-${Date.now()}.${ext}`);
+
+                formData.append(
+                  'image',
+                  blob,
+                  `imported-docx-img-${Date.now()}.${ext}`
+                );
 
                 try {
                   const response = await fetch('/guiding_light_backend/upload_inline_image.php', {
@@ -810,54 +830,81 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
     setHasUnsavedChanges(true); // Flag changes
   };
 
-  const handleDeleteExistingAttachment = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this attachment permanently?")) return;
+  const handleDeleteExistingAttachment =
+    async (id: number) => {
 
-    try {
-      const response = await fetch('/guiding_light_backend/delete_attachment.php', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-      });
-      const data = await response.json();
-      if (data.success) {
-        setExistingAttachments(prev => prev.filter(att => att.id !== id));
-        setHasUnsavedChanges(true); // Flag changes
-      } else {
-        alert(data.error);
+      if (
+        !window.confirm(
+          'Are you sure you want to delete this attachment permanently?'
+        )
+      ) {
+        return;
       }
-    } catch (err) {
-      alert("Failed to delete attachment.");
-    }
-  };
 
-  const handleCreateNewCategory = async () => {
-    if (!newCategoryName.trim()) return;
-    setIsSavingCategory(true);
-    try {
-      const response = await fetch('/guiding_light_backend/create_category.php', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newCategoryName })
-      });
-      const data = await response.json();
-      if (data.success) {
-        categories.push({ id: data.id, name: data.name });
-        setCategoryId(data.id.toString());
+      try {
+        await deleteAttachment(id);
+
+        setExistingAttachments(
+          prev =>
+            prev.filter(
+              att => att.id !== id
+            )
+        );
+
+        setHasUnsavedChanges(true);
+
+      } catch (err) {
+        alert(
+          err instanceof Error
+            ? err.message
+            : 'Failed to delete attachment.'
+        );
+      }
+    };
+
+  const handleCreateNewCategory =
+    async () => {
+
+      const trimmedName =
+        newCategoryName.trim();
+
+      if (!trimmedName) return;
+
+      setIsSavingCategory(true);
+
+      try {
+        const data =
+          await createCategory(
+            trimmedName
+          );
+
+        setCategories(prev => [
+          ...prev,
+          {
+            id: data.id,
+            name: data.name
+          }
+        ]);
+
+        setCategoryId(
+          data.id.toString()
+        );
+
         setIsCreatingCategory(false);
         setNewCategoryName('');
-        setHasUnsavedChanges(true); // Flag changes
-      } else {
-        alert(data.error);
+        setHasUnsavedChanges(true);
+
+      } catch (err) {
+        alert(
+          err instanceof Error
+            ? err.message
+            : 'Failed to create category.'
+        );
+
+      } finally {
+        setIsSavingCategory(false);
       }
-    } catch (err) {
-      alert("Failed to create category");
-    } finally {
-      setIsSavingCategory(false);
-    }
-  };
+    };
 
   const handleSave = async () => {
     const hasTextContent = editor?.getText().trim().length !== 0;
@@ -912,7 +959,24 @@ function StoryEditorPanel({ story, importedContent, initialPdf, isOpen, categori
       });
     }
 
-    const endpoint = story ? 'update_story.php' : 'create_story.php';
+    try {
+      await saveStory(
+        formData,
+        Boolean(story)
+      );
+
+      onClose(true);
+
+    } catch (err) {
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to save story.'
+      );
+
+    } finally {
+      setIsSaving(false);
+    }
 
     try {
       const response = await fetch(`/guiding_light_backend/${endpoint}`, {

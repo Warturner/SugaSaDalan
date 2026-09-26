@@ -8,6 +8,61 @@ import {
 
 import { apiFetch } from './api';
 
+export async function createCategory(
+  name: string
+) {
+  const data = await apiFetch<{
+    success: boolean;
+    id: string | number;
+    name: string;
+  }>(
+    'create_category.php',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name })
+    }
+  );
+
+  return {
+    ...data,
+    id: Number(data.id)
+  };
+}
+
+export function uploadInlineImage(
+  file: Blob,
+  fileName?: string
+) {
+  const formData = new FormData();
+
+  if (fileName) {
+    formData.append(
+      'image',
+      file,
+      fileName
+    );
+  } else {
+    formData.append(
+      'image',
+      file
+    );
+  }
+
+  return apiFetch<{
+    success: boolean;
+    url: string;
+  }>(
+    'upload_inline_image.php',
+    {
+      method: 'POST',
+      body: formData
+    }
+  );
+}
+
 export function getStories() {
   return apiFetch<Story[]>(
     'get_stories.php'
