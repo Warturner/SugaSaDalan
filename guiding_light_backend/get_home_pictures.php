@@ -1,7 +1,6 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+require_once 'cors.php';
+
 header("Content-Type: application/json; charset=UTF-8");
 
 // Point directly to the media folder inside htdocs

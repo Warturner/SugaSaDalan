@@ -7,11 +7,6 @@ header("Content-Type: application/json; charset=UTF-8");
 
 $currentUser = requireAdmin();
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
 

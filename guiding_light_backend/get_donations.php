@@ -6,9 +6,6 @@ $currentUser = requireAdmin();
 
 header("Content-Type: application/json; charset=UTF-8");
 
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    exit(0);
-}
 
 try {
     // FIXED: Added payment_method to the SELECT query!
