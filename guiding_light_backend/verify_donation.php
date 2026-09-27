@@ -74,10 +74,16 @@ try {
     
     $stmt = $conn->prepare("SELECT donation_id FROM donations WHERE reference_number = ?");
     $stmt->execute([$session_id]);
-    if ($stmt->rowCount() > 0) {
-        echo json_encode(['success' => true]); 
-        exit;
-    }
+if ($stmt->fetch()) {
+
+    $conn->rollBack();
+
+    echo json_encode([
+        'success' => true
+    ]);
+
+    exit;
+}
 
     $billing = $payment_data['attributes']['billing'] ?? [];
     $donor_name = $billing['name'] ?? 'Anonymous Donor';
@@ -94,7 +100,16 @@ try {
     echo json_encode(['success' => true]);
 
 } catch (PDOException $e) {
-    $conn->rollBack();
-    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+
+    if ($conn->inTransaction()) {
+        $conn->rollBack();
+    }
+
+    http_response_code(500);
+
+    echo json_encode([
+        'error' =>
+            'Failed to record donation.'
+    ]);
 }
 ?>
