@@ -7,7 +7,6 @@ header(
 );
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-
     http_response_code(405);
 
     echo json_encode([
@@ -17,62 +16,69 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-$postId = filter_var(
-    $_GET['post_id'] ?? null,
-    FILTER_VALIDATE_INT
-);
-
-if (!$postId || $postId <= 0) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        'error' =>
-            'A valid post ID is required.'
-    ]);
-
-    exit;
-}
-
 try {
 
     $stmt = $conn->prepare(
         "SELECT
-            id,
-            post_id,
-            file_name,
-            file_path,
-            file_type,
-            file_size,
-            uploaded_at
-         FROM story_attachments
-         WHERE post_id = ?
-         ORDER BY uploaded_at ASC"
+            s.post_id,
+            s.title,
+            s.content_type,
+            s.content,
+            s.excerpt,
+            s.image_path,
+            s.published_date,
+            s.category_id,
+            s.is_pinned,
+            s.pin_until,
+            c.name AS category_name,
+            u.username AS author,
+
+            CASE
+                WHEN
+                    s.is_pinned = 1
+                    AND (
+                        s.pin_until IS NULL
+                        OR s.pin_until > NOW()
+                    )
+                THEN 1
+                ELSE 0
+            END AS active_pin
+
+         FROM stories s
+
+         LEFT JOIN users u
+            ON s.author_id = u.user_id
+
+         LEFT JOIN story_categories c
+            ON s.category_id = c.id
+
+         ORDER BY
+            active_pin DESC,
+            s.published_date DESC"
     );
 
-    $stmt->execute([
-        $postId
-    ]);
+    $stmt->execute();
 
-    $attachments =
-        $stmt->fetchAll(
-            PDO::FETCH_ASSOC
-        );
+    $stories = $stmt->fetchAll();
 
-    foreach (
-        $attachments
-        as &$attachment
-    ) {
+    foreach ($stories as &$story) {
 
-        $attachment['file_url'] =
-            '/guiding_light_backend/' .
-            $attachment['file_path'];
+        if (!empty($story['image_path'])) {
+
+            $story['image'] =
+                '/guiding_light_backend/' .
+                $story['image_path'];
+
+        } else {
+
+            $story['image'] = null;
+        }
     }
 
-    unset($attachment);
+    unset($story);
 
     echo json_encode(
-        $attachments,
+        $stories,
         JSON_INVALID_UTF8_SUBSTITUTE
     );
 
@@ -82,6 +88,6 @@ try {
 
     echo json_encode([
         'error' =>
-            'Failed to load story attachments.'
+            'Failed to load stories.'
     ]);
 }
