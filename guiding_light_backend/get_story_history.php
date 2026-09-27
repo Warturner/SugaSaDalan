@@ -1,7 +1,13 @@
 <?php
+require 'auth.php';
 require 'db_connect.php';
 
 header("Content-Type: application/json; charset=UTF-8");
+
+$currentUser = requireRole([
+    'admin',
+    'media'
+]);
 
 $postId = isset($_GET['post_id']) ? (int)$_GET['post_id'] : 0;
 

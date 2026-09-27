@@ -7,6 +7,11 @@ header(
     "Content-Type: application/json; charset=UTF-8"
 );
 
+$currentUser = requireRole([
+    'admin',
+    'media'
+]);
+
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
     http_response_code(405);
