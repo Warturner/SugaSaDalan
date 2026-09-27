@@ -1,15 +1,7 @@
 <?php
 require 'db_connect.php';
 
-// Set headers for CORS and content type
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    exit(0);
-}
 
 $postId = isset($_GET['post_id']) ? (int)$_GET['post_id'] : 0;
 

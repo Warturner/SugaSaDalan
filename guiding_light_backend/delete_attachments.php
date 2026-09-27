@@ -6,8 +6,6 @@ $currentUser = requireRole(['admin', 'media']);
 
 header("Content-Type: application/json; charset=UTF-8");
 
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') { exit(0); }
-
 $data = json_decode(file_get_contents("php://input"), true);
 $id = $data['id'] ?? 0;
 
