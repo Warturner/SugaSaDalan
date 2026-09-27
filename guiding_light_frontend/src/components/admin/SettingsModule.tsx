@@ -16,10 +16,10 @@ export default function SettingsModule({ user, onUpdateUser }: SettingsProps) {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  
+
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -45,8 +45,8 @@ export default function SettingsModule({ user, onUpdateUser }: SettingsProps) {
       const response = await fetch('/guiding_light_backend/update_profile.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          user_id: user?.id,
           current_password: currentPassword,
           new_username: username,
           new_password: newPassword
@@ -60,7 +60,7 @@ export default function SettingsModule({ user, onUpdateUser }: SettingsProps) {
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
-        
+
         // Update the global state so the header instantly reflects the new username
         if (user && data.new_username !== user.username) {
           onUpdateUser({ ...user, username: data.new_username });
@@ -82,20 +82,20 @@ export default function SettingsModule({ user, onUpdateUser }: SettingsProps) {
         <p className="text-stone-500">Update your personal credentials and manage your account security.</p>
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-[32px] border border-stone-100 shadow-sm overflow-hidden p-8 md:p-12"
       >
         <form onSubmit={handleSubmit} className="space-y-8">
-          
+
           {/* Account Info Section */}
           <div>
             <h3 className="text-lg font-bold text-stone-800 flex items-center mb-6 pb-4 border-b border-stone-100">
               <User className="w-5 h-5 mr-3 text-[#4b5e52]" />
               Profile Information
             </h3>
-            
+
             <div className="mb-6">
               <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Account Role</label>
               <div className="inline-flex items-center px-4 py-2 bg-stone-50 rounded-xl border border-stone-100">
@@ -135,8 +135,8 @@ export default function SettingsModule({ user, onUpdateUser }: SettingsProps) {
                     className="w-full px-4 py-3 bg-amber-50 border border-amber-100 rounded-2xl focus:ring-2 focus:ring-amber-200 pr-12"
                     placeholder="Enter current password to authorize changes"
                   />
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setShowCurrent(!showCurrent)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
                   >
@@ -156,8 +156,8 @@ export default function SettingsModule({ user, onUpdateUser }: SettingsProps) {
                       className="w-full px-4 py-3 bg-stone-50 border-none rounded-2xl focus:ring-2 focus:ring-[#d4c5b3] pr-12"
                       placeholder="Leave blank to keep current"
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setShowNew(!showNew)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
                     >
