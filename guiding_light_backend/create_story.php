@@ -1,129 +1,279 @@
 <?php
+
 require 'db_connect.php';
 require 'auth.php';
+require_once 'story_uploads.php';
 
-header("Content-Type: application/json; charset=UTF-8");
+header(
+    "Content-Type: application/json; charset=UTF-8"
+);
 
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+
+    echo json_encode([
+        'error' => 'Method not allowed.'
+    ]);
+
+    exit;
 }
 
-$currentUser = requireRole(['admin', 'media']);
+$currentUser = requireRole([
+    'admin',
+    'media'
+]);
 
 try {
-    $title = $_POST['title'] ?? '';
-    $excerpt = $_POST['excerpt'] ?? '';
-    $content = $_POST['content'] ?? '';
-    $author_id = $currentUser['id'];
-    $content_type =
-    $_POST['content_type'] ?? 'article';
 
-if (
-    !in_array(
-        $content_type,
-        ['article', 'publication'],
-        true
-    )
-) {
-    $content_type = 'article';
-}
+    $title =
+        trim($_POST['title'] ?? '');
 
-    $category_id = !empty($_POST['category_id']) ? $_POST['category_id'] : null;
-    $is_pinned = ($_POST['is_pinned'] ?? 'false') === 'true' ? 1 : 0;
-    $pin_until = !empty($_POST['pin_until']) ? $_POST['pin_until'] : null;
+    $excerpt =
+        trim($_POST['excerpt'] ?? '');
 
-    if (empty($title) || empty($content)) {
-        echo json_encode(['error' => 'Title and content are required.']);
+    $content =
+        $_POST['content'] ?? '';
+
+    $contentType =
+        $_POST['content_type'] ?? 'article';
+
+    if (
+        !in_array(
+            $contentType,
+            ['article', 'publication'],
+            true
+        )
+    ) {
+        http_response_code(400);
+
+        echo json_encode([
+            'error' => 'Invalid content type.'
+        ]);
+
         exit;
     }
 
-    $image_path = null;
+    if (
+        $title === '' ||
+        $content === ''
+    ) {
+        http_response_code(400);
 
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        $upload_dir = 'uploads/stories/';
-        if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
-        
-        $file_extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $new_filename = uniqid('story_') . '.' . $file_extension;
-        $target_file = $upload_dir . $new_filename;
+        echo json_encode([
+            'error' =>
+                'Title and content are required.'
+        ]);
 
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
-            $image_path = $target_file;
+        exit;
+    }
+
+    if (mb_strlen($title) > 150) {
+        http_response_code(400);
+
+        echo json_encode([
+            'error' =>
+                'Title must not exceed 150 characters.'
+        ]);
+
+        exit;
+    }
+
+    if (mb_strlen($excerpt) > 255) {
+        http_response_code(400);
+
+        echo json_encode([
+            'error' =>
+                'Excerpt must not exceed 255 characters.'
+        ]);
+
+        exit;
+    }
+
+    $categoryId = null;
+
+    if (
+        isset($_POST['category_id']) &&
+        $_POST['category_id'] !== ''
+    ) {
+        $categoryId = filter_var(
+            $_POST['category_id'],
+            FILTER_VALIDATE_INT
+        );
+
+        if (!$categoryId) {
+            throw new InvalidArgumentException(
+                'Invalid category.'
+            );
         }
     }
 
-    $sql = "INSERT INTO stories (
-        title,
-        content_type,
-        excerpt,
-        content,
-        author_id,
-        image_path,
-        category_id,
-        is_pinned,
-        pin_until
-    )
-    VALUES (
-        :title,
-        :content_type,
-        :excerpt,
-        :content,
-        :author_id,
-        :image_path,
-        :category_id,
-        :is_pinned,
-        :pin_until
-    )
-";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([
-    ':title' => $title,
-    ':content_type' => $content_type,
-    ':excerpt' => $excerpt,
-    ':content' => $content,
-    ':author_id' => $author_id,
-    ':image_path' => $image_path,
-    ':category_id' => $category_id,
-    ':is_pinned' => $is_pinned,
-    ':pin_until' => $pin_until
-]);
-    
-    $post_id = $conn->lastInsertId();
-    
-// Handle PDF attachments
-    if (isset($_FILES['attachments'])) {
-        $att_upload_dir = 'uploads/stories/attachments/';
-        if (!is_dir($att_upload_dir)) mkdir($att_upload_dir, 0777, true);
+    $isPinned =
+        ($_POST['is_pinned'] ?? 'false')
+        === 'true'
+            ? 1
+            : 0;
 
-        $total_files = count($_FILES['attachments']['name']);
-        for ($i = 0; $i < $total_files; $i++) {
-            if ($_FILES['attachments']['error'][$i] === UPLOAD_ERR_OK) {
-                $file_name = $_FILES['attachments']['name'][$i];
-                $tmp_name = $_FILES['attachments']['tmp_name'][$i];
-                $file_size = $_FILES['attachments']['size'][$i];
-                $file_type = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-                
-                // Security: Only allow safe document types
-                $allowed = ['pdf'];
-                if (in_array($file_type, $allowed)) {
-                    $new_filename = uniqid('doc_') . '_' . time() . '.' . $file_type;
-                    $target_path = $att_upload_dir . $new_filename;
-                    
-                    if (move_uploaded_file($tmp_name, $target_path)) {
-                        $att_sql = "INSERT INTO story_attachments (post_id, file_name, file_path, file_type, file_size) VALUES (?, ?, ?, ?, ?)";
-                        $att_stmt = $conn->prepare($att_sql);
-                        $att_stmt->execute([$post_id, $file_name, $target_path, $file_type, $file_size]);
-                    }
-                }
+    $pinUntil =
+        !empty($_POST['pin_until'])
+            ? $_POST['pin_until']
+            : null;
+
+    /*
+     * Validate attachments BEFORE creating
+     * the database record.
+     */
+    $attachmentFiles = [];
+
+    if (
+        isset($_FILES['attachments']) &&
+        is_array(
+            $_FILES['attachments']['name']
+        )
+    ) {
+        $count =
+            count(
+                $_FILES['attachments']['name']
+            );
+
+        for (
+            $i = 0;
+            $i < $count;
+            $i++
+        ) {
+            $file =
+                uploadedFileAt(
+                    $_FILES['attachments'],
+                    $i
+                );
+
+            if (
+                $file['error']
+                === UPLOAD_ERR_NO_FILE
+            ) {
+                continue;
             }
+
+            validateStoryPdf($file);
+
+            $attachmentFiles[] =
+                $file;
         }
     }
 
-    echo json_encode(['success' => true, 'post_id' => $post_id]);
+    if (
+        $contentType === 'publication' &&
+        count($attachmentFiles) === 0
+    ) {
+        throw new InvalidArgumentException(
+            'A publication must have a PDF attachment.'
+        );
+    }
 
-} catch (PDOException $e) {
+    $imagePath = null;
+
+    if (isset($_FILES['image'])) {
+        $imagePath =
+            saveStoryCoverImage(
+                $_FILES['image']
+            );
+    }
+
+    $stmt = $conn->prepare(
+        "INSERT INTO stories (
+            title,
+            content_type,
+            excerpt,
+            content,
+            author_id,
+            image_path,
+            category_id,
+            is_pinned,
+            pin_until
+        )
+        VALUES (
+            :title,
+            :content_type,
+            :excerpt,
+            :content,
+            :author_id,
+            :image_path,
+            :category_id,
+            :is_pinned,
+            :pin_until
+        )"
+    );
+
+    $stmt->execute([
+        ':title' =>
+            $title,
+        ':content_type' =>
+            $contentType,
+        ':excerpt' =>
+            $excerpt,
+        ':content' =>
+            $content,
+        ':author_id' =>
+            $currentUser['id'],
+        ':image_path' =>
+            $imagePath,
+        ':category_id' =>
+            $categoryId,
+        ':is_pinned' =>
+            $isPinned,
+        ':pin_until' =>
+            $pinUntil
+    ]);
+
+    $postId =
+        (int) $conn->lastInsertId();
+
+    foreach (
+        $attachmentFiles
+        as $file
+    ) {
+        $attachment =
+            saveStoryPdf($file);
+
+        $attachmentStmt =
+            $conn->prepare(
+                "INSERT INTO story_attachments (
+                    post_id,
+                    file_name,
+                    file_path,
+                    file_type,
+                    file_size
+                )
+                VALUES (?, ?, ?, ?, ?)"
+            );
+
+        $attachmentStmt->execute([
+            $postId,
+            $attachment['file_name'],
+            $attachment['file_path'],
+            $attachment['file_type'],
+            $attachment['file_size']
+        ]);
+    }
+
+    echo json_encode([
+        'success' => true,
+        'post_id' => $postId
+    ]);
+
+} catch (InvalidArgumentException $e) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        'error' => $e->getMessage()
+    ]);
+
+} catch (Throwable $e) {
+
     http_response_code(500);
-    echo json_encode(["error" => "Database error: " . $e->getMessage()]);
+
+    echo json_encode([
+        'error' =>
+            'Failed to create story.'
+    ]);
 }
-?>
