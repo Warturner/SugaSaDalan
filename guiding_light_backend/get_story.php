@@ -11,26 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
 
     echo json_encode([
-        'success' => false,
         'error' => 'Method not allowed.'
-    ]);
-
-    exit;
-}
-
-$postId = filter_var(
-    $_GET['id'] ?? null,
-    FILTER_VALIDATE_INT
-);
-
-if (!$postId || $postId <= 0) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'error' =>
-            'A valid story ID is required.'
     ]);
 
     exit;
@@ -40,89 +21,82 @@ try {
 
     $stmt = $conn->prepare(
         "SELECT
+            s.post_id,
             s.title,
             s.content_type,
             s.content,
+            s.excerpt,
             s.image_path,
             s.published_date,
-            u.username AS author
+            s.category_id,
+            s.is_pinned,
+            s.pin_until,
+            c.name AS category_name,
+            u.username AS author,
+
+            CASE
+                WHEN
+                    s.is_pinned = 1
+                    AND (
+                        s.pin_until IS NULL
+                        OR s.pin_until > NOW()
+                    )
+                THEN 1
+                ELSE 0
+            END AS active_pin
+
          FROM stories s
+
          LEFT JOIN users u
             ON s.author_id = u.user_id
-         WHERE s.post_id = :post_id
-         LIMIT 1"
+
+         LEFT JOIN story_categories c
+            ON s.category_id = c.id
+
+         ORDER BY
+            active_pin DESC,
+            s.published_date DESC"
     );
 
-    $stmt->execute([
-        ':post_id' => $postId
-    ]);
+    $stmt->execute();
 
-    $story =
-        $stmt->fetch(PDO::FETCH_ASSOC);
+    $stories =
+        $stmt->fetchAll();
 
-    if (!$story) {
-
-        http_response_code(404);
-
-        echo json_encode([
-            'success' => false,
-            'error' =>
-                'Story not found.'
-        ]);
-
-        exit;
-    }
-
-    $imageUrl = '';
-
-    if (
-        !empty(
-            $story['image_path']
-        )
+    foreach (
+        $stories
+        as &$story
     ) {
 
-        $imageUrl =
-            '/guiding_light_backend/' .
-            $story['image_path'];
+        if (
+            !empty(
+                $story['image_path']
+            )
+        ) {
+
+            $story['image'] =
+                '/guiding_light_backend/' .
+                $story['image_path'];
+
+        } else {
+
+            $story['image'] = null;
+        }
     }
 
-    echo json_encode([
-        'success' => true,
+    unset($story);
 
-        'story' => [
-            'title' =>
-                $story['title'],
-
-            'content_type' =>
-                $story['content_type'],
-
-            'content' =>
-                $story['content'],
-
-            'image' =>
-                $imageUrl,
-
-            'author' =>
-                $story['author']
-                ?: 'Admin',
-
-            'date' =>
-                date(
-                    'F j, Y',
-                    strtotime(
-                        $story['published_date']
-                    )
-                )
-        ]
-    ], JSON_INVALID_UTF8_SUBSTITUTE);
+    echo json_encode(
+        $stories,
+        JSON_INVALID_UTF8_SUBSTITUTE
+    );
 
 } catch (PDOException $e) {
 
     http_response_code(500);
 
     echo json_encode([
-        'success' => false,
         'error' =>
-            'Failed to load story.'
+            'Failed to load stories.'
     ]);
 }
