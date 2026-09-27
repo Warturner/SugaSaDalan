@@ -7,14 +7,31 @@ $password = "guidingL1ght26"; //
 
 try {
     // Create a new PDO connection
-    $conn = new PDO("mysql:host=$host;dbname=$db_name", $username, $password);
+    $conn = new PDO(
+    "mysql:host=$host;dbname=$db_name;charset=utf8mb4",
+    $username,
+    $password,
+    [
+        PDO::ATTR_ERRMODE =>
+            PDO::ERRMODE_EXCEPTION,
+
+        PDO::ATTR_DEFAULT_FETCH_MODE =>
+            PDO::FETCH_ASSOC,
+
+        PDO::ATTR_EMULATE_PREPARES =>
+            false
+    ]
+);
     
-    // Set the PDO error mode to exception so we can see any problems
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
 } 
 catch(PDOException $e) {
     // If the connection fails, return the error in JSON format
-    echo json_encode(["error" => "Connection failed: " . $e->getMessage()]);
+    http_response_code(500);
+
+    echo json_encode([
+        'error' => 'Database connection failed: ' . $e->getMessage()
+    ]);
     die();
 }
 ?>
