@@ -3,6 +3,17 @@ require_once 'cors.php';
 
 header("Content-Type: application/json; charset=UTF-8");
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+
+    http_response_code(405);
+
+    echo json_encode([
+        'error' => 'Method not allowed.'
+    ]);
+
+    exit;
+}
+
 $data = json_decode(file_get_contents("php://input"));
 $amount = (float)($data->amount ?? 0);
 $method_label = $data->payment_method ?? 'E-wallet';

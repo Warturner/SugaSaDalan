@@ -3,6 +3,17 @@ require_once 'cors.php';
 
 header("Content-Type: application/json; charset=UTF-8");
 
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+
+    http_response_code(405);
+
+    echo json_encode([
+        'error' => 'Method not allowed.'
+    ]);
+
+    exit;
+}
+
 // Point directly to the media folder inside htdocs
 $dir = $_SERVER['DOCUMENT_ROOT'] . '/media/Home_Pictures';
 $images = [];
