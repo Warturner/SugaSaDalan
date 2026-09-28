@@ -325,7 +325,29 @@ export default function DonationVerification({
     setDateTo(
       printDateTo
     );
+    const reportDonations =
+  successfulDonations.filter(
+    donation => {
 
+      const donationDate =
+        donation.transaction_date
+          ?.slice(0, 10);
+
+      return (
+        donationDate >= printDateFrom &&
+        donationDate <= printDateTo
+      );
+    }
+  );
+
+if (reportDonations.length === 0) {
+
+  setPrintDateError(
+    'No successful donations were found within the selected reporting period.'
+  );
+
+  return;
+}
     // Audit report should contain every
     // successful donation in the period,
     // not only the current search result.
@@ -349,114 +371,114 @@ export default function DonationVerification({
   };
 
   return (
-    
+
     <div className="donation-print-area space-y-8">
       {showPrintPrompt && (
 
-  <div className="donation-no-print fixed inset-0 z-[200] bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="donation-no-print fixed inset-0 z-[200] bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
 
-    <div className="bg-white w-full max-w-lg rounded-[32px] p-8 shadow-2xl">
+          <div className="bg-white w-full max-w-lg rounded-[32px] p-8 shadow-2xl">
 
-      <div className="mb-7">
+            <div className="mb-7">
 
-        <h3 className="text-2xl font-serif italic text-stone-800 mb-2">
-          Print Donation Report
-        </h3>
+              <h3 className="text-2xl font-serif italic text-stone-800 mb-2">
+                Print Donation Report
+              </h3>
 
-        <p className="text-sm text-stone-500">
-          Select the reporting period to include in the audit report.
-        </p>
+              <p className="text-sm text-stone-500">
+                Select the reporting period to include in the audit report.
+              </p>
 
-      </div>
+            </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-        <div>
+              <div>
 
-          <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">
-            Date From
-          </label>
+                <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">
+                  Date From
+                </label>
 
-          <input
-            type="date"
-            value={printDateFrom}
-            onChange={(e) => {
-              setPrintDateFrom(
-                e.target.value
-              );
+                <input
+                  type="date"
+                  value={printDateFrom}
+                  onChange={(e) => {
+                    setPrintDateFrom(
+                      e.target.value
+                    );
 
-              setPrintDateError(null);
-            }}
-            className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm"
-          />
+                    setPrintDateError(null);
+                  }}
+                  className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm"
+                />
 
-        </div>
+              </div>
 
-        <div>
+              <div>
 
-          <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">
-            Date To
-          </label>
+                <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">
+                  Date To
+                </label>
 
-          <input
-            type="date"
-            value={printDateTo}
-            onChange={(e) => {
-              setPrintDateTo(
-                e.target.value
-              );
+                <input
+                  type="date"
+                  value={printDateTo}
+                  onChange={(e) => {
+                    setPrintDateTo(
+                      e.target.value
+                    );
 
-              setPrintDateError(null);
-            }}
-            className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm"
-          />
+                    setPrintDateError(null);
+                  }}
+                  className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm"
+                />
 
-        </div>
+              </div>
 
-      </div>
+            </div>
 
-      {printDateError && (
+            {printDateError && (
 
-        <div className="mt-5 flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-xs font-medium">
+              <div className="mt-5 flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-xs font-medium">
 
-          <AlertTriangle className="w-4 h-4 shrink-0" />
+                <AlertTriangle className="w-4 h-4 shrink-0" />
 
-          {printDateError}
+                {printDateError}
+
+              </div>
+            )}
+
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-8">
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPrintPrompt(false);
+                  setPrintDateError(null);
+                }}
+                className="px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-stone-500 bg-stone-100 hover:bg-stone-200"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest bg-[#3a4740] text-[#d4c5b3] hover:bg-[#2c3630] flex items-center justify-center gap-2"
+              >
+
+                <Printer className="w-4 h-4" />
+
+                Print Report
+
+              </button>
+
+            </div>
+
+          </div>
 
         </div>
       )}
-
-      <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-8">
-
-        <button
-          type="button"
-          onClick={() => {
-            setShowPrintPrompt(false);
-            setPrintDateError(null);
-          }}
-          className="px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-stone-500 bg-stone-100 hover:bg-stone-200"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          onClick={handlePrint}
-          className="px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest bg-[#3a4740] text-[#d4c5b3] hover:bg-[#2c3630] flex items-center justify-center gap-2"
-        >
-
-          <Printer className="w-4 h-4" />
-
-          Print Report
-
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-)}
 
       {/* PRINT-ONLY REPORT HEADER */}
       <div className="donation-print-header">
@@ -584,7 +606,7 @@ export default function DonationVerification({
             }}
             disabled={
               isLoading ||
-              filteredDonations.length === 0
+              successfulDonations.length === 0
             }
             className="px-5 py-3 bg-[#3a4740] text-[#d4c5b3] rounded-full hover:bg-[#2c3630] transition-colors shadow-sm flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed"
           >
@@ -642,10 +664,6 @@ export default function DonationVerification({
                 }
                 className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm"
               />
-
-            </div>
-
-            <div>
 
             </div>
 
