@@ -80,7 +80,7 @@ export default function ContactUs() {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Message Us</p>
-                    <p className="text-lg font-bold text-stone-800">+63 917 123 4567</p>
+                    <p className="text-lg font-bold text-stone-800">+63 953 629 317</p>
                   </div>
                 </div>
 
@@ -90,7 +90,7 @@ export default function ContactUs() {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Email Us</p>
-                    <p className="text-lg font-bold text-stone-800">support@streetlight.org</p>
+                    <p className="text-lg font-bold text-stone-800">streetlight.sugasadalan.ngo@gmail.com</p>
                   </div>
                 </div>
 
