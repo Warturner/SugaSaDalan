@@ -238,12 +238,12 @@ export default function DonationVerification({
           statusFilter === 'all' ||
           (
             statusFilter ===
-              'successful' &&
+            'successful' &&
             Number(donation.status) === 2
           ) ||
           (
             statusFilter ===
-              'pending' &&
+            'pending' &&
             Number(donation.status) !== 2
           );
 
@@ -252,7 +252,7 @@ export default function DonationVerification({
           Number(
             donation.payment_method
           ) ===
-            Number(paymentFilter);
+          Number(paymentFilter);
 
         return (
           matchesSearch &&
@@ -485,12 +485,10 @@ export default function DonationVerification({
 
               <select
                 value={statusFilter}
-                onChange={
-                  e =>
-                    setStatusFilter(
-                      e.target.value
-                        as StatusFilter
-                    )
+                onChange={(e) =>
+                  setStatusFilter(
+                    e.target.value as StatusFilter
+                  )
                 }
                 className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm"
               >
@@ -515,12 +513,10 @@ export default function DonationVerification({
 
               <select
                 value={paymentFilter}
-                onChange={
-                  e =>
-                    setPaymentFilter(
-                      e.target.value
-                        as PaymentFilter
-                    )
+                onChange={(e) =>
+                  setPaymentFilter(
+                    e.target.value as PaymentFilter
+                  )
                 }
                 className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm"
               >
