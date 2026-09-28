@@ -93,8 +93,14 @@ try {
     $_SESSION['role'] =
         $user['role'];
 
+    $now =
+    time();
+
     $_SESSION['logged_in_at'] =
-        time();
+    $now;
+
+    $_SESSION['last_activity'] =
+    $now;
 
     // RETURN SAFE USER INFORMATION
 

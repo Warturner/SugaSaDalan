@@ -55,8 +55,7 @@ try {
     // Account may have been deleted
 if (!$dbUser) {
 
-    session_unset();
-    session_destroy();
+    destroyAuthSession();
 
     echo json_encode([
         'success' => true,
