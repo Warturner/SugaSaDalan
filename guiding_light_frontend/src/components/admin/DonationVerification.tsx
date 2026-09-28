@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   Loader,
   AlertTriangle,
-  Clock,
   Printer
 } from 'lucide-react';
 
@@ -36,11 +35,6 @@ interface Donation {
   payment_method: number;
   status: number;
 }
-
-type StatusFilter =
-  | 'all'
-  | 'successful'
-  | 'pending';
 
 type PaymentFilter =
   | 'all'
@@ -72,9 +66,6 @@ export default function DonationVerification({
 
   const [dateTo, setDateTo] =
     useState('');
-
-  const [statusFilter, setStatusFilter] =
-    useState<StatusFilter>('all');
 
   const [paymentFilter, setPaymentFilter] =
     useState<PaymentFilter>('all');
@@ -234,19 +225,6 @@ export default function DonationVerification({
           !dateTo ||
           donationDate <= dateTo;
 
-        const matchesStatus =
-          statusFilter === 'all' ||
-          (
-            statusFilter ===
-            'successful' &&
-            Number(donation.status) === 2
-          ) ||
-          (
-            statusFilter ===
-            'pending' &&
-            Number(donation.status) !== 2
-          );
-
         const matchesPayment =
           paymentFilter === 'all' ||
           Number(
@@ -258,7 +236,6 @@ export default function DonationVerification({
           matchesSearch &&
           matchesDateFrom &&
           matchesDateTo &&
-          matchesStatus &&
           matchesPayment
         );
       }
@@ -272,21 +249,10 @@ export default function DonationVerification({
       0
     );
 
-  const successfulCount =
-    filteredDonations.filter(
-      donation =>
-        Number(donation.status) === 2
-    ).length;
-
-  const pendingCount =
-    filteredDonations.length -
-    successfulCount;
-
   const activeFilterCount =
     [
       dateFrom,
       dateTo,
-      statusFilter !== 'all',
       paymentFilter !== 'all'
     ].filter(Boolean).length;
 
@@ -294,7 +260,6 @@ export default function DonationVerification({
 
     setDateFrom('');
     setDateTo('');
-    setStatusFilter('all');
     setPaymentFilter('all');
     setSearchQuery('');
   };
@@ -440,7 +405,7 @@ export default function DonationVerification({
       {showFilters && (
         <div className="donation-no-print bg-white border border-stone-100 rounded-[28px] p-6 shadow-sm">
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
 
             <div>
               <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">
@@ -553,7 +518,7 @@ export default function DonationVerification({
       )}
 
       {/* AUDIT SUMMARY */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
         <div className="bg-white rounded-2xl border border-stone-100 p-5 shadow-sm">
           <p className="text-[9px] font-bold uppercase tracking-widest text-stone-400 mb-2">
@@ -571,238 +536,238 @@ export default function DonationVerification({
           </p>
 
           <p className="text-xl font-bold text-[#4b5e52]">
-            {formatCurrency(
-              totalAmount
-            )}
+            {formatCurrency(totalAmount)}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-stone-100 p-5 shadow-sm">
-          <p className="text-[9px] font-bold uppercase tracking-widest text-stone-400 mb-2">
-            Successful
-          </p>
-
-          <p className="text-2xl font-bold text-stone-800">
-            {successfulCount}
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-stone-100 p-5 shadow-sm">
-          <p className="text-[9px] font-bold uppercase tracking-widest text-stone-400 mb-2">
-            Pending
-          </p>
-
-          <p className="text-2xl font-bold text-stone-800">
-            {pendingCount}
-          </p>
-        </div>
       </div>
 
-      {/* DONATION TABLE */}
-      <div className="bg-white rounded-[40px] border border-stone-100 shadow-sm overflow-hidden p-4">
-
-        {error ? (
-
-          <div className="p-12 text-center text-red-500 flex flex-col items-center justify-center">
-
-            <AlertTriangle className="w-12 h-12 mb-4 opacity-50" />
-
-            <p className="font-bold uppercase tracking-widest">
-              {error}
-            </p>
-          </div>
-
-        ) : (
-
-          <div className="overflow-x-auto">
-
-            <table className="w-full text-left border-collapse min-w-[900px]">
-
-              <thead>
-
-                <tr className="border-b border-stone-100">
-
-                  <th className="px-6 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-[0.15em]">
-                    Date
-                  </th>
-
-                  <th className="px-6 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-[0.15em]">
-                    TXN ID
-                  </th>
-
-                  <th className="px-6 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-[0.15em]">
-                    Donor Profile
-                  </th>
-
-                  <th className="px-6 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-[0.15em] text-right">
-                    Amount
-                  </th>
-
-                  <th className="px-6 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-[0.15em]">
-                    Method
-                  </th>
-
-                  <th className="px-6 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-[0.15em]">
-                    Status
-                  </th>
-                </tr>
-
-              </thead>
-
-              <tbody className="divide-y divide-stone-50">
-
-                {isLoading ? (
-
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="text-center p-20"
-                    >
-                      <div className="flex flex-col items-center justify-center text-stone-400">
-
-                        <Loader className="w-8 h-8 animate-spin mb-4" />
-
-                        <span className="text-xs font-bold uppercase tracking-widest">
-                          Loading Records...
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-
-                ) : filteredDonations.length === 0 ? (
-
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="text-center p-20 text-stone-400 font-bold uppercase tracking-widest"
-                    >
-                      No donation records match the selected filters.
-                    </td>
-                  </tr>
-
-                ) : (
-
-                  filteredDonations.map(
-                    donation => (
-
-                      <tr
-                        key={
-                          donation.donation_id
-                        }
-                        className="hover:bg-stone-50/50 transition-colors"
-                      >
-
-                        <td className="px-6 py-5">
-
-                          <p className="text-xs font-bold text-stone-800 mb-1">
-                            {formatDate(
-                              donation.transaction_date
-                            )}
-                          </p>
-
-                          <p className="text-[10px] text-stone-400">
-                            {formatTime(
-                              donation.transaction_date
-                            )}
-                          </p>
-                        </td>
-
-                        <td className="px-6 py-5">
-
-                          <span className="text-[10px] font-mono font-bold text-stone-500">
-                            {
-                              donation.reference_number
-                            }
-                          </span>
-                        </td>
-
-                        <td className="px-6 py-5">
-
-                          <p className="text-xs font-bold text-stone-800 mb-1">
-                            {
-                              donation.donor_name
-                            }
-                          </p>
-
-                          <p className="text-[10px] text-stone-400">
-                            {
-                              donation.contact_email
-                            }
-                          </p>
-                        </td>
-
-                        <td className="px-6 py-5 text-sm font-bold text-[#4b5e52] text-right whitespace-nowrap">
-
-                          {formatCurrency(
-                            donation.amount
-                          )}
-                        </td>
-
-                        <td className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-stone-500">
-
-                          {getPaymentMethodName(
-                            donation.payment_method
-                          )}
-                        </td>
-
-                        <td className="px-6 py-5">
-
-                          {Number(
-                            donation.status
-                          ) === 2 ? (
-
-                            <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[9px] font-bold bg-[#3a4740]/10 text-[#3a4740] uppercase tracking-widest border border-[#3a4740]/20">
-
-                              <ShieldCheck className="w-3 h-3 mr-2" />
-
-                              Successful
-                            </span>
-
-                          ) : (
-
-                            <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[9px] font-bold bg-[#d4a373]/10 text-[#d4a373] uppercase tracking-widest border border-[#d4a373]/20">
-
-                              <Clock className="w-3 h-3 mr-2" />
-
-                              Pending
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  )
-                )}
-
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* PRINT FOOTER */}
-      <div className="donation-print-header mt-8 text-xs border-t border-stone-300 pt-4">
-
-        <p>
-          Total Transactions:{' '}
-          <strong>
-            {filteredDonations.length}
-          </strong>
+      <div className="bg-white rounded-2xl border border-stone-100 p-5 shadow-sm">
+        <p className="text-[9px] font-bold uppercase tracking-widest text-stone-400 mb-2">
+          Successful
         </p>
 
-        <p>
-          Total Donation Amount:{' '}
-          <strong>
-            {formatCurrency(
-              totalAmount
-            )}
-          </strong>
-        </p>
-
-        <p className="mt-4 text-stone-500">
-          Generated from the Guiding Light donation ledger for audit and reporting purposes.
+        <p className="text-2xl font-bold text-stone-800">
+          {successfulCount}
         </p>
       </div>
 
+      <div className="bg-white rounded-2xl border border-stone-100 p-5 shadow-sm">
+        <p className="text-[9px] font-bold uppercase tracking-widest text-stone-400 mb-2">
+          Pending
+        </p>
+
+        <p className="text-2xl font-bold text-stone-800">
+          {pendingCount}
+        </p>
+      </div>
     </div>
+
+      {/* DONATION TABLE */ }
+  <div className="bg-white rounded-[40px] border border-stone-100 shadow-sm overflow-hidden p-4">
+
+    {error ? (
+
+      <div className="p-12 text-center text-red-500 flex flex-col items-center justify-center">
+
+        <AlertTriangle className="w-12 h-12 mb-4 opacity-50" />
+
+        <p className="font-bold uppercase tracking-widest">
+          {error}
+        </p>
+      </div>
+
+    ) : (
+
+      <div className="overflow-x-auto">
+
+        <table className="w-full text-left border-collapse min-w-[900px]">
+
+          <thead>
+
+            <tr className="border-b border-stone-100">
+
+              <th className="px-6 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-[0.15em]">
+                Date
+              </th>
+
+              <th className="px-6 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-[0.15em]">
+                TXN ID
+              </th>
+
+              <th className="px-6 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-[0.15em]">
+                Donor Profile
+              </th>
+
+              <th className="px-6 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-[0.15em] text-right">
+                Amount
+              </th>
+
+              <th className="px-6 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-[0.15em]">
+                Method
+              </th>
+
+              <th className="px-6 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-[0.15em]">
+                Status
+              </th>
+            </tr>
+
+          </thead>
+
+          <tbody className="divide-y divide-stone-50">
+
+            {isLoading ? (
+
+              <tr>
+                <td
+                  colSpan={6}
+                  className="text-center p-20"
+                >
+                  <div className="flex flex-col items-center justify-center text-stone-400">
+
+                    <Loader className="w-8 h-8 animate-spin mb-4" />
+
+                    <span className="text-xs font-bold uppercase tracking-widest">
+                      Loading Records...
+                    </span>
+                  </div>
+                </td>
+              </tr>
+
+            ) : filteredDonations.length === 0 ? (
+
+              <tr>
+                <td
+                  colSpan={6}
+                  className="text-center p-20 text-stone-400 font-bold uppercase tracking-widest"
+                >
+                  No donation records match the selected filters.
+                </td>
+              </tr>
+
+            ) : (
+
+              filteredDonations.map(
+                donation => (
+
+                  <tr
+                    key={
+                      donation.donation_id
+                    }
+                    className="hover:bg-stone-50/50 transition-colors"
+                  >
+
+                    <td className="px-6 py-5">
+
+                      <p className="text-xs font-bold text-stone-800 mb-1">
+                        {formatDate(
+                          donation.transaction_date
+                        )}
+                      </p>
+
+                      <p className="text-[10px] text-stone-400">
+                        {formatTime(
+                          donation.transaction_date
+                        )}
+                      </p>
+                    </td>
+
+                    <td className="px-6 py-5">
+
+                      <span className="text-[10px] font-mono font-bold text-stone-500">
+                        {
+                          donation.reference_number
+                        }
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-5">
+
+                      <p className="text-xs font-bold text-stone-800 mb-1">
+                        {
+                          donation.donor_name
+                        }
+                      </p>
+
+                      <p className="text-[10px] text-stone-400">
+                        {
+                          donation.contact_email
+                        }
+                      </p>
+                    </td>
+
+                    <td className="px-6 py-5 text-sm font-bold text-[#4b5e52] text-right whitespace-nowrap">
+
+                      {formatCurrency(
+                        donation.amount
+                      )}
+                    </td>
+
+                    <td className="px-6 py-5 text-[10px] font-bold uppercase tracking-widest text-stone-500">
+
+                      {getPaymentMethodName(
+                        donation.payment_method
+                      )}
+                    </td>
+
+                    <td className="px-6 py-5">
+
+                      {Number(
+                        donation.status
+                      ) === 2 ? (
+
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[9px] font-bold bg-[#3a4740]/10 text-[#3a4740] uppercase tracking-widest border border-[#3a4740]/20">
+
+                          <ShieldCheck className="w-3 h-3 mr-2" />
+
+                          Successful
+                        </span>
+
+                      ) : (
+
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[9px] font-bold bg-[#d4a373]/10 text-[#d4a373] uppercase tracking-widest border border-[#d4a373]/20">
+
+                          <Clock className="w-3 h-3 mr-2" />
+
+                          Pending
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              )
+            )}
+
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+
+  {/* PRINT FOOTER */ }
+  <div className="donation-print-header mt-8 text-xs border-t border-stone-300 pt-4">
+
+    <p>
+      Total Transactions:{' '}
+      <strong>
+        {filteredDonations.length}
+      </strong>
+    </p>
+
+    <p>
+      Total Donation Amount:{' '}
+      <strong>
+        {formatCurrency(
+          totalAmount
+        )}
+      </strong>
+    </p>
+
+    <p className="mt-4 text-stone-500">
+      Generated from the Guiding Light donation ledger for audit and reporting purposes.
+    </p>
+  </div>
+
+    </div >
   );
 }
