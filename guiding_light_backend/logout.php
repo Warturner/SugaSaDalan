@@ -39,8 +39,6 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
-// DESTROY SERVER SESSION JUST TO BE SAFE HEHE
-
 session_destroy();
 
 

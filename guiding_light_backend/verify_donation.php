@@ -91,8 +91,6 @@ if ($stmt->fetch()) {
 
     $amount = ($result['data']['attributes']['line_items'][0]['amount'] ?? 0) / 100;
     
-    // Abstracted as E-Wallet/Card (3)
-    // 💡 NEW: Single streamlined INSERT statement for the merged table
     $stmt = $conn->prepare("INSERT INTO donations (donor_name, contact_email, amount, reference_number, payment_method, status) VALUES (?, ?, ?, ?, 3, 2)");
     $stmt->execute([$donor_name, $donor_email, $amount, $session_id]);
 

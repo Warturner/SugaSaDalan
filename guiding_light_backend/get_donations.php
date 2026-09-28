@@ -18,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 $currentUser = requireAdmin();
 
 try {
-    // FIXED: Added payment_method to the SELECT query!
     $stmt = $conn->query("
         SELECT donation_id, donor_name, contact_email, amount, reference_number, transaction_date, payment_method, status 
         FROM donations 
