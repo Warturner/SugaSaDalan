@@ -34,12 +34,6 @@ interface Donation {
   status: number;
 }
 
-type PaymentFilter =
-  | 'all'
-  | '1'
-  | '2'
-  | '3';
-
 export default function DonationVerification({
   currentUser
 }: DonationVerificationProps) {
@@ -68,7 +62,7 @@ export default function DonationVerification({
   const [
     paymentFilter,
     setPaymentFilter
-  ] = useState<PaymentFilter>('all');
+  ] = useState('all');
 
   const [
     reportGeneratedAt,
@@ -503,12 +497,8 @@ export default function DonationVerification({
 
               <select
                 value={paymentFilter}
-                onChange={
-                  e =>
-                    setPaymentFilter(
-                      e.target.value
-                        as PaymentFilter
-                    )
+                onChange={(e) =>
+                  setPaymentFilter(e.target.value)
                 }
                 className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm"
               >
