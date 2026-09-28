@@ -59,10 +59,17 @@ export default function DonationVerification({
   const [dateTo, setDateTo] =
     useState('');
 
-  const [
-    paymentFilter,
-    setPaymentFilter
-  ] = useState('all');
+  const [showPrintPrompt, setShowPrintPrompt] =
+    useState(false);
+
+  const [printDateFrom, setPrintDateFrom] =
+    useState('');
+
+  const [printDateTo, setPrintDateTo] =
+    useState('');
+
+  const [printDateError, setPrintDateError] =
+    useState<string | null>(null);
 
   const [
     reportGeneratedAt,
@@ -190,16 +197,15 @@ export default function DonationVerification({
     );
   };
 
-  const filteredDonations =
+  const successfulDonations =
     donations.filter(
-      donation => {
+      donation =>
+        Number(donation.status) === 2
+    );
 
-        // The current PayMongo flow only records
-        // successfully verified payments.
-        const isSuccessful =
-          Number(
-            donation.status
-          ) === 2;
+  const filteredDonations =
+    successfulDonations.filter(
+      donation => {
 
         const query =
           searchQuery
@@ -230,19 +236,10 @@ export default function DonationVerification({
           !dateTo ||
           donationDate <= dateTo;
 
-        const matchesPayment =
-          paymentFilter === 'all' ||
-          Number(
-            donation.payment_method
-          ) ===
-          Number(paymentFilter);
-
         return (
-          isSuccessful &&
           matchesSearch &&
           matchesDateFrom &&
-          matchesDateTo &&
-          matchesPayment
+          matchesDateTo
         );
       }
     );
@@ -262,15 +259,13 @@ export default function DonationVerification({
   const activeFilterCount =
     [
       dateFrom,
-      dateTo,
-      paymentFilter !== 'all'
+      dateTo
     ].filter(Boolean).length;
 
   const clearFilters = () => {
 
     setDateFrom('');
     setDateTo('');
-    setPaymentFilter('all');
     setSearchQuery('');
   };
 
@@ -299,20 +294,169 @@ export default function DonationVerification({
 
   const handlePrint = () => {
 
+    if (
+      !printDateFrom ||
+      !printDateTo
+    ) {
+
+      setPrintDateError(
+        'Please select both the start and end date.'
+      );
+
+      return;
+    }
+
+    if (
+      printDateFrom >
+      printDateTo
+    ) {
+
+      setPrintDateError(
+        'The start date cannot be later than the end date.'
+      );
+
+      return;
+    }
+
+    setDateFrom(
+      printDateFrom
+    );
+
+    setDateTo(
+      printDateTo
+    );
+
+    // Audit report should contain every
+    // successful donation in the period,
+    // not only the current search result.
+    setSearchQuery('');
+
     setReportGeneratedAt(
       new Date()
     );
 
+    setPrintDateError(null);
+    setShowPrintPrompt(false);
+
+    // Allow React to apply the selected
+    // reporting period before print preview.
     setTimeout(
       () => {
         window.print();
       },
-      0
+      100
     );
   };
 
   return (
+    
     <div className="donation-print-area space-y-8">
+      {showPrintPrompt && (
+
+  <div className="donation-no-print fixed inset-0 z-[200] bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+
+    <div className="bg-white w-full max-w-lg rounded-[32px] p-8 shadow-2xl">
+
+      <div className="mb-7">
+
+        <h3 className="text-2xl font-serif italic text-stone-800 mb-2">
+          Print Donation Report
+        </h3>
+
+        <p className="text-sm text-stone-500">
+          Select the reporting period to include in the audit report.
+        </p>
+
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+        <div>
+
+          <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">
+            Date From
+          </label>
+
+          <input
+            type="date"
+            value={printDateFrom}
+            onChange={(e) => {
+              setPrintDateFrom(
+                e.target.value
+              );
+
+              setPrintDateError(null);
+            }}
+            className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm"
+          />
+
+        </div>
+
+        <div>
+
+          <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">
+            Date To
+          </label>
+
+          <input
+            type="date"
+            value={printDateTo}
+            onChange={(e) => {
+              setPrintDateTo(
+                e.target.value
+              );
+
+              setPrintDateError(null);
+            }}
+            className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm"
+          />
+
+        </div>
+
+      </div>
+
+      {printDateError && (
+
+        <div className="mt-5 flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-xs font-medium">
+
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+
+          {printDateError}
+
+        </div>
+      )}
+
+      <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-8">
+
+        <button
+          type="button"
+          onClick={() => {
+            setShowPrintPrompt(false);
+            setPrintDateError(null);
+          }}
+          className="px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-stone-500 bg-stone-100 hover:bg-stone-200"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={handlePrint}
+          className="px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest bg-[#3a4740] text-[#d4c5b3] hover:bg-[#2c3630] flex items-center justify-center gap-2"
+        >
+
+          <Printer className="w-4 h-4" />
+
+          Print Report
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
 
       {/* PRINT-ONLY REPORT HEADER */}
       <div className="donation-print-header">
@@ -425,7 +569,19 @@ export default function DonationVerification({
 
           <button
             type="button"
-            onClick={handlePrint}
+            onClick={() => {
+
+              setPrintDateFrom(
+                dateFrom
+              );
+
+              setPrintDateTo(
+                dateTo
+              );
+
+              setPrintDateError(null);
+              setShowPrintPrompt(true);
+            }}
             disabled={
               isLoading ||
               filteredDonations.length === 0
@@ -447,7 +603,7 @@ export default function DonationVerification({
 
         <div className="donation-no-print bg-white border border-stone-100 rounded-[28px] p-6 shadow-sm">
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
             <div>
 
@@ -490,36 +646,6 @@ export default function DonationVerification({
             </div>
 
             <div>
-
-              <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">
-                Payment Method
-              </label>
-
-              <select
-                value={paymentFilter}
-                onChange={(e) =>
-                  setPaymentFilter(e.target.value)
-                }
-                className="w-full px-4 py-3 bg-stone-50 border border-stone-100 rounded-xl text-sm"
-              >
-
-                <option value="all">
-                  All Methods
-                </option>
-
-                <option value="1">
-                  Bank Card
-                </option>
-
-                <option value="2">
-                  Manual Bank
-                </option>
-
-                <option value="3">
-                  E-Wallet / Card
-                </option>
-
-              </select>
 
             </div>
 
