@@ -318,36 +318,38 @@ export default function DonationVerification({
       return;
     }
 
-    setDateFrom(
-      printDateFrom
-    );
 
-    setDateTo(
-      printDateTo
-    );
     const reportDonations =
-  successfulDonations.filter(
-    donation => {
+      successfulDonations.filter(
+        donation => {
 
-      const donationDate =
-        donation.transaction_date
-          ?.slice(0, 10);
+          const donationDate =
+            donation.transaction_date
+              ?.slice(0, 10);
 
-      return (
-        donationDate >= printDateFrom &&
-        donationDate <= printDateTo
+          return (
+            donationDate >= printDateFrom &&
+            donationDate <= printDateTo
+          );
+        }
       );
+
+    if (reportDonations.length === 0) {
+
+      setDateFrom(
+        printDateFrom
+      );
+
+      setDateTo(
+        printDateTo
+      );
+
+      setPrintDateError(
+        'No successful donations were found within the selected reporting period.'
+      );
+
+      return;
     }
-  );
-
-if (reportDonations.length === 0) {
-
-  setPrintDateError(
-    'No successful donations were found within the selected reporting period.'
-  );
-
-  return;
-}
     // Audit report should contain every
     // successful donation in the period,
     // not only the current search result.
