@@ -29,10 +29,24 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
     <nav className="fixed top-0 left-0 right-0 bg-white border-b border-stone-200 z-50 h-20 flex items-center">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex justify-between h-full items-center">
-          <div className="flex items-center cursor-pointer" onClick={() => setActivePage('Home')}>
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => setActivePage('Home')}
+          >
+            <img
+              src="media/logo/logo.png"
+              alt="https://ibb.co/xqwRNbSz"
+              className="w-11 h-11 object-contain"
+            />
+
             <div className="flex flex-col">
-              <h1 className="text-stone-800 font-serif italic text-2xl leading-none">Streetlight</h1>
-              <p className="text-stone-400 text-[10px] uppercase tracking-widest font-semibold mt-1">Suga sa Dalan Org.</p>
+              <h1 className="text-stone-800 font-serif italic text-2xl leading-none">
+                Streetlight
+              </h1>
+
+              <p className="text-stone-400 text-[10px] uppercase tracking-widest font-semibold mt-1">
+                Suga sa Dalan Org.
+              </p>
             </div>
           </div>
 
@@ -42,9 +56,8 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
               <button
                 key={item.id}
                 onClick={() => setActivePage(item.id)}
-                className={`relative h-full text-xs font-bold uppercase tracking-widest transition-colors flex items-center ${
-                  activePage === item.id ? 'text-[#4b5e52]' : 'text-stone-500 hover:text-stone-800'
-                }`}
+                className={`relative h-full text-xs font-bold uppercase tracking-widest transition-colors flex items-center ${activePage === item.id ? 'text-[#4b5e52]' : 'text-stone-500 hover:text-stone-800'
+                  }`}
               >
                 {item.label}
                 {activePage === item.id && (
@@ -67,7 +80,7 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
           </div>
 
           {/* Mobile Menu Toggle */}
-          <button 
+          <button
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden p-2 text-stone-600 hover:bg-stone-50 rounded-xl transition-colors"
           >
@@ -93,9 +106,8 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
                     setActivePage(item.id);
                     setIsOpen(false);
                   }}
-                  className={`block w-full text-left px-6 py-5 text-xs font-bold uppercase tracking-widest rounded-2xl transition-all ${
-                    activePage === item.id ? 'text-[#4b5e52] bg-stone-50 shadow-sm' : 'text-stone-500 hover:bg-stone-50/50'
-                  }`}
+                  className={`block w-full text-left px-6 py-5 text-xs font-bold uppercase tracking-widest rounded-2xl transition-all ${activePage === item.id ? 'text-[#4b5e52] bg-stone-50 shadow-sm' : 'text-stone-500 hover:bg-stone-50/50'
+                    }`}
                 >
                   {item.label}
                 </button>
