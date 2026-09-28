@@ -18,7 +18,7 @@ export default function Hero({ setActivePage }: HeroProps) {
 
   // Fallback image if no images are found
   const fallbackImage =
-    "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1200";
+    "https://ibb.co/V0SVXVYz";
 
   // ==========================================
   // FETCH HOME PAGE IMAGES

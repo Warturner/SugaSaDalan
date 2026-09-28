@@ -34,8 +34,8 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
             onClick={() => setActivePage('Home')}
           >
             <img
-              src="media/logo/logo.png"
-              alt="https://ibb.co/xqwRNbSz"
+              src="/media/logo/logo.png"
+              alt="Streetlight: Suga sa Dalan Organization logo"
               className="w-11 h-11 object-contain"
             />
 
