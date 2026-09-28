@@ -336,25 +336,25 @@ export default function DonationVerification({
 
     if (reportDonations.length === 0) {
 
-      setDateFrom(
-        printDateFrom
-      );
-
-      setDateTo(
-        printDateTo
-      );
-
       setPrintDateError(
         'No successful donations were found within the selected reporting period.'
       );
 
       return;
     }
+
+    setDateFrom(
+      printDateFrom
+    );
+
+    setDateTo(
+      printDateTo
+    );
+
     // Audit report should contain every
     // successful donation in the period,
     // not only the current search result.
     setSearchQuery('');
-
     setReportGeneratedAt(
       new Date()
     );
