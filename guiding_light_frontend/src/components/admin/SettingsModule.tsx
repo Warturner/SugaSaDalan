@@ -4,11 +4,12 @@
  */
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Lock, User, Eye, EyeOff, Save, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Lock, User as UserIcon, Eye, EyeOff, Save, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import type { User } from '../../types';
 
 interface SettingsProps {
-  user: { id: number; username: string; role?: string } | null;
-  onUpdateUser: (user: { id: number; username: string; role?: string }) => void;
+  user: User | null;
+  onUpdateUser: (user: User) => void;
 }
 
 export default function SettingsModule({ user, onUpdateUser }: SettingsProps) {
@@ -92,7 +93,7 @@ export default function SettingsModule({ user, onUpdateUser }: SettingsProps) {
           {/* Account Info Section */}
           <div>
             <h3 className="text-lg font-bold text-stone-800 flex items-center mb-6 pb-4 border-b border-stone-100">
-              <User className="w-5 h-5 mr-3 text-[#4b5e52]" />
+              <UserIcon className="w-5 h-5 mr-3 text-[#4b5e52]" />
               Profile Information
             </h3>
 

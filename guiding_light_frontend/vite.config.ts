@@ -1,16 +1,16 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
     server: {
-      allowedHosts: true
+      allowedHosts: true as const
     },
     preview: {
-      allowedHosts: true // <-- Added this to allow the tunnel in preview mode!
+      allowedHosts: true as const
     },
     resolve: {
       alias: {
