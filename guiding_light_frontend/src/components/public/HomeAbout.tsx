@@ -2,12 +2,14 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { CheckCircle2, Heart } from 'lucide-react';
 import { PublicPage } from '../../types';
+import { useTheme } from '../../context/ThemeContext';
 
 interface HomeAboutProps {
   setActivePage: (page: PublicPage) => void;
 }
 
 export default function HomeAbout({ setActivePage }: HomeAboutProps) {
+  const { isDarkMode } = useTheme();
   const whatWeDoItems = [
     "Appreciative and accepting approach to strengthen their self-worth and to build trusting relationships",
     "Damage reduction through education and medical treatment",
@@ -18,7 +20,12 @@ export default function HomeAbout({ setActivePage }: HomeAboutProps) {
   ];
 
   return (
-    <div className="bg-white">
+    <div
+      className={`transition-colors duration-300 ${isDarkMode
+        ? 'bg-[#242c28]'
+        : 'bg-white'
+        }`}
+    >
       {/* About Streetlight */}
       <section id="about-section" className="py-24 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -28,40 +35,48 @@ export default function HomeAbout({ setActivePage }: HomeAboutProps) {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <div className="inline-block px-4 py-1 bg-stone-100 text-stone-500 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6">About Us</div>
+              <div className={`inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 ${isDarkMode
+                ? 'bg-white/10 text-[#d4c5b3]'
+                : 'bg-stone-100 text-stone-500'
+                }`}>About Us</div>
               <h2 className="text-4xl md:text-5xl font-serif italic text-stone-800 mb-8 leading-tight">About Streetlight</h2>
-              <div className="space-y-6 text-stone-600 leading-relaxed text-lg">
+              <div
+                className={`space-y-6 leading-relaxed text-lg ${isDarkMode
+                  ? 'text-stone-300'
+                  : 'text-stone-600'
+                  }`}
+              >
                 <p>
                   Streetlight "Suga sa Dalan" was founded with a
-mission to bring light and hope to minors involved in
-prostitution and victims trafficking in Cagayan de Oro
-City, Philippines. The organization began its journey in
-Switzerland on May 1, 2022, founded by Esther
-Buehlmann and Kathrin Schelker, two Swiss
-nationals with a deep passion for helping vulnerable
-children and youth.
+                  mission to bring light and hope to minors involved in
+                  prostitution and victims trafficking in Cagayan de Oro
+                  City, Philippines. The organization began its journey in
+                  Switzerland on May 1, 2022, founded by Esther
+                  Buehlmann and Kathrin Schelker, two Swiss
+                  nationals with a deep passion for helping vulnerable
+                  children and youth.
                 </p>
                 <p>
                   Recognizing the urgent need for intervention and
-support in the Philippines, Esther expanded the
-organization's reach and officially established
-Streetlight: Suga sa Dalan in Cagayan de Oro City in
-September 2022. Even before its formal founding in
-the city, Esther had been actively collaborating with
-local partner agencies, the City Social Welfare and
-Development Office (CSWDO), Cagayan de Oro City
-Police Office (COCPO), Barangays, and other
-organizations, laying the groundwork for what would
-become a vital support system for the community.
+                  support in the Philippines, Esther expanded the
+                  organization's reach and officially established
+                  Streetlight: Suga sa Dalan in Cagayan de Oro City in
+                  September 2022. Even before its formal founding in
+                  the city, Esther had been actively collaborating with
+                  local partner agencies, the City Social Welfare and
+                  Development Office (CSWDO), Cagayan de Oro City
+                  Police Office (COCPO), Barangays, and other
+                  organizations, laying the groundwork for what would
+                  become a vital support system for the community.
                 </p>
                 <p>
                   Since its inception, Streetlight: Suga sa Dalan has
-been dedicated to rescuing and empowering minors,
-providing intervention programs, and ensuring access
-to future support services through strong partnerships
-with local agencies. The organization continues to
-grow, guided by the vision of creating safer
-environments and brighter futures for those in need.
+                  been dedicated to rescuing and empowering minors,
+                  providing intervention programs, and ensuring access
+                  to future support services through strong partnerships
+                  with local agencies. The organization continues to
+                  grow, guided by the vision of creating safer
+                  environments and brighter futures for those in need.
                 </p>
               </div>
             </motion.div>
@@ -71,10 +86,13 @@ environments and brighter futures for those in need.
               viewport={{ once: true }}
               className="relative"
             >
-              <div className="aspect-[4/5] rounded-[48px] overflow-hidden shadow-2xl border-[12px] border-stone-50">
-                <img 
-                  src="/media/1.jpg" 
-                  alt="Streetlight Outreach" 
+              <div className={`aspect-[4/5] rounded-[48px] overflow-hidden shadow-2xl border-[12px] ${isDarkMode
+                ? 'border-[#303a35]'
+                : 'border-stone-50'
+                }`}>
+                <img
+                  src="/media/1.jpg"
+                  alt="Streetlight Outreach"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -85,7 +103,12 @@ environments and brighter futures for those in need.
       </section>
 
       {/* What We Do */}
-      <section className="py-24 bg-stone-50 overflow-hidden">
+      <section
+        className={`py-24 overflow-hidden transition-colors ${isDarkMode
+          ? 'bg-[#1f2623]'
+          : 'bg-stone-50'
+          }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <motion.div
@@ -94,10 +117,13 @@ environments and brighter futures for those in need.
               viewport={{ once: true }}
               className="order-2 lg:order-1"
             >
-              <div className="aspect-[4/3] rounded-[48px] overflow-hidden shadow-2xl border-[12px] border-white">
-                <img 
-                  src="/media/2.png" 
-                  alt="Children at school" 
+              <div className={`aspect-[4/3] rounded-[48px] overflow-hidden shadow-2xl border-[12px] ${isDarkMode
+                ? 'border-[#303a35]'
+                : 'border-white'
+                }`}>
+                <img
+                  src="/media/2.png"
+                  alt="Children at school"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -108,15 +134,27 @@ environments and brighter futures for those in need.
               viewport={{ once: true }}
               className="order-1 lg:order-2"
             >
-              <div className="inline-block px-4 py-1 bg-white text-stone-500 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 shadow-sm">Our Impact</div>
-              <h2 className="text-4xl md:text-5xl font-serif italic text-stone-800 mb-8 leading-tight">What we do</h2>
+              <div className={`inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 shadow-sm ${isDarkMode
+                ? 'bg-white/10 text-[#d4c5b3]'
+                : 'bg-white text-stone-500'
+                }`}>Our Impact</div>
+              <h2 className={`text-4xl md:text-5xl font-serif italic mb-8 leading-tight ${isDarkMode
+                ? 'text-[#f7f5f2]'
+                : 'text-stone-800'
+                }`}>What we do</h2>
               <ul className="space-y-6">
                 {whatWeDoItems.map((item, idx) => (
                   <li key={idx} className="flex items-start group">
-                    <div className="w-6 h-6 bg-white text-[#4b5e52] rounded-full shadow-sm flex items-center justify-center mr-4 shrink-0 mt-1 group-hover:scale-110 transition-transform">
+                    <div className={`w-6 h-6 rounded-full shadow-sm flex items-center justify-center mr-4 shrink-0 mt-1 group-hover:scale-110 transition-transform ${isDarkMode
+                      ? 'bg-white/10 text-[#d4c5b3]'
+                      : 'bg-white text-[#4b5e52]'
+                      }`}>
                       <CheckCircle2 className="w-3.5 h-3.5" />
                     </div>
-                    <span className="text-stone-600 leading-relaxed font-medium">{item}</span>
+                    <span className={`leading-relaxed font-medium ${isDarkMode
+                      ? 'text-stone-300'
+                      : 'text-stone-600'
+                      }`}>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -126,28 +164,42 @@ environments and brighter futures for those in need.
       </section>
 
       {/* How You Can Help */}
-      <section className="py-24 bg-white overflow-hidden">
+      <section
+        className={`py-24 overflow-hidden transition-colors ${isDarkMode
+            ? 'bg-[#242c28]'
+            : 'bg-white'
+          }`}
+      >
         <div className="max-w-4xl mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="inline-block px-4 py-1 bg-stone-100 text-stone-500 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6">Partnership</div>
-            <h2 className="text-4xl md:text-5xl font-serif italic text-stone-800 mb-8 leading-tight">How You Can Help</h2>
-            <div className="space-y-6 text-stone-600 leading-relaxed text-lg mb-12">
+            <div className={`inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 ${isDarkMode
+              ? 'bg-white/10 text-[#d4c5b3]'
+              : 'bg-stone-100 text-stone-500'
+              }`}>Partnership</div>
+            <h2 className={`text-4xl md:text-5xl font-serif italic mb-8 leading-tight ${isDarkMode
+              ? 'text-[#f7f5f2]'
+              : 'text-stone-800'
+              }`}>How You Can Help</h2>
+            <div className={`space-y-6 leading-relaxed text-lg mb-12 ${isDarkMode
+              ? 'text-stone-300'
+              : 'text-stone-600'
+              }`}>
               <p>
-                With low financial and personnel investments, the project can guide the lives of many young people in a healthier direction: 
-                away from the streets and the redlight district, back to a safe environment and to school, and, therefore, to a better future. 
+                With low financial and personnel investments, the project can guide the lives of many young people in a healthier direction:
+                away from the streets and the redlight district, back to a safe environment and to school, and, therefore, to a better future.
                 To be able to offer these girls this opportunity, we are dependent on your donations.
               </p>
               <p>
-                Our monthly expenses are limited to the salary of the small team on site, as well as the expenses for the medical treatment 
-                and the education of the clients, gasoline, and hygiene products. Your donation fully benefits Streetlight as there 
+                Our monthly expenses are limited to the salary of the small team on site, as well as the expenses for the medical treatment
+                and the education of the clients, gasoline, and hygiene products. Your donation fully benefits Streetlight as there
                 are hardly any administrative expenses in Switzerland.
               </p>
             </div>
-            
+
             <button
               onClick={() => {
                 setActivePage('Donate');
