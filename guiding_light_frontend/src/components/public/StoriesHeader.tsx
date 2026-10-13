@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
 
-
 export default function StoriesHeader() {
 
   const { isDarkMode } = useTheme();
@@ -14,7 +13,6 @@ export default function StoriesHeader() {
           : 'bg-[#ede9e3]'
       }`}
     >
-
       <div className="max-w-7xl mx-auto px-4 text-center">
 
         <div
@@ -28,7 +26,7 @@ export default function StoriesHeader() {
         </div>
 
         <h1
-          className={`text-5xl font-serif italic mb-4 tracking-tight ${
+          className={`text-5xl font-serif italic mb-4 tracking-tight transition-colors ${
             isDarkMode
               ? 'text-[#f7f5f2]'
               : 'text-stone-800'
@@ -38,7 +36,7 @@ export default function StoriesHeader() {
         </h1>
 
         <p
-          className={`text-lg ${
+          className={`text-lg transition-colors ${
             isDarkMode
               ? 'text-stone-300'
               : 'text-stone-600'
@@ -48,7 +46,6 @@ export default function StoriesHeader() {
         </p>
 
       </div>
-
     </div>
   );
 }
