@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: sql112.infinityfree.com
--- Generation Time: Oct 13, 2026 at 05:28 AM
+-- Generation Time: Oct 13, 2026 at 07:50 AM
 -- Server version: 11.4.13-MariaDB
 -- PHP Version: 7.2.22
 
@@ -21,6 +21,23 @@ SET time_zone = "+00:00";
 --
 -- Database: `if0_42909551_guiding_light_db`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `account_activity_logs`
+--
+
+CREATE TABLE `account_activity_logs` (
+  `log_id` bigint(20) UNSIGNED NOT NULL,
+  `actor_user_id` int(11) DEFAULT NULL,
+  `actor_username` varchar(50) NOT NULL,
+  `target_user_id` int(11) DEFAULT NULL,
+  `target_username` varchar(50) NOT NULL,
+  `action` varchar(40) NOT NULL,
+  `details` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -139,6 +156,15 @@ CREATE TABLE `users` (
 --
 
 --
+-- Indexes for table `account_activity_logs`
+--
+ALTER TABLE `account_activity_logs`
+  ADD PRIMARY KEY (`log_id`),
+  ADD KEY `idx_account_activity_created` (`created_at`),
+  ADD KEY `idx_account_activity_actor` (`actor_user_id`),
+  ADD KEY `idx_account_activity_target` (`target_user_id`);
+
+--
 -- Indexes for table `donations`
 --
 ALTER TABLE `donations`
@@ -194,6 +220,12 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `account_activity_logs`
+--
+ALTER TABLE `account_activity_logs`
+  MODIFY `log_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `donations`
 --
 ALTER TABLE `donations`
@@ -238,6 +270,13 @@ ALTER TABLE `users`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `account_activity_logs`
+--
+ALTER TABLE `account_activity_logs`
+  ADD CONSTRAINT `fk_account_activity_actor` FOREIGN KEY (`actor_user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_account_activity_target` FOREIGN KEY (`target_user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `donations`

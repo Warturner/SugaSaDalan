@@ -85,5 +85,5 @@ export type ServiceCategory =
 export type PaymentMethod = 'E-wallet' | 'Manual Bank Transfer' | 'Bank Card';
 
 export type PublicPage = 'Home' | 'Mission' | 'Stories' | 'Donate' | 'Services' | 'Contact' | 'Login' | 'Team';
-export type AdminTab = 'Stories' | 'Donations' | 'Reconciliation' | 'Accounts' | 'Settings' | 'Team';
+export type AdminTab = 'Stories' | 'Donations' | 'Reconciliation' | 'Accounts' | 'AccountHistory' | 'Settings' | 'Team';
  

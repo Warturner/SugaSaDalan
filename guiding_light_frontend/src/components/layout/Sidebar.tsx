@@ -11,6 +11,7 @@ import {
   LogOut,
   Settings,
   Users,
+  ScrollText,
   UserSquare,
   ChevronRight,
   Menu,
@@ -37,6 +38,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, user }: Sid
     { id: 'Team' as AdminTab, icon: UserSquare, label: 'Team Profiles', allowedRoles: ['admin'] },
     { id: 'Donations' as AdminTab, icon: LayoutDashboard, label: 'Donations', allowedRoles: ['admin'] },
     { id: 'Accounts' as AdminTab, icon: Users, label: 'User Accounts', allowedRoles: ['admin'] },
+    { id: 'AccountHistory' as AdminTab, icon: ScrollText, label: 'Account Activity', allowedRoles: ['admin'] },
 
     // Both roles should be able to change their own password
     { id: 'Settings' as AdminTab, icon: Settings, label: 'Settings', allowedRoles: ['admin', 'media'] },

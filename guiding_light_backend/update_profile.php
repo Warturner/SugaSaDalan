@@ -1,224 +1,109 @@
 <?php
-
 require 'db_connect.php';
 require 'auth.php';
+require_once 'account_activity.php';
 
-header(
-    "Content-Type: application/json; charset=UTF-8"
-);
+header('Content-Type: application/json; charset=UTF-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-
     http_response_code(405);
-
-    echo json_encode([
-        'success' => false,
-        'error' => 'Method not allowed.'
-    ]);
-
+    echo json_encode(['success' => false, 'error' => 'Method not allowed.']);
     exit;
 }
 
 $currentUser = requireAuth();
 
-$data = json_decode(
-    file_get_contents("php://input"),
-    true
-);
-
-if (!is_array($data)) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'error' => 'Invalid request data.'
-    ]);
-
-    exit;
-}
-
-$userId =
-    (int) $currentUser['id'];
-
-$currentPassword =
-    $data['current_password'] ?? '';
-
-$newUsername =
-    trim(
-        $data['new_username'] ?? ''
-    );
-
-$newPassword =
-    $data['new_password'] ?? '';
-
-if (
-    $currentPassword === '' ||
-    $newUsername === ''
-) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'error' =>
-            'Current password and username are required.'
-    ]);
-
-    exit;
-}
-
-if (mb_strlen($newUsername) > 50) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'error' =>
-            'Username must not exceed 50 characters.'
-    ]);
-
-    exit;
-}
-
 try {
+    $raw = file_get_contents('php://input');
+    if (strlen($raw) > 16384) {
+        throw new InvalidArgumentException('Profile request is too large.');
+    }
+    $data = json_decode($raw, true);
+    if (!is_array($data)) {
+        throw new InvalidArgumentException('Invalid request data.');
+    }
 
-    // Verify the CURRENT logged-in user's password.
+    $currentPassword = $data['current_password'] ?? null;
+    $newUsername = $data['new_username'] ?? null;
+    $newPassword = $data['new_password'] ?? '';
+
+    if (!is_string($currentPassword) || $currentPassword === '' ||
+        !is_string($newUsername) || !is_string($newPassword)) {
+        throw new InvalidArgumentException('Current password and username are required.');
+    }
+    $newUsername = trim($newUsername);
+    if ($newUsername === '' || mb_strlen($newUsername) > 50) {
+        throw new InvalidArgumentException('Username must be 1–50 characters.');
+    }
+    if ($newPassword !== '' && (strlen($newPassword) < 8 || strlen($newPassword) > 256)) {
+        throw new InvalidArgumentException('New password must be 8–256 characters.');
+    }
+
+    $userId = (int) $currentUser['id'];
+    $conn->beginTransaction();
+
+    // Lock this account until both its update and audit entries are committed.
     $stmt = $conn->prepare(
-        "SELECT password_hash
-         FROM users
-         WHERE user_id = :id
-         LIMIT 1"
+        'SELECT username, password_hash FROM users WHERE user_id = :id LIMIT 1 FOR UPDATE'
     );
-
-    $stmt->execute([
-        ':id' => $userId
-    ]);
-
-    $user = $stmt->fetch();
-
+    $stmt->execute([':id' => $userId]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$user) {
-
+        $conn->rollBack();
         http_response_code(401);
-
-        echo json_encode([
-            'success' => false,
-            'error' =>
-                'Account could not be verified.'
-        ]);
-
+        echo json_encode(['success' => false, 'error' => 'Account could not be verified.']);
         exit;
     }
-
-    if (
-        !password_verify(
-            $currentPassword,
-            $user['password_hash']
-        )
-    ) {
-
+    if (!password_verify($currentPassword, $user['password_hash'])) {
+        $conn->rollBack();
         http_response_code(403);
-
-        echo json_encode([
-            'success' => false,
-            'error' =>
-                'Current password is incorrect.'
-        ]);
-
-        exit;
-    }
-
-    // Prevent duplicate usernames.
-    $checkStmt = $conn->prepare(
-        "SELECT user_id
-         FROM users
-         WHERE username = :username
-           AND user_id != :id
-         LIMIT 1"
-    );
-
-    $checkStmt->execute([
-        ':username' =>
-            $newUsername,
-
-        ':id' =>
-            $userId
-    ]);
-
-    if ($checkStmt->fetch()) {
-
-        http_response_code(409);
-
-        echo json_encode([
-            'success' => false,
-            'error' =>
-                'That username is already taken.'
-        ]);
-
+        echo json_encode(['success' => false, 'error' => 'Current password is incorrect.']);
         exit;
     }
 
     if ($newPassword !== '') {
-
-        $hashedPassword =
-            password_hash(
-                $newPassword,
-                PASSWORD_DEFAULT
-            );
-
-        $updateStmt = $conn->prepare(
-            "UPDATE users
-             SET
-                username = :username,
-                password_hash = :password_hash
-             WHERE user_id = :id"
+        $stmt = $conn->prepare(
+            'UPDATE users SET username = :name, password_hash = :hash WHERE user_id = :id'
         );
-
-        $updateStmt->execute([
-            ':username' =>
-                $newUsername,
-
-            ':password_hash' =>
-                $hashedPassword,
-
-            ':id' =>
-                $userId
+        $stmt->execute([
+            ':name' => $newUsername,
+            ':hash' => password_hash($newPassword, PASSWORD_DEFAULT),
+            ':id' => $userId
         ]);
-
     } else {
-
-        $updateStmt = $conn->prepare(
-            "UPDATE users
-             SET username = :username
-             WHERE user_id = :id"
-        );
-
-        $updateStmt->execute([
-            ':username' =>
-                $newUsername,
-
-            ':id' =>
-                $userId
-        ]);
+        $stmt = $conn->prepare('UPDATE users SET username = :name WHERE user_id = :id');
+        $stmt->execute([':name' => $newUsername, ':id' => $userId]);
     }
 
-    // Keep the active session synchronized.
-    $_SESSION['username'] =
-        $newUsername;
+    if ($user['username'] !== $newUsername) {
+        recordAccountActivity(
+            $conn, $userId, $user['username'], $userId, $newUsername,
+            'username_changed', 'Own username changed from ' . $user['username'] . ' to ' . $newUsername . '.'
+        );
+    }
+    if ($newPassword !== '') {
+        recordAccountActivity(
+            $conn, $userId, $user['username'], $userId, $newUsername,
+            'password_changed', 'Password changed in account settings.'
+        );
+    }
 
-    echo json_encode([
-        'success' => true,
-        'new_username' =>
-            $newUsername
-    ]);
-
+    $conn->commit();
+    $_SESSION['username'] = $newUsername;
+    echo json_encode(['success' => true, 'new_username' => $newUsername]);
+} catch (InvalidArgumentException $e) {
+    if ($conn->inTransaction()) $conn->rollBack();
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 } catch (PDOException $e) {
-
-    http_response_code(500);
-
+    if ($conn->inTransaction()) $conn->rollBack();
+    http_response_code($e->getCode() === '23000' ? 409 : 500);
     echo json_encode([
         'success' => false,
-        'error' =>
-            'Failed to update profile.'
+        'error' => $e->getCode() === '23000' ? 'That username is already taken.' : 'Failed to update profile.'
     ]);
+} catch (Throwable $e) {
+    if ($conn->inTransaction()) $conn->rollBack();
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Failed to update profile.']);
 }
