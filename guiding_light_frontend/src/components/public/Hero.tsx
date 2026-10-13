@@ -263,7 +263,12 @@ export default function Hero({ setActivePage }: HeroProps) {
 
               {/* Victims */}
               <div className="text-center sm:border-r border-stone-100 last:border-0">
-                <p className="text-3xl md:text-4xl font-serif italic text-stone-800 mb-2">
+                <p
+                  className={`text-3xl md:text-4xl font-serif italic mb-2 ${isDarkMode
+                      ? 'text-[#f7f5f2]'
+                      : 'text-stone-800'
+                    }`}
+                >
                   500+
                 </p>
 
@@ -277,7 +282,12 @@ export default function Hero({ setActivePage }: HeroProps) {
                 ? 'border-white/10'
                 : 'border-stone-100'
                 }`}>
-                <p className="text-3xl md:text-4xl font-serif italic text-stone-800 mb-2">
+                <p
+                  className={`text-3xl md:text-4xl font-serif italic mb-2 ${isDarkMode
+                      ? 'text-[#f7f5f2]'
+                      : 'text-stone-800'
+                    }`}
+                >
                   100%
                 </p>
 
@@ -296,8 +306,8 @@ export default function Hero({ setActivePage }: HeroProps) {
                 </p>
 
                 <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isDarkMode
-                    ? 'text-stone-400'
-                    : 'text-stone-400'
+                  ? 'text-stone-400'
+                  : 'text-stone-400'
                   }`}>
                   Funds Allocated
                 </p>

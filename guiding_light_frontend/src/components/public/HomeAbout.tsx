@@ -39,7 +39,14 @@ export default function HomeAbout({ setActivePage }: HomeAboutProps) {
                 ? 'bg-white/10 text-[#d4c5b3]'
                 : 'bg-stone-100 text-stone-500'
                 }`}>About Us</div>
-              <h2 className="text-4xl md:text-5xl font-serif italic text-stone-800 mb-8 leading-tight">About Streetlight</h2>
+              <h2
+                className={`text-4xl md:text-5xl font-serif italic mb-8 leading-tight ${isDarkMode
+                  ? 'text-[#f7f5f2]'
+                  : 'text-stone-800'
+                  }`}
+              >
+                About Streetlight
+              </h2>
               <div
                 className={`space-y-6 leading-relaxed text-lg ${isDarkMode
                   ? 'text-stone-300'
@@ -166,8 +173,8 @@ export default function HomeAbout({ setActivePage }: HomeAboutProps) {
       {/* How You Can Help */}
       <section
         className={`py-24 overflow-hidden transition-colors ${isDarkMode
-            ? 'bg-[#242c28]'
-            : 'bg-white'
+          ? 'bg-[#242c28]'
+          : 'bg-white'
           }`}
       >
         <div className="max-w-4xl mx-auto px-4 text-center">

@@ -196,7 +196,17 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
                     setActivePage(item.id);
                     setIsOpen(false);
                   }}
-                  className={`block w-full text-left px-6 py-5 text-xs font-bold uppercase tracking-widest rounded-2xl transition-all ${activePage === item.id ? 'text-[#4b5e52] bg-stone-50 shadow-sm' : 'text-stone-500 hover:bg-stone-50/50'
+                  className={`block w-full text-left px-6 py-5 text-xs font-bold uppercase tracking-widest rounded-2xl transition-all ${activePage === item.id
+                      ? (
+                        isDarkMode
+                          ? 'text-[#d4c5b3] bg-white/10'
+                          : 'text-[#4b5e52] bg-stone-50 shadow-sm'
+                      )
+                      : (
+                        isDarkMode
+                          ? 'text-stone-400 hover:text-white hover:bg-white/5'
+                          : 'text-stone-500 hover:bg-stone-50/50'
+                      )
                     }`}
                 >
                   {item.label}
@@ -209,8 +219,8 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
                   type="button"
                   onClick={toggleTheme}
                   className={`w-full px-6 py-4 rounded-2xl flex items-center justify-center text-xs font-bold uppercase tracking-widest transition-colors ${isDarkMode
-                      ? 'bg-white/5 text-[#d4c5b3] border border-white/10'
-                      : 'bg-stone-100 text-stone-600'
+                    ? 'bg-white/5 text-[#d4c5b3] border border-white/10'
+                    : 'bg-stone-100 text-stone-600'
                     }`}
                 >
 
