@@ -9,14 +9,12 @@ import type { User as UserType } from '../../types';
 import { loginUser } from '../../services/authService';
 
 interface LoginProps {
-  onLoginSuccess: (
-    user: UserType
-  ) => void;
-
+  onLoginSuccess: (user: UserType) => void;
   onBack: () => void;
+  notice?: string | null;
 }
 
-export default function Login({ onLoginSuccess, onBack }: LoginProps) {
+export default function Login({ onLoginSuccess, onBack, notice }: LoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,36 +27,23 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
     setError(null);
 
     try {
-
-      const data =
-        await loginUser(
-          username,
-          password
-        );
-
-      onLoginSuccess(
-        data.user
-      );
-
+      const data = await loginUser(username, password);
+      onLoginSuccess(data.user);
     } catch (err) {
-
       setError(
         err instanceof Error
           ? err.message
           : 'Unable to connect to the server. Please check your internet connection and try again.'
       );
-
     } finally {
-
       setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-[#ede9e3] flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-white/40 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#d4c5b3]/30 blur-3xl rounded-full -translate-x-1/2 translate-y-1/2"></div>
+      <div className="absolute top-0 right-0 w-96 h-96 bg-white/40 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#d4c5b3]/30 blur-3xl rounded-full -translate-x-1/2 translate-y-1/2" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -74,10 +59,16 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
         </button>
 
         <div className="mb-12">
-          {/* The padlock icon has been removed from here! */}
           <h2 className="text-4xl font-serif italic text-stone-800 mb-2">Admin Portal</h2>
           <p className="text-stone-500 text-sm">Secure access for authorized personnel only.</p>
         </div>
+
+        {notice && (
+          <div role="alert" className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl text-xs flex items-start gap-2 mb-6 font-medium">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <p>{notice}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -90,6 +81,7 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-6 py-4 bg-stone-50 border-none rounded-2xl focus:ring-2 focus:ring-[#d4c5b3] pl-12"
                 placeholder="Enter username"
+                autoComplete="username"
               />
               <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-300" />
             </div>
@@ -99,18 +91,20 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
             <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Password</label>
             <div className="relative">
               <input
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-6 py-4 bg-stone-50 border-none rounded-2xl focus:ring-2 focus:ring-[#d4c5b3] pl-12 pr-12"
                 placeholder="••••••••"
+                autoComplete="current-password"
               />
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-300" />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -122,6 +116,7 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs flex items-start font-medium"
+              role="alert"
             >
               <AlertTriangle className="w-4 h-4 mr-2 shrink-0 mt-0.5" />
               <p>{error}</p>
@@ -133,11 +128,7 @@ export default function Login({ onLoginSuccess, onBack }: LoginProps) {
             disabled={isLoading}
             className="w-full bg-[#3a4740] text-[#d4c5b3] py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-[#2c3630] transition-colors flex items-center justify-center shadow-xl shadow-[#3a4740]/20 mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {isLoading ? (
-              <Loader className="w-5 h-5 animate-spin" />
-            ) : (
-              'Authenticate'
-            )}
+            {isLoading ? <Loader className="w-5 h-5 animate-spin" /> : 'Authenticate'}
           </button>
         </form>
 

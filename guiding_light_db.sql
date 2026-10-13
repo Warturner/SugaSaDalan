@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: sql112.infinityfree.com
--- Generation Time: Oct 13, 2026 at 04:39 AM
+-- Generation Time: Oct 13, 2026 at 05:28 AM
 -- Server version: 11.4.13-MariaDB
 -- PHP Version: 7.2.22
 
@@ -130,7 +130,8 @@ CREATE TABLE `users` (
   `password_hash` varchar(255) NOT NULL,
   `contact_num` varchar(15) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `role` varchar(20) NOT NULL DEFAULT 'admin'
+  `role` varchar(20) NOT NULL DEFAULT 'admin',
+  `active_session_hash` char(64) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -185,7 +186,8 @@ ALTER TABLE `team_members`
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
-  ADD PRIMARY KEY (`user_id`);
+  ADD PRIMARY KEY (`user_id`),
+  ADD UNIQUE KEY `uq_users_username` (`username`);
 
 --
 -- AUTO_INCREMENT for dumped tables
