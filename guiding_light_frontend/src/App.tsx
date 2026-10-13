@@ -29,6 +29,7 @@ import Sidebar from './components/layout/Sidebar';
 import CMSModule from './components/admin/CMSModule';
 import TeamManagement from './components/admin/TeamManagement';
 import DonationVerification from './components/admin/DonationVerification';
+import ScrollToTopButton from './components/public/ScrollToTopButton';
 
 export default function App() {
   const [isAdmin, setIsAdmin] = React.useState(false);
@@ -436,7 +437,13 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
-      <Footer setActivePage={setActivePage} />
+
+      <Footer
+        setActivePage={setActivePage}
+      />
+
+      <ScrollToTopButton />
+
     </div>
   );
 }
