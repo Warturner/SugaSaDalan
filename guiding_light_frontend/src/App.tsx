@@ -75,6 +75,32 @@ export default function App() {
 
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = React.useState(true);
+  // Kept until a successful login, including across refreshes of this tab.
+  const [sessionNotice, setSessionNotice] = React.useState<string | null>(() =>
+    sessionStorage.getItem('guidingLightSessionNotice')
+  );
+  const [sessionModalOpen, setSessionModalOpen] = React.useState(false);
+  const sessionInvalidHandled = React.useRef(false);
+
+  const invalidateSession = React.useCallback((reason?: string | null) => {
+    // A device displaced by another login must never log out the newer device.
+    if (sessionInvalidHandled.current) return;
+    sessionInvalidHandled.current = true;
+
+    const message = reason === 'session_replaced'
+      ? 'Account logged in from a different device. Please log in again.'
+      : reason === 'account_deleted'
+        ? 'This account was removed. Please contact an administrator.'
+        : 'Your session has expired. Please log in again.';
+
+    sessionStorage.setItem('guidingLightSessionNotice', message);
+    setSessionNotice(message);
+    setSessionModalOpen(reason === 'session_replaced');
+    setCurrentUser(null);
+    setIsAdmin(false);
+    setActivePage('Login');
+    setActiveAdminTab('Stories');
+  }, []);
   React.useEffect(() => {
 
     const restoreSession = async () => {
@@ -93,9 +119,14 @@ export default function App() {
           setIsAdmin(true);
 
         } else {
-
-          setCurrentUser(null);
-          setIsAdmin(false);
+          if (data.reason === 'session_replaced' ||
+              data.reason === 'account_deleted' ||
+              data.reason === 'session_expired') {
+            invalidateSession(data.reason);
+          } else {
+            setCurrentUser(null);
+            setIsAdmin(false);
+          }
         }
 
       } catch (error) {
@@ -116,7 +147,56 @@ export default function App() {
 
     restoreSession();
 
-  }, []);
+  }, [invalidateSession]);
+
+  // Passive status checks do not extend the server's inactivity clock.
+  React.useEffect(() => {
+    if (!isAdmin) return;
+
+    let cancelled = false;
+    let pending = false;
+
+    const checkActiveDevice = async () => {
+      if (cancelled || pending || document.visibilityState === 'hidden') return;
+      pending = true;
+      try {
+        const result = await checkSession();
+        if (cancelled) return;
+        if (!result.authenticated || !result.user) {
+          invalidateSession(result.reason);
+        } else {
+          setCurrentUser(result.user);
+        }
+      } catch {
+        // An intermittent network outage should not force logout.
+      } finally {
+        pending = false;
+      }
+    };
+
+    const checkOnReturn = () => { void checkActiveDevice(); };
+    const timer = window.setInterval(checkActiveDevice, 10000);
+    window.addEventListener('focus', checkOnReturn);
+    document.addEventListener('visibilitychange', checkOnReturn);
+    void checkActiveDevice();
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener('focus', checkOnReturn);
+      document.removeEventListener('visibilitychange', checkOnReturn);
+    };
+  }, [isAdmin, invalidateSession]);
+
+  // A 401 from a protected API call can trigger logout before the next poll.
+  React.useEffect(() => {
+    if (!isAdmin) return;
+    const handleSessionInvalid = (event: Event) => {
+      invalidateSession((event as CustomEvent<string | null>).detail);
+    };
+    window.addEventListener('guiding-light:session-invalid', handleSessionInvalid);
+    return () => window.removeEventListener('guiding-light:session-invalid', handleSessionInvalid);
+  }, [isAdmin, invalidateSession]);
 
   const [logoutTimer, setLogoutTimer] = React.useState<number>(3);
 
@@ -137,12 +217,14 @@ export default function App() {
       );
 
     } finally {
-
+      sessionStorage.removeItem('guidingLightSessionNotice');
+      sessionInvalidHandled.current = false;
+      setSessionNotice(null);
+      setSessionModalOpen(false);
       setIsAdmin(false);
       setCurrentUser(null);
       setActivePage('Login');
       setActiveAdminTab('Stories');
-
     }
   };
 
@@ -309,6 +391,47 @@ export default function App() {
 
   return (
     <ThemeProvider>
+      {/* Modal appears on the displaced device after we already sign it out. */}
+      <AnimatePresence>
+        {sessionModalOpen && (
+          <motion.div
+            key="session-replaced-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] bg-stone-950/70 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="session-replaced-title"
+              aria-describedby="session-replaced-description"
+              initial={{ opacity: 0, scale: 0.94, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 12 }}
+              className="bg-white border border-amber-200 rounded-3xl shadow-2xl p-8 max-w-md w-full text-center"
+            >
+              <div className="mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-600">
+                <AlertTriangle className="w-8 h-8" />
+              </div>
+              <h2 id="session-replaced-title" className="text-2xl font-serif italic text-stone-800 mb-3">
+                Account logged in from a different device
+              </h2>
+              <p id="session-replaced-description" className="text-sm leading-relaxed text-stone-600 mb-7">
+                You have been automatically signed out of this device. Please log in again.
+              </p>
+              <button
+                autoFocus
+                type="button"
+                onClick={() => setSessionModalOpen(false)}
+                className="w-full rounded-xl bg-[#3a4740] px-5 py-3.5 text-white font-semibold hover:bg-[#2c3630] focus:outline-none focus:ring-4 focus:ring-amber-200"
+              >
+                OK, go to login
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="min-h-screen bg-transparent text-stone-800 selection:bg-[#d4c5b3] selection:text-[#3a4740]">
 
@@ -428,7 +551,13 @@ export default function App() {
             {activePage === 'Login' && (
               <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <Login
+                  notice={sessionNotice}
                   onLoginSuccess={(user) => {
+                    sessionStorage.removeItem('guidingLightSessionNotice');
+                    sessionInvalidHandled.current = false;
+                    setSessionNotice(null);
+                    setSessionModalOpen(false);
+                    setShowWarning(false);
                     setIsAdmin(true);
                     setActiveAdminTab('Stories');
                     setCurrentUser(user);
