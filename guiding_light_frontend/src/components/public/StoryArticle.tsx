@@ -11,6 +11,7 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
+import ResponsivePdfViewer from './ResponsivePdfViewer';
 
 import type {
   StoryDetail,
@@ -391,16 +392,29 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
                             }`}
                         >
 
-                          <div className="w-full h-[500px] md:h-[800px]">
+                          <>
+                            {/* MOBILE PDF VIEWER */}
+                            <div className="md:hidden w-full min-w-0">
 
-                            <iframe
-                              src={`${att.file_url}#view=FitH`}
-                              className="w-full h-full"
-                              title={att.file_name}
-                              loading="lazy"
-                            />
+                              <ResponsivePdfViewer
+                                url={att.file_url}
+                              />
 
-                          </div>
+                            </div>
+
+
+                            {/* DESKTOP PDF VIEWER */}
+                            <div className="hidden md:block w-full h-[800px]">
+
+                              <iframe
+                                src={`${att.file_url}#view=FitH`}
+                                className="w-full h-full"
+                                title={att.file_name}
+                                loading="lazy"
+                              />
+
+                            </div>
+                          </>
 
                         </motion.div>
                       )}
