@@ -10,8 +10,8 @@ import {
     type PDFDocumentProxy
 } from 'pdfjs-dist';
 
-import pdfWorkerUrl from
-    'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import PdfWorker from
+    'pdfjs-dist/build/pdf.worker.min.mjs?worker&inline';
 
 import {
     AlertTriangle,
@@ -19,8 +19,8 @@ import {
 } from 'lucide-react';
 
 
-GlobalWorkerOptions.workerSrc =
-    pdfWorkerUrl;
+GlobalWorkerOptions.workerPort =
+    new PdfWorker();
 
 
 interface ResponsivePdfViewerProps {
