@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$currentUser = requireRole(['admin', 'media']);
+$currentUser = requireAdmin();
 
 /**
  * Never delete arbitrary paths from stored DB text.

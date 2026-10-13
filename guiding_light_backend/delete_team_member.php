@@ -18,10 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$currentUser = requireRole([
-    'admin',
-    'media'
-]);
+$currentUser = requireAdmin();
 
 try {
 
