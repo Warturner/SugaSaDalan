@@ -4,23 +4,47 @@
  */
 
 import React from 'react';
-import { Mail, MapPin, Phone } from 'lucide-react';
-import { PublicPage } from '../../types';
+
+import {
+  Mail,
+  MapPin,
+  Phone
+} from 'lucide-react';
+
+import {
+  PublicPage
+} from '../../types';
+
+import {
+  useTheme
+} from '../../context/ThemeContext';
+
 
 interface FooterProps {
-  setActivePage: (page: PublicPage) => void;
+  setActivePage:
+    (page: PublicPage) => void;
 }
 
-export default function Footer({ setActivePage }: FooterProps) {
+
+export default function Footer({
+  setActivePage
+}: FooterProps) {
+
+  const { isDarkMode } = useTheme();
+
   return (
-    <footer className="bg-[#3a4740] text-white py-12 sm:py-14">
+    <footer
+      className={`text-white py-12 sm:py-14 transition-colors duration-300 ${
+        isDarkMode
+          ? 'bg-[#171d1a]'
+          : 'bg-[#3a4740]'
+      }`}
+    >
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* MAIN FOOTER CONTENT */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.1fr_1.6fr_0.7fr] gap-10 lg:gap-14 mb-10">
 
-          {/* ORGANIZATION */}
           <div>
 
             <h1 className="text-white font-serif italic text-2xl mb-4">
@@ -34,7 +58,6 @@ export default function Footer({ setActivePage }: FooterProps) {
           </div>
 
 
-          {/* CONNECT */}
           <div>
 
             <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d4c5b3] mb-5">
@@ -85,8 +108,7 @@ export default function Footer({ setActivePage }: FooterProps) {
                   <MapPin className="w-4 h-4 mr-3 text-[#d4c5b3] mt-0.5 shrink-0" />
 
                   <span className="text-xs font-bold uppercase tracking-widest leading-relaxed">
-                    208 Tiano Brothers St. Cagayan De Oro City,
-                    Northern Mindanao, Philippines
+                    208 Tiano Brothers St. Cagayan De Oro City, Northern Mindanao, Philippines
                   </span>
 
                 </a>
@@ -98,7 +120,6 @@ export default function Footer({ setActivePage }: FooterProps) {
           </div>
 
 
-          {/* QUICK LINKS */}
           <div className="lg:justify-self-end lg:text-right">
 
             <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#d4c5b3] mb-5">
@@ -111,8 +132,14 @@ export default function Footer({ setActivePage }: FooterProps) {
 
                 <button
                   onClick={() => {
-                    setActivePage('Stories');
-                    window.scrollTo(0, 0);
+                    setActivePage(
+                      'Stories'
+                    );
+
+                    window.scrollTo(
+                      0,
+                      0
+                    );
                   }}
                   className="text-xs font-bold uppercase tracking-widest text-stone-400 hover:text-white transition-colors"
                 >
@@ -126,8 +153,14 @@ export default function Footer({ setActivePage }: FooterProps) {
 
                 <button
                   onClick={() => {
-                    setActivePage('Donate');
-                    window.scrollTo(0, 0);
+                    setActivePage(
+                      'Donate'
+                    );
+
+                    window.scrollTo(
+                      0,
+                      0
+                    );
                   }}
                   className="text-xs font-bold uppercase tracking-widest text-stone-400 hover:text-white transition-colors"
                 >
@@ -141,10 +174,16 @@ export default function Footer({ setActivePage }: FooterProps) {
 
                 <button
                   onClick={() => {
-                    setActivePage('Login');
-                    window.scrollTo(0, 0);
+                    setActivePage(
+                      'Login'
+                    );
+
+                    window.scrollTo(
+                      0,
+                      0
+                    );
                   }}
-                  className="text-xs font-bold uppercase tracking-widest text-stone-500/60 hover:text-stone-300 transition-colors"
+                  className="text-xs font-bold uppercase tracking-widest text-stone-500 hover:text-stone-300 transition-colors"
                 >
                   Staff Portal
                 </button>
@@ -158,7 +197,6 @@ export default function Footer({ setActivePage }: FooterProps) {
         </div>
 
 
-        {/* BOTTOM BAR */}
         <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
 
           <p className="text-stone-500 text-[9px] uppercase tracking-[0.2em] leading-relaxed">

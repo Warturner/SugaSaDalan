@@ -310,7 +310,7 @@ export default function App() {
   return (
     <ThemeProvider>
 
-      <div className="min-h-screen bg-[#f7f5f2] text-stone-800 selection:bg-[#d4c5b3] selection:text-[#3a4740]">
+      <div className="min-h-screen bg-transparent text-stone-800 selection:bg-[#d4c5b3] selection:text-[#3a4740]">
 
         <Navbar
           activePage={activePage}

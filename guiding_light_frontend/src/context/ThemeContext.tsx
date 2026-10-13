@@ -38,6 +38,26 @@ export function ThemeProvider({
         : 'light'
     );
 
+    document.documentElement.style.colorScheme =
+      isDarkMode
+        ? 'dark'
+        : 'light';
+
+    document.body.style.backgroundColor =
+      isDarkMode
+        ? '#242c28'
+        : '#f7f5f2';
+
+    return () => {
+
+      document.documentElement.style.colorScheme =
+        'light';
+
+      document.body.style.backgroundColor =
+        '#f7f5f2';
+
+    };
+
   }, [isDarkMode]);
 
   const toggleTheme = () => {
