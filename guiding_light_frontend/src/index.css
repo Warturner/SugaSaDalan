@@ -95,4 +95,8 @@
   .donation-print-area .shadow-xl {
     box-shadow: none !important;
   }
+
+  .donation-desktop-table {
+  display: block !important;
+}
 }
