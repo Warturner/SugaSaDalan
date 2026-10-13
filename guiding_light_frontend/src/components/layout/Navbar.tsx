@@ -74,12 +74,16 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
             </div>
           </div>
 
-          {/* Desktop Nav - Admin Button Removed */}
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8 h-full">
+
             {navItems.map((item) => (
+
               <button
                 key={item.id}
-                onClick={() => setActivePage(item.id)}
+                onClick={() =>
+                  setActivePage(item.id)
+                }
                 className={`relative h-full text-xs font-bold uppercase tracking-widest transition-colors flex items-center ${activePage === item.id
                   ? (
                     isDarkMode
@@ -93,8 +97,11 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
                   )
                   }`}
               >
+
                 {item.label}
+
                 {activePage === item.id && (
+
                   <motion.div
                     layoutId="navbar-active-line"
                     className={`absolute bottom-0 left-0 right-0 h-0.5 ${isDarkMode
@@ -102,66 +109,58 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
                       : 'bg-[#4b5e52]'
                       }`}
                   />
+
                 )}
+
               </button>
+
             ))}
+
+
+            {/* DARK MODE */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={
+                isDarkMode
+                  ? 'Switch to light mode'
+                  : 'Switch to dark mode'
+              }
+              title={
+                isDarkMode
+                  ? 'Light Mode'
+                  : 'Dark Mode'
+              }
+              className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center border transition-all ${isDarkMode
+                ? 'bg-white/5 border-white/10 text-[#d4c5b3] hover:bg-white/10'
+                : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100'
+                }`}
+            >
+
+              {isDarkMode ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
+
+            </button>
+
+
+            {/* DONATE */}
             <button
               onClick={() => {
                 setActivePage('Donate');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                window.scrollTo({
+                  top: 0,
+                  behavior: 'smooth'
+                });
               }}
-              className="bg-[#4b5e52] text-white px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#3a4740] transition-all shadow-md active:scale-95 flex items-center"
+              className="bg-[#4b5e52] text-white px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#3a4740] transition-all shadow-md active:scale-95 flex items-center shrink-0"
             >
-              <button
-                type="button"
-                onClick={toggleTheme}
-                aria-label={
-                  isDarkMode
-                    ? 'Switch to light mode'
-                    : 'Switch to dark mode'
-                }
-                title={
-                  isDarkMode
-                    ? 'Light Mode'
-                    : 'Dark Mode'
-                }
-                className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${isDarkMode
-                  ? 'bg-white/5 border-white/10 text-[#d4c5b3] hover:bg-white/10'
-                  : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100'
-                  }`}
-              >
-
-                {isDarkMode ? (
-                  <Sun className="w-4 h-4" />
-                ) : (
-                  <Moon className="w-4 h-4" />
-                )}
-
-              </button>
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className={`w-full px-6 py-4 rounded-2xl flex items-center justify-center text-xs font-bold uppercase tracking-widest transition-colors ${isDarkMode
-                    ? 'bg-white/5 text-[#d4c5b3] border border-white/10'
-                    : 'bg-stone-100 text-stone-600'
-                  }`}
-              >
-
-                {isDarkMode ? (
-                  <>
-                    <Sun className="w-4 h-4 mr-2" />
-                    Light Mode
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-4 h-4 mr-2" />
-                    Dark Mode
-                  </>
-                )}
-
-              </button>
               Donate Now
             </button>
+
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -204,16 +203,52 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
                 </button>
               ))}
               <div className="pt-6 px-2 space-y-4">
+
+                {/* MOBILE THEME TOGGLE */}
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className={`w-full px-6 py-4 rounded-2xl flex items-center justify-center text-xs font-bold uppercase tracking-widest transition-colors ${isDarkMode
+                      ? 'bg-white/5 text-[#d4c5b3] border border-white/10'
+                      : 'bg-stone-100 text-stone-600'
+                    }`}
+                >
+
+                  {isDarkMode ? (
+                    <>
+                      <Sun className="w-4 h-4 mr-2" />
+                      Light Mode
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="w-4 h-4 mr-2" />
+                      Dark Mode
+                    </>
+                  )}
+
+                </button>
+
+
+                {/* MOBILE DONATE */}
                 <button
                   onClick={() => {
                     setActivePage('Donate');
                     setIsOpen(false);
+
+                    window.scrollTo({
+                      top: 0,
+                      behavior: 'smooth'
+                    });
                   }}
                   className="w-full bg-[#4b5e52] text-white px-8 py-5 rounded-full text-center text-xs font-bold uppercase tracking-widest flex items-center justify-center shadow-lg active:scale-95 transition-transform"
                 >
+
                   <Heart className="w-4 h-4 mr-2" />
+
                   Donate Now
+
                 </button>
+
               </div>
             </div>
           </motion.div>
