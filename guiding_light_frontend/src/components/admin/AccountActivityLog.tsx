@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Activity, Search, CalendarDays, RefreshCw, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
-import { apiFetch } from '../../../services/api';
+import { apiFetch } from '../../services/api';
 
 type AccountAction =
   | 'account_created'

@@ -1,9 +1,5 @@
 <?php
-/**
- * Call within the SAME database transaction as the account mutation.
- * Snapshots preserve actor and target usernames after users are deleted.
- * Never pass passwords, password hashes, session tokens or secret values.
- */
+
 function recordAccountActivity(
     PDO $conn,
     int $actorUserId,
