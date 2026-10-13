@@ -303,8 +303,8 @@ export default function CMSModule() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <h2 className="text-2xl font-serif italic text-stone-700">Story Management</h2>
 
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
+          <div className="relative w-full sm:flex-1 md:w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <input
               type="text"
@@ -320,7 +320,7 @@ export default function CMSModule() {
 
           <button
             onClick={handleOpenCreationMenu}
-            className="flex items-center bg-[#4b5e52] text-white px-5 py-3 rounded-full transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg hover:bg-[#3a4740] shrink-0"
+            className="w-full sm:w-auto flex items-center justify-center bg-[#4b5e52] text-white px-5 py-3 rounded-full transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg hover:bg-[#3a4740] shrink-0"
           >
             <Plus className="w-4 h-4 mr-2" />
             Create New
@@ -328,86 +328,353 @@ export default function CMSModule() {
         </div>
       </div>
 
-      <div className="bg-white rounded-[32px] shadow-sm border border-stone-100 overflow-hidden">
-        <table className="w-full">
-          <thead className="border-b border-stone-100 bg-stone-50/50">
-            <tr>
-              <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-                <div className="flex items-center gap-2 cursor-pointer hover:text-stone-700 transition-colors" onClick={() => handleSort('title')}>
-                  Title <SortIcon columnKey="title" />
-                </div>
-              </th>
-              <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-                <div className="flex items-center gap-2 cursor-pointer hover:text-stone-700 transition-colors" onClick={() => handleSort('category_name')}>
-                  Category <SortIcon columnKey="category_name" />
-                </div>
-              </th>
-              <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-                <div className="flex items-center gap-2 cursor-pointer hover:text-stone-700 transition-colors" onClick={() => handleSort('author')}>
-                  Author <SortIcon columnKey="author" />
-                </div>
-              </th>
-              <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-                <div className="flex items-center gap-2 cursor-pointer hover:text-stone-700 transition-colors" onClick={() => handleSort('published_date')}>
-                  Published Date <SortIcon columnKey="published_date" />
-                </div>
-              </th>
-              <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && <tr><td colSpan={5} className="text-center p-10"><Loader className="mx-auto animate-spin text-stone-300" /></td></tr>}
-            {error && <tr><td colSpan={5} className="text-center p-10 text-red-500">{error}</td></tr>}
-            {!isLoading && !error && processedStories.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center p-16">
-                  <div className="flex flex-col items-center text-stone-400">
-                    <Search className="w-8 h-8 mb-3 opacity-20" />
-                    <p className="text-sm font-bold uppercase tracking-widest">No stories found</p>
-                  </div>
-                </td>
-              </tr>
-            )}
-            {!isLoading && !error && paginatedStories.map(story => (
-              <tr key={story.post_id} className="border-b border-stone-100 last:border-b-0 hover:bg-stone-50/50 transition-colors">
-                <td className="px-6 py-5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-stone-700">{story.title}</span>
-                    {story.is_pinned === 1 && (
-                      <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-widest flex items-center shrink-0">
-                        <Pin className="w-3 h-3 mr-1" /> Pinned
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-5">
-                  <span className="bg-white border border-stone-200 text-stone-600 text-xs px-3 py-1 rounded-full font-bold shadow-sm">
-                    {story.category_name || 'Uncategorized'}
-                  </span>
-                </td>
-                <td className="px-6 py-5 text-stone-500">{story.author}</td>
-                <td className="px-6 py-5 text-stone-500 font-mono text-sm">
-                  {new Date(story.published_date).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-5 flex items-center space-x-4">
-                  <button onClick={() => handleStoryClick(story)} className="text-[#4b5e52] font-bold text-[10px] uppercase tracking-widest hover:underline">View</button>
-                  <button onClick={() => handleEdit(story)} className="text-stone-400 font-bold text-[10px] uppercase tracking-widest hover:text-stone-800 transition-colors">Edit</button>
-                  <button onClick={() => handleDelete(story)} className="text-red-400 font-bold text-[10px] uppercase tracking-widest hover:text-red-600 transition-colors">Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="bg-white rounded-[24px] md:rounded-[32px] shadow-sm border border-stone-100 overflow-hidden">
 
-        {!isLoading && !error && processedStories.length > 0 && (
-          <div className="p-4 flex justify-between items-center bg-stone-50/50">
-            <span className="text-xs text-stone-500 font-bold uppercase tracking-widest">Page {currentPage} of {totalPages}</span>
-            <div className="flex gap-2">
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 rounded-md bg-white border border-stone-200 hover:bg-stone-100 disabled:opacity-50 transition-colors shadow-sm"><ChevronLeft className="w-4 h-4" /></button>
-              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 rounded-md bg-white border border-stone-200 hover:bg-stone-100 disabled:opacity-50 transition-colors shadow-sm"><ChevronRight className="w-4 h-4" /></button>
+        {isLoading ? (
+
+          <div className="p-12 text-center">
+            <Loader className="mx-auto animate-spin text-stone-300" />
+          </div>
+
+        ) : error ? (
+
+          <div className="p-10 text-center text-red-500">
+            {error}
+          </div>
+
+        ) : processedStories.length === 0 ? (
+
+          <div className="p-12 md:p-16">
+            <div className="flex flex-col items-center text-stone-400">
+              <Search className="w-8 h-8 mb-3 opacity-20" />
+              <p className="text-sm font-bold uppercase tracking-widest">
+                No stories found
+              </p>
             </div>
           </div>
+
+        ) : (
+
+          <>
+            {/* MOBILE STORY CARDS */}
+            <div className="md:hidden divide-y divide-stone-100">
+
+              {paginatedStories.map(story => (
+
+                <div
+                  key={story.post_id}
+                  className="p-5 space-y-4"
+                >
+
+                  <div className="flex items-start justify-between gap-3">
+
+                    <div className="min-w-0 flex-1">
+
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+
+                        <span className="bg-stone-50 border border-stone-200 text-stone-600 text-[9px] px-2.5 py-1 rounded-full font-bold uppercase tracking-widest">
+                          {story.category_name || 'Uncategorized'}
+                        </span>
+
+                        {story.is_pinned === 1 && (
+                          <span className="bg-amber-100 text-amber-700 text-[9px] px-2.5 py-1 rounded-full font-bold uppercase tracking-widest flex items-center">
+                            <Pin className="w-3 h-3 mr-1" />
+                            Pinned
+                          </span>
+                        )}
+
+                      </div>
+
+                      <h3 className="text-base font-bold text-stone-800 leading-snug break-words">
+                        {story.title}
+                      </h3>
+
+                    </div>
+
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+
+                    <div className="bg-stone-50 rounded-xl p-3 min-w-0">
+
+                      <p className="text-[8px] font-bold uppercase tracking-widest text-stone-400 mb-1">
+                        Author
+                      </p>
+
+                      <p className="text-xs font-medium text-stone-600 truncate">
+                        {story.author || 'Unknown'}
+                      </p>
+
+                    </div>
+
+                    <div className="bg-stone-50 rounded-xl p-3">
+
+                      <p className="text-[8px] font-bold uppercase tracking-widest text-stone-400 mb-1">
+                        Published
+                      </p>
+
+                      <p className="text-xs font-medium text-stone-600">
+                        {new Date(
+                          story.published_date
+                        ).toLocaleDateString()}
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+
+                    <button
+                      onClick={() =>
+                        handleStoryClick(story)
+                      }
+                      className="py-3 rounded-xl bg-[#4b5e52]/10 text-[#4b5e52] text-[9px] font-bold uppercase tracking-widest"
+                    >
+                      View
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        handleEdit(story)
+                      }
+                      className="py-3 rounded-xl bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-widest"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        handleDelete(story)
+                      }
+                      className="py-3 rounded-xl bg-red-50 text-red-500 text-[9px] font-bold uppercase tracking-widest"
+                    >
+                      Delete
+                    </button>
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+
+
+            {/* TABLET / DESKTOP TABLE */}
+            <div className="hidden md:block overflow-x-auto">
+
+              <table className="w-full min-w-[760px]">
+
+                <thead className="border-b border-stone-100 bg-stone-50/50">
+
+                  <tr>
+
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                      <div
+                        className="flex items-center gap-2 cursor-pointer hover:text-stone-700 transition-colors"
+                        onClick={() =>
+                          handleSort('title')
+                        }
+                      >
+                        Title
+                        <SortIcon columnKey="title" />
+                      </div>
+                    </th>
+
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                      <div
+                        className="flex items-center gap-2 cursor-pointer hover:text-stone-700 transition-colors"
+                        onClick={() =>
+                          handleSort('category_name')
+                        }
+                      >
+                        Category
+                        <SortIcon columnKey="category_name" />
+                      </div>
+                    </th>
+
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                      <div
+                        className="flex items-center gap-2 cursor-pointer hover:text-stone-700 transition-colors"
+                        onClick={() =>
+                          handleSort('author')
+                        }
+                      >
+                        Author
+                        <SortIcon columnKey="author" />
+                      </div>
+                    </th>
+
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                      <div
+                        className="flex items-center gap-2 cursor-pointer hover:text-stone-700 transition-colors"
+                        onClick={() =>
+                          handleSort('published_date')
+                        }
+                      >
+                        Published Date
+                        <SortIcon columnKey="published_date" />
+                      </div>
+                    </th>
+
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                      Actions
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  {paginatedStories.map(story => (
+
+                    <tr
+                      key={story.post_id}
+                      className="border-b border-stone-100 last:border-b-0 hover:bg-stone-50/50 transition-colors"
+                    >
+
+                      <td className="px-6 py-5">
+
+                        <div className="flex items-center gap-2">
+
+                          <span className="font-bold text-stone-700">
+                            {story.title}
+                          </span>
+
+                          {story.is_pinned === 1 && (
+
+                            <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-widest flex items-center shrink-0">
+
+                              <Pin className="w-3 h-3 mr-1" />
+
+                              Pinned
+
+                            </span>
+
+                          )}
+
+                        </div>
+
+                      </td>
+
+                      <td className="px-6 py-5">
+
+                        <span className="bg-white border border-stone-200 text-stone-600 text-xs px-3 py-1 rounded-full font-bold shadow-sm">
+
+                          {story.category_name || 'Uncategorized'}
+
+                        </span>
+
+                      </td>
+
+                      <td className="px-6 py-5 text-stone-500">
+                        {story.author}
+                      </td>
+
+                      <td className="px-6 py-5 text-stone-500 font-mono text-sm">
+
+                        {new Date(
+                          story.published_date
+                        ).toLocaleDateString()}
+
+                      </td>
+
+                      <td className="px-6 py-5">
+
+                        <div className="flex items-center gap-4">
+
+                          <button
+                            onClick={() =>
+                              handleStoryClick(story)
+                            }
+                            className="text-[#4b5e52] font-bold text-[10px] uppercase tracking-widest hover:underline"
+                          >
+                            View
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              handleEdit(story)
+                            }
+                            className="text-stone-400 font-bold text-[10px] uppercase tracking-widest hover:text-stone-800 transition-colors"
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              handleDelete(story)
+                            }
+                            className="text-red-400 font-bold text-[10px] uppercase tracking-widest hover:text-red-600 transition-colors"
+                          >
+                            Delete
+                          </button>
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+
+            {/* SHARED PAGINATION */}
+            <div className="p-4 flex justify-between items-center bg-stone-50/50 border-t border-stone-100">
+
+              <span className="text-[10px] sm:text-xs text-stone-500 font-bold uppercase tracking-widest">
+
+                Page {currentPage} of {totalPages}
+
+              </span>
+
+              <div className="flex gap-2">
+
+                <button
+                  onClick={() =>
+                    setCurrentPage(p =>
+                      Math.max(1, p - 1)
+                    )
+                  }
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-md bg-white border border-stone-200 hover:bg-stone-100 disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={() =>
+                    setCurrentPage(p =>
+                      Math.min(
+                        totalPages,
+                        p + 1
+                      )
+                    )
+                  }
+                  disabled={
+                    currentPage === totalPages
+                  }
+                  className="p-2 rounded-md bg-white border border-stone-200 hover:bg-stone-100 disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+
+              </div>
+
+            </div>
+
+          </>
+
         )}
+
       </div>
 
       <AnimatePresence>

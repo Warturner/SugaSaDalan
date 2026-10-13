@@ -266,7 +266,7 @@ export default function App() {
           onLogout={handleLogout}
           user={currentUser}
         />
-        <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-10">
+        <main className="flex-1 min-w-0 lg:ml-64 p-4 sm:p-6 lg:p-10">
           <header className="mb-8 lg:mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 sm:p-8 rounded-[24px] sm:rounded-[32px] border border-stone-100 shadow-sm gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-serif italic text-stone-800">System Management Overview</h1>
