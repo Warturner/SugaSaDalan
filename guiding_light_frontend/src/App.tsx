@@ -10,6 +10,7 @@ import { AlertTriangle } from 'lucide-react';
 import { ThemeProvider } from './context/ThemeContext';
 
 
+
 // Components
 import Navbar from './components/layout/Navbar';
 import Hero from './components/public/Hero';
@@ -23,6 +24,7 @@ import HomeAbout from './components/public/HomeAbout';
 import Footer from './components/public/Footer';
 import Team from './components/public/Team';
 import ScrollToTopButton from './components/public/ScrollToTopButton';
+import StoriesHeader from './components/public/StoriesHeader';
 
 // Admin Components
 import UserAccounts from './components/admin/UserAccounts';
@@ -368,13 +370,7 @@ export default function App() {
                   />
                 ) : (
                   <>
-                    <div className="bg-[#ede9e3] pt-20 pb-10">
-                      <div className="max-w-7xl mx-auto px-4 text-center">
-                        <div className="inline-block px-4 py-1 bg-stone-200 text-stone-600 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4">The Feed</div>
-                        <h1 className="text-5xl font-serif italic text-stone-800 mb-4 tracking-tight">Stories of Hope</h1>
-                        <p className="text-stone-600 text-lg">Voices of resilience and hope from our community.</p>
-                      </div>
-                    </div>
+                    <StoriesHeader />
                     <SuccessStories onStoryClick={(id) => {
                       setSelectedStoryId(id);
                       window.scrollTo({ top: 0, behavior: 'smooth' });

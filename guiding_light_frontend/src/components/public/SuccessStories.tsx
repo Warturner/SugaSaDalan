@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Pin, Calendar, User, ChevronRight, ChevronLeft, Tag, Loader, Image as ImageIcon } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 import type {
   Story,
@@ -19,7 +20,7 @@ import {
 interface StoriesProps {
   onStoryClick: (id: number) => void;
 }
-
+const { isDarkMode } = useTheme();
 const STORIES_PER_PAGE = 9;
 
 export default function Stories({ onStoryClick }: StoriesProps) {
@@ -88,19 +89,34 @@ export default function Stories({ onStoryClick }: StoriesProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-32 pb-20 flex justify-center text-[#4b5e52]">
+      <div
+        className={`min-h-screen pt-32 pb-20 flex justify-center transition-colors ${isDarkMode
+          ? 'bg-[#242c28] text-[#d4c5b3]'
+          : 'bg-[#f7f5f2] text-[#4b5e52]'
+          }`}
+      >
         <Loader className="w-8 h-8 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f5f2] pt-32 pb-20 px-4">
+    <div
+      className={`min-h-screen pt-32 pb-20 px-4 transition-colors duration-300 ${isDarkMode
+        ? 'bg-[#242c28]'
+        : 'bg-[#f7f5f2]'
+        }`}
+    >
       <div className="max-w-7xl mx-auto">
 
         {/* Header & Controls */}
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-serif italic text-stone-800 mb-8">NGO Stories & Updates</h1>
+          <h1
+            className={`text-4xl md:text-5xl font-serif italic mb-8 ${isDarkMode
+              ? 'text-[#f7f5f2]'
+              : 'text-stone-800'
+              }`}
+          >NGO Stories & Updates</h1>
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
 
@@ -108,7 +124,14 @@ export default function Stories({ onStoryClick }: StoriesProps) {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedCategory('All')}
-                className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all shadow-sm ${selectedCategory === 'All' ? 'bg-[#4b5e52] text-white' : 'bg-white text-stone-500 hover:bg-stone-100 border border-stone-200'}`}
+                className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all shadow-sm ${selectedCategory === 'All'
+                  ? 'bg-[#4b5e52] text-white'
+                  : (
+                    isDarkMode
+                      ? 'bg-white/5 text-stone-300 hover:bg-white/10 border border-white/10'
+                      : 'bg-white text-stone-500 hover:bg-stone-100 border border-stone-200'
+                  )
+                  }`}
               >
                 All Stories
               </button>
@@ -116,7 +139,14 @@ export default function Stories({ onStoryClick }: StoriesProps) {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.name)}
-                  className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all shadow-sm ${selectedCategory === cat.name ? 'bg-[#4b5e52] text-white' : 'bg-white text-stone-500 hover:bg-stone-100 border border-stone-200'}`}
+                  className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all shadow-sm ${selectedCategory === cat.name
+                    ? 'bg-[#4b5e52] text-white'
+                    : (
+                      isDarkMode
+                        ? 'bg-white/5 text-stone-300 hover:bg-white/10 border border-white/10'
+                        : 'bg-white text-stone-500 hover:bg-stone-100 border border-stone-200'
+                    )
+                    }`}
                 >
                   {cat.name}
                 </button>
@@ -131,7 +161,10 @@ export default function Stories({ onStoryClick }: StoriesProps) {
                 placeholder="Search stories..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-5 py-3 bg-white border border-stone-200 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-stone-700 text-sm placeholder:text-stone-400"
+                className={`w-full pl-11 pr-5 py-3 border rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4b5e52]/20 focus:border-[#4b5e52] text-sm transition-colors ${isDarkMode
+                  ? 'bg-white/5 border-white/10 text-stone-200 placeholder:text-stone-500'
+                  : 'bg-white border-stone-200 text-stone-700 placeholder:text-stone-400'
+                  }`}
               />
             </div>
 
@@ -146,13 +179,19 @@ export default function Stories({ onStoryClick }: StoriesProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               onClick={() => onStoryClick(pinnedStory.post_id)}
-              className="mb-12 bg-white rounded-[32px] overflow-hidden shadow-xl border border-stone-100 cursor-pointer group flex flex-col md:flex-row relative"
+              className={`mb-12 rounded-[32px] overflow-hidden shadow-xl border cursor-pointer group flex flex-col md:flex-row relative transition-colors ${isDarkMode
+                ? 'bg-[#303a35] border-white/10'
+                : 'bg-white border-stone-100'
+                }`}
             >
               <div className="absolute top-6 left-6 z-10 bg-amber-500 text-white px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center shadow-lg">
                 <Pin className="w-3 h-3 mr-1.5" /> Featured
               </div>
 
-              <div className="md:w-1/2 aspect-[4/3] md:aspect-auto overflow-hidden relative bg-stone-100">
+              <div className={`md:w-1/2 aspect-[4/3] md:aspect-auto overflow-hidden relative ${isDarkMode
+                ? 'bg-white/5'
+                : 'bg-stone-100'
+                }`}>
                 {pinnedStory.image ? (
                   <img src={pinnedStory.image} alt={pinnedStory.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 ) : (
@@ -165,7 +204,10 @@ export default function Stories({ onStoryClick }: StoriesProps) {
                   <span className="bg-[#f7f5f2] text-[#4b5e52] text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest border border-stone-200 flex items-center">
                     <Tag className="w-3 h-3 mr-1" /> {pinnedStory.category_name || 'Uncategorized'}
                   </span>
-                  <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest flex items-center">
+                  <span className={`text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest border flex items-center ${isDarkMode
+                      ? 'bg-white/5 text-[#d4c5b3] border-white/10'
+                      : 'bg-[#f7f5f2] text-[#4b5e52] border-stone-200'
+                    }`}>
                     <Calendar className="w-3 h-3 mr-1" /> {new Date(pinnedStory.published_date).toLocaleDateString()}
                   </span>
                 </div>
