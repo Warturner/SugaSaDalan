@@ -22,17 +22,17 @@ interface UserAccountsProps {
 export default function UserAccounts({ currentUser }: UserAccountsProps) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Modal States
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+
   // Form States
   const [userId, setUserId] = useState<number | null>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'admin' | 'media'>('media');
-  
+
   // Security & Toggle States
   const [adminPassword, setAdminPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -109,7 +109,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
     setUserId(acc.user_id);
     setUsername(acc.username);
     setRole(acc.role);
-    setPassword(''); 
+    setPassword('');
     setIsEditModalOpen(true);
   };
 
@@ -123,10 +123,10 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          user_id: userId, 
-          username, 
-          password, 
+        body: JSON.stringify({
+          user_id: userId,
+          username,
+          password,
           role,
           admin_password: adminPassword
         })
@@ -160,7 +160,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
         body: JSON.stringify({ user_id: id })
       });
       const data = await response.json();
-      
+
       if (data.success) {
         fetchUsers();
       } else {
@@ -172,68 +172,245 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex justify-between items-end mb-10">
+    <div className="w-full min-w-0 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-5 mb-8 sm:mb-10">
         <div>
           <h2 className="text-3xl font-serif italic text-stone-800 mb-2">User Accounts</h2>
           <p className="text-stone-500">Manage system access and permissions for NGO staff.</p>
         </div>
-        <button 
+        <button
           onClick={() => { resetForm(); setIsCreateModalOpen(true); }}
-          className="flex items-center bg-[#4b5e52] text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#3a4740] transition-colors shadow-lg active:scale-95"
+          className="w-full sm:w-auto flex items-center justify-center bg-[#4b5e52] text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#3a4740] transition-colors shadow-lg active:scale-95"
         >
           <UserPlus className="w-4 h-4 mr-2" />
           Add New User
         </button>
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-[32px] border border-stone-100 shadow-sm overflow-hidden"
+        className="bg-white rounded-[24px] sm:rounded-[32px] border border-stone-100 shadow-sm overflow-hidden min-w-0"
       >
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-stone-50 border-b border-stone-100">
-            <tr>
-              <th className="px-8 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-widest">User ID</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-widest">Username</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-widest">Role</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-widest text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-stone-50">
-            {isLoading ? (
-              <tr><td colSpan={4} className="text-center py-12 text-stone-400">Loading accounts...</td></tr>
-            ) : accounts.length === 0 ? (
-              <tr><td colSpan={4} className="text-center py-12 text-stone-400">No accounts found.</td></tr>
-            ) : (
-              accounts.map((acc) => (
-                <tr key={acc.user_id} className="hover:bg-stone-50/50 transition-colors">
-                  <td className="px-8 py-5 text-sm font-mono text-stone-400">#{acc.user_id}</td>
-                  <td className="px-8 py-5"><span className="text-sm font-bold text-stone-800 capitalize">{acc.username}</span></td>
-                  <td className="px-8 py-5">
-                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                      acc.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
-                    }`}>
-                      {acc.role === 'admin' ? <Shield className="w-3 h-3 mr-1.5" /> : <User className="w-3 h-3 mr-1.5" />}
+
+        {isLoading ? (
+
+          <div className="text-center py-12 text-stone-400">
+            Loading accounts...
+          </div>
+
+        ) : accounts.length === 0 ? (
+
+          <div className="text-center py-12 text-stone-400">
+            No accounts found.
+          </div>
+
+        ) : (
+
+          <>
+            {/* MOBILE ACCOUNT CARDS */}
+            <div className="md:hidden divide-y divide-stone-100">
+
+              {accounts.map(acc => (
+
+                <div
+                  key={acc.user_id}
+                  className="p-5 space-y-4 min-w-0"
+                >
+
+                  <div className="flex items-start justify-between gap-3 min-w-0">
+
+                    <div className="min-w-0 flex-1">
+
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-stone-400 mb-1">
+                        Account
+                      </p>
+
+                      <p className="font-bold text-stone-800 capitalize break-words">
+                        {acc.username}
+                      </p>
+
+                      <p className="text-[10px] font-mono text-stone-400 mt-1">
+                        User #{acc.user_id}
+                      </p>
+
+                    </div>
+
+                    <div
+                      className={`shrink-0 inline-flex items-center px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest ${acc.role === 'admin'
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-emerald-100 text-emerald-700'
+                        }`}
+                    >
+
+                      {acc.role === 'admin' ? (
+                        <Shield className="w-3 h-3 mr-1.5" />
+                      ) : (
+                        <User className="w-3 h-3 mr-1.5" />
+                      )}
+
                       {acc.role}
+
                     </div>
-                  </td>
-                  <td className="px-8 py-5 text-right">
-                    <div className="flex items-center justify-end space-x-3">
-                      <button onClick={() => openEditModal(acc)} className="p-2 text-stone-400 hover:text-blue-500 transition-colors rounded-xl hover:bg-blue-50">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleDeleteUser(acc.user_id, acc.username)} className="p-2 text-stone-400 hover:text-red-500 transition-colors rounded-xl hover:bg-red-50">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+
+                  </div>
+
+
+                  <div className="grid grid-cols-2 gap-3">
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openEditModal(acc)
+                      }
+                      className="flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-50 text-blue-600 text-[9px] font-bold uppercase tracking-widest"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      Edit
+                    </button>
+
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleDeleteUser(
+                          acc.user_id,
+                          acc.username
+                        )
+                      }
+                      className="flex items-center justify-center gap-2 py-3 rounded-xl bg-red-50 text-red-500 text-[9px] font-bold uppercase tracking-widest"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete
+                    </button>
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+
+
+            {/* TABLET / DESKTOP TABLE */}
+            <div className="hidden md:block overflow-x-auto">
+
+              <table className="w-full text-left border-collapse min-w-[650px]">
+
+                <thead className="bg-stone-50 border-b border-stone-100">
+
+                  <tr>
+
+                    <th className="px-8 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                      User ID
+                    </th>
+
+                    <th className="px-8 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                      Username
+                    </th>
+
+                    <th className="px-8 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                      Role
+                    </th>
+
+                    <th className="px-8 py-5 text-[10px] font-bold text-stone-400 uppercase tracking-widest text-right">
+                      Actions
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+
+                <tbody className="divide-y divide-stone-50">
+
+                  {accounts.map(acc => (
+
+                    <tr
+                      key={acc.user_id}
+                      className="hover:bg-stone-50/50 transition-colors"
+                    >
+
+                      <td className="px-8 py-5 text-sm font-mono text-stone-400">
+                        #{acc.user_id}
+                      </td>
+
+
+                      <td className="px-8 py-5">
+
+                        <span className="text-sm font-bold text-stone-800 capitalize">
+                          {acc.username}
+                        </span>
+
+                      </td>
+
+
+                      <td className="px-8 py-5">
+
+                        <div
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${acc.role === 'admin'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-emerald-100 text-emerald-700'
+                            }`}
+                        >
+
+                          {acc.role === 'admin' ? (
+                            <Shield className="w-3 h-3 mr-1.5" />
+                          ) : (
+                            <User className="w-3 h-3 mr-1.5" />
+                          )}
+
+                          {acc.role}
+
+                        </div>
+
+                      </td>
+
+
+                      <td className="px-8 py-5 text-right">
+
+                        <div className="flex items-center justify-end space-x-3">
+
+                          <button
+                            onClick={() =>
+                              openEditModal(acc)
+                            }
+                            className="p-2 text-stone-400 hover:text-blue-500 transition-colors rounded-xl hover:bg-blue-50"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              handleDeleteUser(
+                                acc.user_id,
+                                acc.username
+                              )
+                            }
+                            className="p-2 text-stone-400 hover:text-red-500 transition-colors rounded-xl hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </>
+
+        )}
+
       </motion.div>
 
       {/* Shared Modal for Create & Edit */}
@@ -249,13 +426,13 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-[32px] p-8 w-full max-w-md shadow-2xl"
+              className="bg-white rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl"
             >
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-serif italic text-stone-800">
                   {isEditModalOpen ? 'Edit User' : 'Add New User'}
                 </h3>
-                <button 
+                <button
                   onClick={() => { setIsCreateModalOpen(false); setIsEditModalOpen(false); }}
                   className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors"
                 >
@@ -290,8 +467,8 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
                       className="w-full px-4 py-3 bg-stone-50 border-none rounded-2xl focus:ring-2 focus:ring-[#d4c5b3] pr-12"
                       placeholder={isEditModalOpen ? "Enter new password..." : "Enter password..."}
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
                     >
@@ -306,9 +483,8 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
                     <button
                       type="button"
                       onClick={() => setRole('media')}
-                      className={`py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
-                        role === 'media' ? 'bg-[#4b5e52] text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
-                      }`}
+                      className={`py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${role === 'media' ? 'bg-[#4b5e52] text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
+                        }`}
                     >
                       <User className="w-4 h-4 mx-auto mb-1" />
                       Media
@@ -316,9 +492,8 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
                     <button
                       type="button"
                       onClick={() => setRole('admin')}
-                      className={`py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
-                        role === 'admin' ? 'bg-[#4b5e52] text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
-                      }`}
+                      className={`py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${role === 'admin' ? 'bg-[#4b5e52] text-white' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
+                        }`}
                     >
                       <Shield className="w-4 h-4 mx-auto mb-1" />
                       Admin
@@ -342,8 +517,8 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
                         className="w-full px-4 py-3 bg-amber-50 border border-amber-100 rounded-2xl focus:ring-2 focus:ring-amber-200 pr-12"
                         placeholder="Your admin password..."
                       />
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowAdminPassword(!showAdminPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
                       >
@@ -353,7 +528,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
                   </div>
                 )}
 
-                {error && <p className="text-red-500 text-xs font-bold text-center flex justify-center items-center gap-2"><AlertTriangle className="w-4 h-4"/>{error}</p>}
+                {error && <p className="text-red-500 text-xs font-bold text-center flex justify-center items-center gap-2"><AlertTriangle className="w-4 h-4" />{error}</p>}
 
                 <button
                   type="submit"
