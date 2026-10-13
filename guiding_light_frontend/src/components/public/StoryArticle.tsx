@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, Edit, Languages, Loader, Moon, Sun, FileText } from 'lucide-react';
+import { ArrowLeft, Edit, Languages, Loader, FileText } from 'lucide-react';
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -12,6 +12,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import ResponsivePdfViewer from './ResponsivePdfViewer';
+import { useTheme } from '../../context/ThemeContext';
 
 import type {
   StoryDetail,
@@ -47,9 +48,7 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
   const [targetLang, setTargetLang] = useState('en');
   const [isTranslating, setIsTranslating] = useState(false);
   const [displayContent, setDisplayContent] = useState('');
-
-  // Theme toggle state (defaulting to false / light mode)
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { isDarkMode } = useTheme();
 
   useEffect(() => {
 
@@ -191,17 +190,7 @@ export default function StoryArticle({ storyId, isAdmin, onEdit, onBack }: Story
           </button>
 
           <div className="flex items-center gap-3">
-            {/* Theme Toggle Button */}
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`p-2 rounded-full border shadow-sm backdrop-blur-sm transition-colors ${isDarkMode
-                ? 'bg-white/5 border-white/10 text-stone-400 hover:text-white'
-                : 'bg-white border-stone-200 text-stone-500 hover:text-stone-800'
-                }`}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
+
 
             {/* Language Selector */}
             {originalStory.content_type === 'article' && (<div className={`relative flex items-center border rounded-full px-4 py-2 shadow-sm backdrop-blur-sm transition-colors ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-white border-stone-200'}`}>

@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import type { PublicPage, AdminTab, User } from './types';
 import { checkSession, logoutUser } from './services/authService';
 import { AlertTriangle } from 'lucide-react';
+import { ThemeProvider } from './context/ThemeContext';
+
 
 // Components
 import Navbar from './components/layout/Navbar';
@@ -20,6 +22,7 @@ import ContactUs from './components/public/ContactUs';
 import HomeAbout from './components/public/HomeAbout';
 import Footer from './components/public/Footer';
 import Team from './components/public/Team';
+import ScrollToTopButton from './components/public/ScrollToTopButton';
 
 // Admin Components
 import UserAccounts from './components/admin/UserAccounts';
@@ -29,7 +32,7 @@ import Sidebar from './components/layout/Sidebar';
 import CMSModule from './components/admin/CMSModule';
 import TeamManagement from './components/admin/TeamManagement';
 import DonationVerification from './components/admin/DonationVerification';
-import ScrollToTopButton from './components/public/ScrollToTopButton';
+
 
 export default function App() {
   const [isAdmin, setIsAdmin] = React.useState(false);
@@ -303,147 +306,151 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f5f2] text-stone-800 selection:bg-[#d4c5b3] selection:text-[#3a4740]">
-      <Navbar
-        activePage={activePage}
-        setActivePage={setActivePage}
-      />
+    <ThemeProvider>
 
-      <main className="pt-20">
-        <AnimatePresence mode="wait">
-          {activePage === 'Home' && (
-            <motion.div
-              key="home"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <Hero setActivePage={setActivePage} />
-              <HomeAbout setActivePage={setActivePage} />
-            </motion.div>
-          )}
+      <div className="min-h-screen bg-[#f7f5f2] text-stone-800 selection:bg-[#d4c5b3] selection:text-[#3a4740]">
 
-          {activePage === 'Mission' && (
-            <motion.div
-              key="mission"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <Mission />
-            </motion.div>
-          )}
+        <Navbar
+          activePage={activePage}
+          setActivePage={setActivePage}
+        />
 
-          {activePage === 'Stories' && (
-            <motion.div
-              key="stories"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              {selectedStoryId ? (
-                <StoryArticle
-                  storyId={selectedStoryId}
-                  isAdmin={isAdmin}
-                  onEdit={(id) => {
+        <main className="pt-20">
+          <AnimatePresence mode="wait">
+            {activePage === 'Home' && (
+              <motion.div
+                key="home"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <Hero setActivePage={setActivePage} />
+                <HomeAbout setActivePage={setActivePage} />
+              </motion.div>
+            )}
 
-                    if (!currentUser) {
-                      setActivePage('Login');
-                      return;
-                    }
+            {activePage === 'Mission' && (
+              <motion.div
+                key="mission"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <Mission />
+              </motion.div>
+            )}
 
-                    setStoryToEdit(id);
-                    setActiveAdminTab('Stories');
-                  }}
-                  onBack={() => {
-                    setSelectedStoryId(null);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                />
-              ) : (
-                <>
-                  <div className="bg-[#ede9e3] pt-20 pb-10">
-                    <div className="max-w-7xl mx-auto px-4 text-center">
-                      <div className="inline-block px-4 py-1 bg-stone-200 text-stone-600 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4">The Feed</div>
-                      <h1 className="text-5xl font-serif italic text-stone-800 mb-4 tracking-tight">Stories of Hope</h1>
-                      <p className="text-stone-600 text-lg">Voices of resilience and hope from our community.</p>
+            {activePage === 'Stories' && (
+              <motion.div
+                key="stories"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                {selectedStoryId ? (
+                  <StoryArticle
+                    storyId={selectedStoryId}
+                    isAdmin={isAdmin}
+                    onEdit={(id) => {
+
+                      if (!currentUser) {
+                        setActivePage('Login');
+                        return;
+                      }
+
+                      setStoryToEdit(id);
+                      setActiveAdminTab('Stories');
+                    }}
+                    onBack={() => {
+                      setSelectedStoryId(null);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  />
+                ) : (
+                  <>
+                    <div className="bg-[#ede9e3] pt-20 pb-10">
+                      <div className="max-w-7xl mx-auto px-4 text-center">
+                        <div className="inline-block px-4 py-1 bg-stone-200 text-stone-600 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4">The Feed</div>
+                        <h1 className="text-5xl font-serif italic text-stone-800 mb-4 tracking-tight">Stories of Hope</h1>
+                        <p className="text-stone-600 text-lg">Voices of resilience and hope from our community.</p>
+                      </div>
                     </div>
-                  </div>
-                  <SuccessStories onStoryClick={(id) => {
-                    setSelectedStoryId(id);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }} />
-                </>
-              )}
-            </motion.div>
-          )}
+                    <SuccessStories onStoryClick={(id) => {
+                      setSelectedStoryId(id);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }} />
+                  </>
+                )}
+              </motion.div>
+            )}
 
-          {/* ADDED: Public Team Page Route */}
-          {activePage === 'Team' && (
-            <motion.div
-              key="team"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <Team />
-            </motion.div>
-          )}
+            {/* ADDED: Public Team Page Route */}
+            {activePage === 'Team' && (
+              <motion.div
+                key="team"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <Team />
+              </motion.div>
+            )}
 
-          {activePage === 'Donate' && (
-            <motion.div
-              key="donate"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <DonationForm />
-            </motion.div>
-          )}
+            {activePage === 'Donate' && (
+              <motion.div
+                key="donate"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <DonationForm />
+              </motion.div>
+            )}
 
-          {activePage === 'Services' && (
-            <motion.div
-              key="services"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <Services />
-            </motion.div>
-          )}
+            {activePage === 'Services' && (
+              <motion.div
+                key="services"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <Services />
+              </motion.div>
+            )}
 
-          {activePage === 'Contact' && (
-            <motion.div
-              key="contact"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <ContactUs />
-            </motion.div>
-          )}
+            {activePage === 'Contact' && (
+              <motion.div
+                key="contact"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <ContactUs />
+              </motion.div>
+            )}
 
-          {activePage === 'Login' && (
-            <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Login
-                onLoginSuccess={(user) => {
-                  setIsAdmin(true);
-                  setActiveAdminTab('Stories');
-                  setCurrentUser(user);
-                }}
-                onBack={() => setActivePage('Home')}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
+            {activePage === 'Login' && (
+              <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <Login
+                  onLoginSuccess={(user) => {
+                    setIsAdmin(true);
+                    setActiveAdminTab('Stories');
+                    setCurrentUser(user);
+                  }}
+                  onBack={() => setActivePage('Home')}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
 
-      <Footer
-        setActivePage={setActivePage}
-      />
+        <Footer
+          setActivePage={setActivePage}
+        />
 
-      <ScrollToTopButton />
+        <ScrollToTopButton />
 
-    </div>
+      </div>
+    </ThemeProvider>
   );
 }
