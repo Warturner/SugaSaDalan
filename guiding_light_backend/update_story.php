@@ -398,30 +398,35 @@ try {
             ' (Cover image was modified or removed).';
     }
 
-    $historyStmt =
-        $conn->prepare(
-            "INSERT INTO story_edit_history (
-                post_id,
-                user_id,
-                changes_made
-             )
-             VALUES (
-                :post_id,
-                :user_id,
-                :changes
-             )"
-        );
+$historyStmt =
+    $conn->prepare(
+        "INSERT INTO story_edit_history (
+            post_id,
+            user_id,
+            editor_username,
+            changes_made
+         )
+         VALUES (
+            :post_id,
+            :user_id,
+            :editor_username,
+            :changes
+         )"
+    );
 
-    $historyStmt->execute([
-        ':post_id' =>
-            $postId,
+$historyStmt->execute([
+    ':post_id' =>
+        $postId,
 
-        ':user_id' =>
-            $currentUser['id'],
+    ':user_id' =>
+        $currentUser['id'],
 
-        ':changes' =>
-            $changes
-    ]);
+    ':editor_username' =>
+        $currentUser['username'],
+
+    ':changes' =>
+        $changes
+]);
 
     $conn->commit();
 

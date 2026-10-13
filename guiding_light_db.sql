@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: sql112.infinityfree.com
--- Generation Time: Oct 13, 2026 at 04:06 AM
+-- Generation Time: Oct 13, 2026 at 04:26 AM
 -- Server version: 11.4.13-MariaDB
 -- PHP Version: 7.2.22
 
@@ -132,7 +132,8 @@ INSERT INTO `story_categories` (`id`, `name`) VALUES
 CREATE TABLE `story_edit_history` (
   `edit_id` int(11) NOT NULL,
   `post_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `editor_username` varchar(50) NOT NULL,
   `edit_timestamp` timestamp NOT NULL DEFAULT current_timestamp(),
   `changes_made` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -228,9 +229,7 @@ ALTER TABLE `story_categories`
 -- Indexes for table `story_edit_history`
 --
 ALTER TABLE `story_edit_history`
-  ADD PRIMARY KEY (`edit_id`),
-  ADD KEY `post_id` (`post_id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD KEY `story_edit_history_ibfk_2` (`user_id`);
 
 --
 -- Indexes for table `team_members`
@@ -273,12 +272,6 @@ ALTER TABLE `story_categories`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- AUTO_INCREMENT for table `story_edit_history`
---
-ALTER TABLE `story_edit_history`
-  MODIFY `edit_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
-
---
 -- AUTO_INCREMENT for table `team_members`
 --
 ALTER TABLE `team_members`
@@ -317,8 +310,7 @@ ALTER TABLE `story_attachments`
 -- Constraints for table `story_edit_history`
 --
 ALTER TABLE `story_edit_history`
-  ADD CONSTRAINT `story_edit_history_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `stories` (`post_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `story_edit_history_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `story_edit_history_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

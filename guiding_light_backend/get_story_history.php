@@ -33,8 +33,7 @@ if ($postId <= 0) {
     http_response_code(400);
 
     echo json_encode([
-        'error' =>
-            'A valid post ID is required.'
+        'error' => 'A valid post ID is required.'
     ]);
 
     exit;
@@ -42,28 +41,38 @@ if ($postId <= 0) {
 
 try {
 
-    $sql =
-        "SELECT
+    $sql = "
+        SELECT
             h.edit_timestamp,
-            u.username,
-            h.changes_made
-         FROM story_edit_history h
-         JOIN users u
-            ON h.user_id = u.user_id
-         WHERE h.post_id = :post_id
-         ORDER BY h.edit_timestamp DESC";
 
-    $stmt =
-        $conn->prepare($sql);
+            COALESCE(
+                NULLIF(h.editor_username, ''),
+                u.username,
+                'Deleted user'
+            ) AS username,
+
+            h.changes_made
+
+        FROM story_edit_history h
+
+        LEFT JOIN users u
+            ON h.user_id = u.user_id
+
+        WHERE h.post_id = :post_id
+
+        ORDER BY
+            h.edit_timestamp DESC,
+            h.edit_id DESC
+    ";
+
+    $stmt = $conn->prepare($sql);
 
     $stmt->execute([
         ':post_id' => $postId
     ]);
 
     echo json_encode(
-        $stmt->fetchAll(
-            PDO::FETCH_ASSOC
-        )
+        $stmt->fetchAll(PDO::FETCH_ASSOC)
     );
 
 } catch (PDOException $e) {
@@ -71,7 +80,7 @@ try {
     http_response_code(500);
 
     echo json_encode([
-        'error' =>
-            'Failed to load story history.'
+        'error' => 'Failed to load story history.'
     ]);
+
 }
