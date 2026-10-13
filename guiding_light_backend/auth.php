@@ -17,14 +17,65 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Same timeout behavior as the existing application.
 const AUTH_IDLE_TIMEOUT = 3 * 60;
 const AUTH_ABSOLUTE_TIMEOUT = 8 * 60 * 60;
 
 /**
- * Clear this device's authorized token only when it is still the active
- * token. A displaced device must never sign out the newer device.
+ * Browser-level request origin guard for authenticated write requests.
+ * No frontend changes are required for existing browser fetch() POST calls.
+ * This supplements (but does not replace) session authentication and RBAC.
+ * Allowed cross-origin frontend origins are defined in cors.php.
  */
+function requireTrustedWriteOrigin(): void
+{
+    global $allowedOrigins;
+
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+        return;
+    }
+
+    $trusted = is_array($allowedOrigins ?? null) ? $allowedOrigins : [];
+
+    // Also accept the exact same origin used to reach this PHP backend.
+    // Validate the Host header's shape before constructing that origin.
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+    if ($host !== '' && preg_match('/^[a-z0-9.\-:\[\]]+$/i', $host)) {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            ? 'https://'
+            : 'http://';
+        $trusted[] = $scheme . $host;
+    }
+
+    $origin = trim((string) ($_SERVER['HTTP_ORIGIN'] ?? ''));
+
+    // Some privacy-aware browsers omit Origin but provide Referer.
+    if ($origin === '') {
+        $referer = (string) ($_SERVER['HTTP_REFERER'] ?? '');
+        if ($referer !== '') {
+            $parts = parse_url($referer);
+            if (is_array($parts) &&
+                isset($parts['scheme'], $parts['host']) &&
+                in_array($parts['scheme'], ['http', 'https'], true)) {
+                $origin = $parts['scheme'] . '://' . $parts['host'];
+                if (isset($parts['port'])) {
+                    $origin .= ':' . $parts['port'];
+                }
+            }
+        }
+    }
+
+    if ($origin === '' || !in_array($origin, $trusted, true)) {
+        http_response_code(403);
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode([
+            'success' => false,
+            'error' => 'Request origin is not permitted.'
+        ]);
+        exit;
+    }
+}
+
+/** Revoke only the currently authorized token, never a newer login. */
 function revokeOwnActiveSession(): void
 {
     global $conn;
@@ -47,7 +98,6 @@ function revokeOwnActiveSession(): void
              WHERE user_id = :user_id
                AND active_session_hash = :active_hash'
         );
-
         $stmt->execute([
             ':user_id' => $userId,
             ':active_hash' => hash('sha256', $token)
@@ -57,10 +107,7 @@ function revokeOwnActiveSession(): void
     }
 }
 
-/**
- * Destroy the local PHP session. Set $revokeActive=true for explicit
- * logout / timeout; false for sessions already replaced elsewhere.
- */
+/** Destroy this browser's session; optionally revoke its DB token. */
 function destroyAuthSession(bool $revokeActive = false): void
 {
     if ($revokeActive) {
@@ -81,7 +128,7 @@ function destroyAuthSession(bool $revokeActive = false): void
                 'samesite' => $params['samesite'] ?? 'Lax'
             ]);
         } else {
-            // Fallback for older PHP runtimes.
+            // Compatible with older PHP 7.2 hosting.
             setcookie(
                 session_name(), '', time() - 42000,
                 $params['path'], $params['domain'],
@@ -93,10 +140,7 @@ function destroyAuthSession(bool $revokeActive = false): void
     session_destroy();
 }
 
-/**
- * Validate timeouts, existence, role, and single-device token against DB.
- * A passive session check must NOT extend the inactivity timeout.
- */
+/** Validate timeouts, account status, roles, and single-device token. */
 function getCurrentUser(bool $refreshActivity = true): ?array
 {
     global $conn;
@@ -136,7 +180,6 @@ function getCurrentUser(bool $refreshActivity = true): ?array
         $stmt->execute([':user_id' => $userId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        // Do not invalidate a valid session just because DB is temporarily down.
         http_response_code(503);
         echo json_encode([
             'success' => false,
@@ -160,7 +203,6 @@ function getCurrentUser(bool $refreshActivity = true): ?array
         return null;
     }
 
-    // Keep role and username current if administrators edit the account.
     $_SESSION['username'] = $user['username'];
     $_SESSION['role'] = $user['role'];
 
@@ -194,6 +236,8 @@ function requireAuth(): array
         exit;
     }
 
+    // All existing protected POST endpoints call requireAuth/Role/Admin.
+    requireTrustedWriteOrigin();
     return $user;
 }
 

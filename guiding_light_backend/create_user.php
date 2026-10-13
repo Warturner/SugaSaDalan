@@ -1,62 +1,77 @@
 <?php
+
 require 'db_connect.php';
 require 'auth.php';
 
-header("Content-Type: application/json; charset=UTF-8");
+header('Content-Type: application/json; charset=UTF-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-
     http_response_code(405);
-
-    echo json_encode([
-        'error' => 'Method not allowed.'
-    ]);
-
+    echo json_encode(['success' => false, 'error' => 'Method not allowed.']);
     exit;
 }
 
 $currentUser = requireAdmin();
 
 try {
-    $data = json_decode(file_get_contents("php://input"));
-    $username = $data->username ?? '';
-    $password = $data->password ?? '';
-    $role = $data->role ?? 'media'; // Default to media for safety
-
-    if (empty($username) || empty($password)) {
-        echo json_encode(['success' => false, 'error' => 'Username and password are required.']);
-        exit;
+    $input = file_get_contents('php://input');
+    if (strlen($input) > 16384) {
+        throw new InvalidArgumentException('Account request is too large.');
     }
 
-    // Check if username already exists
-    $checkStmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE username = :username");
-    $checkStmt->execute([':username' => $username]);
-    if ($checkStmt->fetchColumn() > 0) {
-        echo json_encode(['success' => false, 'error' => 'Username already exists.']);
-        exit;
+    $data = json_decode($input, true);
+    if (!is_array($data)) {
+        throw new InvalidArgumentException('Invalid account request.');
     }
 
-    // Hash the password for security
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    $username = $data['username'] ?? null;
+    $password = $data['password'] ?? null;
+    $role = $data['role'] ?? 'media';
 
-    // Insert the new user
-    $stmt = $conn->prepare("INSERT INTO users (username, password_hash, role) VALUES (:username, :password_hash, :role)");
+    if (!is_string($username) || !is_string($password) || !is_string($role)) {
+        throw new InvalidArgumentException('Invalid account fields.');
+    }
+
+    $username = trim($username);
+
+    if ($username === '' || mb_strlen($username) > 50 ||
+        strlen($password) < 8 || strlen($password) > 256) {
+        throw new InvalidArgumentException(
+            'Username is required (max 50 characters); password must be 8–256 characters.'
+        );
+    }
+
+    if (!in_array($role, ['admin', 'media'], true)) {
+        throw new InvalidArgumentException('Invalid account role.');
+    }
+
+    $stmt = $conn->prepare(
+        'INSERT INTO users (username, password_hash, role)
+         VALUES (:username, :password_hash, :role)'
+    );
     $stmt->execute([
         ':username' => $username,
-        ':password_hash' => $hashed_password,
+        ':password_hash' => password_hash($password, PASSWORD_DEFAULT),
         ':role' => $role
     ]);
 
-    echo json_encode(['success' => true, 'message' => 'User created successfully!']);
-
+    echo json_encode([
+        'success' => true,
+        'message' => 'User created successfully!'
+    ]);
+} catch (InvalidArgumentException $e) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 } catch (PDOException $e) {
-
-    http_response_code(500);
-
+    $duplicate = $e->getCode() === '23000';
+    http_response_code($duplicate ? 409 : 500);
     echo json_encode([
         'success' => false,
-        'error' =>
-            'Failed to create user.'
+        'error' => $duplicate
+            ? 'Username already exists.'
+            : 'Failed to create user.'
     ]);
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Failed to create user.']);
 }
-?>
