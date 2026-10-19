@@ -13,7 +13,7 @@ function glPrivateConfig(): array
     $config = [];
     $root = realpath((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''));
     if ($root !== false) {
-        $file = dirname($root) . DIRECTORY_SEPARATOR . 'guiding_light_private' . DIRECTORY_SEPARATOR . 'config.php';
+        $file = $root . DIRECTORY_SEPARATOR . 'guiding_light_private' . DIRECTORY_SEPARATOR . 'config.php';
         if (is_file($file)) {
             $loaded = require $file;
             if (!is_array($loaded)) {
