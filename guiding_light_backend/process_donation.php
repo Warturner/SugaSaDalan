@@ -1,84 +1,89 @@
 <?php
-require_once 'cors.php';
+require_once __DIR__ . '/cors.php';
+require_once __DIR__ . '/donor_private_config.php';
+header('Content-Type: application/json; charset=UTF-8');
+header('Cache-Control: no-store');
 
-header("Content-Type: application/json; charset=UTF-8");
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     http_response_code(405);
-
-    echo json_encode([
-        'error' => 'Method not allowed.'
-    ]);
-
+    echo json_encode(['success' => false, 'error' => 'Method not allowed.']);
     exit;
 }
 
-$data = json_decode(file_get_contents("php://input"));
-$amount = (float)($data->amount ?? 0);
-$method_label = $data->payment_method ?? 'E-wallet';
+try {
+    $raw = file_get_contents('php://input');
+    if (!is_string($raw) || strlen($raw) > 4096) throw new InvalidArgumentException('Invalid donation request.');
+    $data = json_decode($raw, true);
+    if (!is_array($data)) throw new InvalidArgumentException('Invalid donation request.');
 
-if ($amount <= 0) {
-    echo json_encode(['error' => 'Invalid amount.']);
-    exit;
-}
+    $value = $data['amount'] ?? null;
+    $name = $data['donor_name'] ?? null;
+    $email = $data['donor_email'] ?? null;
+    if (!is_numeric($value) || !is_string($name) || !is_string($email)) {
+        throw new InvalidArgumentException('Donation amount, donor name and email are required.');
+    }
+    $amount = (float) $value;
+    $name = trim($name);
+    $email = trim($email);
+    if (!is_finite($amount) || $amount < 0.01 || $amount > 99999.99 || abs($amount - round($amount, 2)) > 0.000001) {
+        throw new InvalidArgumentException('Please provide a valid donation amount (up to PHP 99,999.99).');
+    }
+    if (mb_strlen($name, 'UTF-8') < 2 || mb_strlen($name, 'UTF-8') > 100 ||
+        preg_match('/[\x00-\x1F\x7F]/', $name)) {
+        throw new InvalidArgumentException('Please enter your full name (2–100 characters).');
+    }
+    if (strlen($email) > 100 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        throw new InvalidArgumentException('Please enter a valid email address (max 100 characters).');
+    }
 
-$secret_key = 'sk_test_WHtx1vpQYbWw1Emap4qAzFrC';
-$encoded_key = base64_encode($secret_key . ':');
-$amount_centavos = $amount * 100;
-$base_url = strtok($_SERVER['HTTP_REFERER'] ?? 'http://yourdomain.com', '?');
-
-$payload = [
-    'data' => [
-        'attributes' => [
-            'billing' => [
-                'name' => 'Anonymous',
-                'email' => 'finance@streetlight.org' // TO-DO: Change for client later
-            ],
+    $key = glRequiredSecret('GL_PAYMONGO_SECRET_KEY', 'paymongo_secret_key');
+    $publicUrl = glPublicBaseUrl();
+    $centavos = (int) round($amount * 100);
+    $payload = [
+        'data' => ['attributes' => [
+            'billing' => ['name' => $name, 'email' => $email],
             'send_email_receipt' => true,
             'show_description' => true,
             'show_line_items' => true,
             'payment_method_types' => ['gcash', 'paymaya', 'card'],
-            'line_items' => [
-                [
-                    'currency' => 'PHP',
-                    'amount' => $amount_centavos,
-                    'description' => 'Donation via ' . $method_label,
-                    'name' => 'Guiding Light Donation',
-                    'quantity' => 1
-                ]
-            ],
-            // 💡 FIXED: We removed the {CHECKOUT_SESSION_ID} trap!
-            'success_url' => $base_url . '?payment=success', 
-            'cancel_url' => $base_url . '?payment=cancelled'
+            'line_items' => [[
+                'currency' => 'PHP', 'amount' => $centavos,
+                'description' => 'Donation via PayMongo',
+                'name' => 'Guiding Light Donation', 'quantity' => 1
+            ]],
+            'success_url' => $publicUrl . '?payment=success',
+            'cancel_url' => $publicUrl . '?payment=cancelled'
+        ]]
+    ];
+
+    $ch = curl_init('https://api.paymongo.com/v1/checkout_sessions');
+    if ($ch === false) throw new RuntimeException('Unable to initialize payment service.');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode($payload),
+        CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2,
+        CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Basic ' . base64_encode($key . ':')
         ]
-    ]
-];
-
-$ch = curl_init('https://api.paymongo.com/v1/checkout_sessions');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // InfinityFree SSL bypass
-curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json',
-    'Authorization: Basic ' . $encoded_key
-]);
-
-$response = curl_exec($ch);
-$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-$result = json_decode($response, true);
-
-if ($http_status === 200 && isset($result['data']['attributes']['checkout_url'])) {
-    echo json_encode([
-        'success' => true, 
-        'checkout_url' => $result['data']['attributes']['checkout_url'],
-        'session_id' => $result['data']['id'] // 💡 EXPORT THE REAL ID DIRECTLY TO REACT!
     ]);
-} else {
-    echo json_encode(['error' => 'Failed to connect to PayMongo.']);
+    $response = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    $result = is_string($response) ? json_decode($response, true) : null;
+    $checkout = $result['data']['attributes']['checkout_url'] ?? null;
+    $session = $result['data']['id'] ?? null;
+    if ($status < 200 || $status >= 300 || !is_string($checkout) || !is_string($session) ||
+        filter_var($checkout, FILTER_VALIDATE_URL) === false || substr($checkout, 0, 8) !== 'https://') {
+        throw new RuntimeException('Payment checkout could not be created.');
+    }
+    echo json_encode(['success' => true, 'checkout_url' => $checkout, 'session_id' => $session]);
+} catch (InvalidArgumentException $e) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+} catch (Throwable $e) {
+    error_log('Unable to initialize PayMongo checkout.');
+    http_response_code(503);
+    echo json_encode(['success' => false, 'error' => 'Donation checkout is temporarily unavailable.']);
 }
-?>
