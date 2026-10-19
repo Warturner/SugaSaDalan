@@ -17,24 +17,17 @@ try {
     if (!is_array($data)) throw new InvalidArgumentException('Invalid donation request.');
 
     $value = $data['amount'] ?? null;
-    $name = $data['donor_name'] ?? null;
-    $email = $data['donor_email'] ?? null;
-    if (!is_numeric($value) || !is_string($name) || !is_string($email)) {
-        throw new InvalidArgumentException('Donation amount, donor name and email are required.');
+    if (!is_numeric($value)) {
+        throw new InvalidArgumentException('Donation amount is required.');
     }
     $amount = (float) $value;
-    $name = trim($name);
-    $email = trim($email);
     if (!is_finite($amount) || $amount < 0.01 || $amount > 99999.99 || abs($amount - round($amount, 2)) > 0.000001) {
         throw new InvalidArgumentException('Please provide a valid donation amount (up to PHP 99,999.99).');
     }
-    if (mb_strlen($name, 'UTF-8') < 2 || mb_strlen($name, 'UTF-8') > 100 ||
-        preg_match('/[\x00-\x1F\x7F]/', $name)) {
-        throw new InvalidArgumentException('Please enter your full name (2–100 characters).');
-    }
-    if (strlen($email) > 100 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        throw new InvalidArgumentException('Please enter a valid email address (max 100 characters).');
-    }
+    // Test-mode checkout defaults. PayMongo may let donors edit billing fields.
+    // Any final billing returned by PayMongo is encrypted by verify_donation.php.
+    $name = 'Anonymous';
+    $email = 'streetlight.sugasadalan.ngo@gmail.com';
 
     $key = glRequiredSecret('GL_PAYMONGO_SECRET_KEY', 'paymongo_secret_key');
     $publicUrl = glPublicBaseUrl();

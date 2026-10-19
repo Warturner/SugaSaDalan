@@ -81,9 +81,6 @@ export default function DonationForm() {
   const [amount, setAmount] =
     React.useState<string>('');
 
-  const [donorName, setDonorName] = React.useState('');
-  const [donorEmail, setDonorEmail] = React.useState('');
-
   const [method, setMethod] =
     React.useState<string>('PayMongo');
 
@@ -217,22 +214,13 @@ export default function DonationForm() {
       return;
     }
 
-    if (donorName.trim().length < 2 || donorName.trim().length > 100 ||
-        donorEmail.trim().length > 100 ||
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(donorEmail.trim())) {
-      setError('Enter your full name and a valid email before checkout.');
-      return;
-    }
-
     setIsSubmitting(true);
     setError(null);
 
 
     const donationData = {
       amount: parseFloat(amount),
-      payment_method: method,
-      donor_name: donorName.trim(),
-      donor_email: donorEmail.trim()
+      payment_method: method
     };
 
 
@@ -406,8 +394,6 @@ export default function DonationForm() {
             onClick={() => {
               setIsSuccess(false);
               setAmount('');
-              setDonorName('');
-              setDonorEmail('');
               setError(null);
             }}
             className="bg-[#4b5e52] text-white px-12 py-4 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#3a4740] transition-all shadow-lg"
@@ -721,25 +707,6 @@ export default function DonationForm() {
                     }}
                   >
 
-                    <div className="space-y-5 mb-8">
-                      <div>
-                        <label htmlFor="donation-donor-name" className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Full name (required for checkout)</label>
-                        <input id="donation-donor-name" type="text" autoComplete="name"
-                          required minLength={2} maxLength={100}
-                          value={donorName} onChange={e => setDonorName(e.target.value)}
-                          placeholder="Your full name"
-                          className="w-full px-4 py-4 bg-stone-50 border border-stone-200 rounded-2xl text-stone-800" />
-                      </div>
-                      <div>
-                        <label htmlFor="donation-donor-email" className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Email address (required for checkout)</label>
-                        <input id="donation-donor-email" type="email" autoComplete="email"
-                          required maxLength={100}
-                          value={donorEmail} onChange={e => setDonorEmail(e.target.value)}
-                          placeholder="you@example.com"
-                          className="w-full px-4 py-4 bg-stone-50 border border-stone-200 rounded-2xl text-stone-800" />
-                      </div>
-                      <p className="text-xs text-stone-500">Your billing details are sent to PayMongo for payment processing. Our donation database encrypts these details before storage.</p>
-                    </div>
                     <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">
                       Amount (PHP)
                     </label>
