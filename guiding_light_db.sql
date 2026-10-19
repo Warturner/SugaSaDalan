@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: sql112.infinityfree.com
--- Generation Time: Oct 19, 2026 at 12:51 AM
+-- Generation Time: Oct 19, 2026 at 03:29 AM
 -- Server version: 11.4.13-MariaDB
 -- PHP Version: 7.2.22
 
@@ -49,6 +49,8 @@ CREATE TABLE `donations` (
   `donation_id` int(11) NOT NULL,
   `donor_name` varchar(100) DEFAULT 'Anonymous',
   `contact_email` varchar(100) DEFAULT 'anonymous@example.com',
+  `donor_name_enc` text DEFAULT NULL,
+  `contact_email_enc` text DEFAULT NULL,
   `amount` decimal(7,2) NOT NULL,
   `reference_number` varchar(50) NOT NULL,
   `payment_method` int(1) NOT NULL,
