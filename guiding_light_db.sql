@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: sql112.infinityfree.com
--- Generation Time: Oct 13, 2026 at 07:50 AM
+-- Generation Time: Oct 19, 2026 at 12:09 AM
 -- Server version: 11.4.13-MariaDB
 -- PHP Version: 7.2.22
 
@@ -55,6 +55,23 @@ CREATE TABLE `donations` (
   `status` int(1) DEFAULT 1,
   `transaction_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `verified_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `login_security_events`
+--
+
+CREATE TABLE `login_security_events` (
+  `event_id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `attempted_username` varchar(50) NOT NULL,
+  `username_hash` char(64) NOT NULL,
+  `ip_hash` char(64) NOT NULL,
+  `event_type` enum('login_failed','login_success','login_restricted') NOT NULL,
+  `details` varchar(100) NOT NULL DEFAULT '',
+  `occurred_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -173,6 +190,17 @@ ALTER TABLE `donations`
   ADD KEY `verified_by` (`verified_by`);
 
 --
+-- Indexes for table `login_security_events`
+--
+ALTER TABLE `login_security_events`
+  ADD PRIMARY KEY (`event_id`),
+  ADD KEY `idx_login_security_username_time` (`username_hash`,`occurred_at`),
+  ADD KEY `idx_login_security_ip_time` (`ip_hash`,`occurred_at`),
+  ADD KEY `idx_login_security_event_time` (`event_type`,`occurred_at`),
+  ADD KEY `idx_login_security_time` (`occurred_at`),
+  ADD KEY `idx_login_security_user` (`user_id`);
+
+--
 -- Indexes for table `stories`
 --
 ALTER TABLE `stories`
@@ -232,6 +260,12 @@ ALTER TABLE `donations`
   MODIFY `donation_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `login_security_events`
+--
+ALTER TABLE `login_security_events`
+  MODIFY `event_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `stories`
 --
 ALTER TABLE `stories`
@@ -283,6 +317,12 @@ ALTER TABLE `account_activity_logs`
 --
 ALTER TABLE `donations`
   ADD CONSTRAINT `donations_ibfk_3` FOREIGN KEY (`verified_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `login_security_events`
+--
+ALTER TABLE `login_security_events`
+  ADD CONSTRAINT `fk_login_security_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `stories`
