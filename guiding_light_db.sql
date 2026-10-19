@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: sql112.infinityfree.com
--- Generation Time: Oct 19, 2026 at 12:09 AM
+-- Generation Time: Oct 19, 2026 at 12:51 AM
 -- Server version: 11.4.13-MariaDB
 -- PHP Version: 7.2.22
 
@@ -69,8 +69,9 @@ CREATE TABLE `login_security_events` (
   `attempted_username` varchar(50) NOT NULL,
   `username_hash` char(64) NOT NULL,
   `ip_hash` char(64) NOT NULL,
-  `event_type` enum('login_failed','login_success','login_restricted') NOT NULL,
+  `event_type` enum('login_failed','login_success','login_restricted','admin_unlocked') NOT NULL,
   `details` varchar(100) NOT NULL DEFAULT '',
+  `admin_actor` varchar(50) DEFAULT NULL,
   `occurred_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

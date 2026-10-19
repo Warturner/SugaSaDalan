@@ -28,7 +28,7 @@ try {
     }
 
     if ($type !== '' && !in_array($type, [
-        'login_failed', 'login_success', 'login_restricted'
+        'login_failed', 'login_success', 'login_restricted', 'admin_unlocked'
     ], true)) {
         throw new InvalidArgumentException('Unknown security event type.');
     }
@@ -72,7 +72,7 @@ try {
     }
     $where = $filters ? ' WHERE ' . implode(' AND ', $filters) : '';
     $stmt = $conn->prepare(
-        'SELECT event_id, attempted_username, event_type, details, occurred_at
+        'SELECT event_id, attempted_username, event_type, details, admin_actor, occurred_at
            FROM login_security_events' . $where . '
           ORDER BY occurred_at DESC, event_id DESC
           LIMIT :limit OFFSET :offset'

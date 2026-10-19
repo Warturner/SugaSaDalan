@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { AlertTriangle, ChevronLeft, ChevronRight, RefreshCw, Search, ShieldCheck } from 'lucide-react';
 import { apiFetch } from '../../services/api';
+import ActiveLoginRestrictions from './ActiveLoginRestrictions';
 
-type SecurityEventType = 'login_failed' | 'login_success' | 'login_restricted';
+type SecurityEventType = 'login_failed' | 'login_success' | 'login_restricted' | 'admin_unlocked';
 
 interface LoginSecurityEntry {
   event_id: number | string;
   attempted_username: string;
   event_type: SecurityEventType;
   details: string;
+  admin_actor?: string | null;
   occurred_at: string;
 }
 
@@ -22,7 +24,8 @@ interface SecurityResponse {
 const eventLabels: Record<SecurityEventType, string> = {
   login_failed: 'Failed login',
   login_success: 'Successful login',
-  login_restricted: 'Temporary restriction'
+  login_restricted: 'Temporary restriction',
+  admin_unlocked: 'Admin unlocked'
 };
 
 function formatTime(value: string): string {
@@ -91,6 +94,7 @@ export default function LoginSecurityLog() {
 
   return (
     <section className="w-full max-w-6xl mx-auto space-y-6">
+      <ActiveLoginRestrictions onUnlocked={() => setRefresh(v => v + 1)} />
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2 text-[#4b5e52]">
@@ -150,6 +154,7 @@ export default function LoginSecurityLog() {
               <option value="login_failed">Failed login</option>
               <option value="login_success">Successful login</option>
               <option value="login_restricted">Temporary restriction</option>
+              <option value="admin_unlocked">Admin unlocked</option>
             </select>
           </label>
         </div>
@@ -189,10 +194,12 @@ export default function LoginSecurityLog() {
                           ? 'bg-green-50 text-green-800'
                           : event.event_type === 'login_restricted'
                             ? 'bg-amber-50 text-amber-800'
-                            : 'bg-red-50 text-red-800'
+                            : event.event_type === 'admin_unlocked'
+                              ? 'bg-blue-50 text-blue-800'
+                              : 'bg-red-50 text-red-800'
                       }`}>{eventLabels[event.event_type] ?? event.event_type}</span>
                     </td>
-                    <td className="px-5 py-4 text-stone-600">{event.details || '—'}</td>
+                    <td className="px-5 py-4 text-stone-600">{event.event_type === 'admin_unlocked' && event.admin_actor ? `By ${event.admin_actor}: ` : ''}{event.details || '—'}</td>
                   </tr>
                 ))}
               </tbody>
