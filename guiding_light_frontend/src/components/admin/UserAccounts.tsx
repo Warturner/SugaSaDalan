@@ -27,6 +27,13 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  // Additional authorization for deleting an account.
+  const [deleteTarget, setDeleteTarget] = useState<Account | null>(null);
+  const [deleteAdminPassword, setDeleteAdminPassword] = useState('');
+  const [showDeleteAdminPassword, setShowDeleteAdminPassword] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Form States
   const [userId, setUserId] = useState<number | null>(null);
   const [username, setUsername] = useState('');
@@ -146,28 +153,53 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
     }
   };
 
-  // --- DELETE USER ---
-  const handleDeleteUser = async (id: number, name: string) => {
-    if (!window.confirm(`Are you absolutely sure you want to delete the account for "${name}"? This cannot be undone.`)) {
-      return;
-    }
+  // --- DELETE USER: Require confirmation and the LOGGED-IN admin's password. ---
+  const openDeleteModal = (account: Account) => {
+    setDeleteTarget(account);
+    setDeleteAdminPassword('');
+    setShowDeleteAdminPassword(false);
+    setDeleteError(null);
+  };
 
+  const closeDeleteModal = () => {
+    if (isDeleting) return;
+    setDeleteTarget(null);
+    setDeleteAdminPassword('');
+    setShowDeleteAdminPassword(false);
+    setDeleteError(null);
+  };
+
+  const handleDeleteUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deleteTarget || isDeleting || !deleteAdminPassword) return;
+
+    const targetId = deleteTarget.user_id;
+    setIsDeleting(true);
+    setDeleteError(null);
     try {
       const response = await fetch('/guiding_light_backend/delete_user.php', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: id })
+        body: JSON.stringify({ user_id: targetId, admin_password: deleteAdminPassword })
       });
       const data = await response.json();
-
-      if (data.success) {
-        fetchUsers();
+      if (response.ok && data.success) {
+        setDeleteTarget(null);
+        setDeleteAdminPassword('');
+        setShowDeleteAdminPassword(false);
+        await fetchUsers();
       } else {
-        alert(data.error || 'Failed to delete user.');
+        setDeleteAdminPassword('');
+        setShowDeleteAdminPassword(false);
+        setDeleteError(data.error || 'Failed to delete user.');
       }
     } catch (err) {
-      alert('Server connection failed.');
+      setDeleteAdminPassword('');
+      setShowDeleteAdminPassword(false);
+      setDeleteError('Server connection failed.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -273,10 +305,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
                     <button
                       type="button"
                       onClick={() =>
-                        handleDeleteUser(
-                          acc.user_id,
-                          acc.username
-                        )
+                        openDeleteModal(acc)
                       }
                       className="flex items-center justify-center gap-2 py-3 rounded-xl bg-red-50 text-red-500 text-[9px] font-bold uppercase tracking-widest"
                     >
@@ -383,10 +412,7 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
 
                           <button
                             onClick={() =>
-                              handleDeleteUser(
-                                acc.user_id,
-                                acc.username
-                              )
+                              openDeleteModal(acc)
                             }
                             className="p-2 text-stone-400 hover:text-red-500 transition-colors rounded-xl hover:bg-red-50"
                           >
@@ -537,6 +563,75 @@ export default function UserAccounts({ currentUser }: UserAccountsProps) {
                 >
                   {isSubmitting ? 'Saving...' : isEditModalOpen ? 'Update Account' : 'Create Account'}
                 </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Admin password confirmation for account deletion. */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4"
+          >
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delete-account-title"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto shadow-2xl"
+            >
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <h3 id="delete-account-title" className="text-2xl font-serif italic text-stone-800">Delete User</h3>
+                <button type="button" onClick={closeDeleteModal} disabled={isDeleting}
+                  className="p-2 text-stone-400 hover:bg-stone-100 rounded-full disabled:opacity-50"
+                  aria-label="Cancel account deletion"><X className="w-5 h-5" /></button>
+              </div>
+              <div className="flex items-start gap-3 rounded-xl border border-red-100 bg-red-50 p-4 mb-5">
+                <AlertTriangle className="w-5 h-5 shrink-0 text-red-600" />
+                <p className="text-sm text-red-800">
+                  You are about to permanently delete <strong className="break-all">{deleteTarget.username}</strong>.
+                  This action cannot be undone.
+                </p>
+              </div>
+              <form onSubmit={handleDeleteUser} className="space-y-5">
+                <div>
+                  <label htmlFor="delete-admin-password" className="block text-[10px] font-bold text-amber-700 uppercase tracking-widest mb-2">
+                    Your Admin Password
+                  </label>
+                  <p className="text-xs text-stone-500 mb-3">Confirm with your own admin password (not this user's password).</p>
+                  <div className="relative">
+                    <input id="delete-admin-password" type={showDeleteAdminPassword ? 'text' : 'password'}
+                      required maxLength={256} autoComplete="current-password"
+                      value={deleteAdminPassword}
+                      onChange={e => setDeleteAdminPassword(e.target.value)}
+                      disabled={isDeleting}
+                      className="w-full px-4 py-3 bg-amber-50 border border-amber-100 rounded-2xl focus:ring-2 focus:ring-amber-200 pr-12"
+                      placeholder="Enter your admin password" />
+                    <button type="button" disabled={isDeleting}
+                      onClick={() => setShowDeleteAdminPassword(v => !v)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-500"
+                      aria-label={showDeleteAdminPassword ? 'Hide admin password' : 'Show admin password'}>
+                      {showDeleteAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                {deleteError && <p role="alert" className="text-sm font-medium text-red-600">{deleteError}</p>}
+                <div className="flex flex-col-reverse sm:flex-row gap-3">
+                  <button type="button" onClick={closeDeleteModal} disabled={isDeleting}
+                    className="flex-1 py-3 rounded-xl border border-stone-200 text-stone-700 font-semibold text-sm disabled:opacity-50">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={isDeleting || !deleteAdminPassword}
+                    className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm disabled:opacity-50">
+                    {isDeleting ? 'Deleting…' : 'Delete Account'}
+                  </button>
+                </div>
               </form>
             </motion.div>
           </motion.div>
