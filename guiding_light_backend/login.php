@@ -1,35 +1,55 @@
 <?php
-
 require 'db_connect.php';
 require 'auth.php';
+require_once __DIR__ . '/login_security.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'error' => 'Method not allowed.']);
-    exit;
+    return;
 }
 
+$heldLocks = [];
 try {
-    $data = json_decode(file_get_contents('php://input'), true);
-
-    if (!is_array($data)) {
+    $raw = file_get_contents('php://input');
+    if (!is_string($raw) || strlen($raw) > 16384) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid login request.']);
-        exit;
+        return;
+    }
+    $data = json_decode($raw, true);
+    if (!is_array($data) || !isset($data['username'], $data['password']) ||
+        !is_string($data['username']) || !is_string($data['password'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid login request.']);
+        return;
     }
 
-    $username = trim((string) ($data['username'] ?? ''));
-    $password = (string) ($data['password'] ?? '');
-
+    $username = trim($data['username']);
+    $password = $data['password'];
     if ($username === '' || $password === '') {
         http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Username and password are required.'
-        ]);
-        exit;
+        echo json_encode(['success' => false, 'error' => 'Username and password are required.']);
+        return;
+    }
+    if (mb_strlen($username, 'UTF-8') > 50 || strlen($password) > 256) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid login request.']);
+        return;
+    }
+
+    [$usernameHash, $ipHash] = loginSecurityKeys($username);
+    $heldLocks = acquireLoginLocks($conn, $usernameHash, $ipHash);
+
+    // Check the IP even when the username does not exist: do not leak account existence.
+    $accountFailures = recentLoginFailures($conn, 'username_hash', $usernameHash);
+    $ipFailures = recentLoginFailures($conn, 'ip_hash', $ipHash);
+    if ($accountFailures >= LOGIN_ACCOUNT_FAILURE_LIMIT ||
+        $ipFailures >= LOGIN_IP_FAILURE_LIMIT) {
+        refuseRateLimitedLogin();
+        return;
     }
 
     $stmt = $conn->prepare(
@@ -38,38 +58,61 @@ try {
     );
     $stmt->execute([':username' => $username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $valid = $user && password_verify($password, $user['password_hash']);
 
-    if (!$user || !password_verify($password, $user['password_hash'])) {
-        http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Invalid username or password.'
-        ]);
-        exit;
+    if (!$valid) {
+        $userId = $user ? (int) $user['user_id'] : null;
+        $conn->beginTransaction();
+        recordLoginSecurityEvent($conn, $userId, $username, $usernameHash, $ipHash, 'login_failed');
+
+        // GET_LOCK has serialized requests against the same username or source IP.
+        $accountFailures++;
+        $ipFailures++;
+        if ($accountFailures >= LOGIN_ACCOUNT_FAILURE_LIMIT ||
+            $ipFailures >= LOGIN_IP_FAILURE_LIMIT) {
+            $detail = $accountFailures >= LOGIN_ACCOUNT_FAILURE_LIMIT
+                ? 'Temporary account-attempt limit reached'
+                : 'Temporary network-attempt limit reached';
+            recordLoginSecurityEvent(
+                $conn, $userId, $username, $usernameHash, $ipHash,
+                'login_restricted', $detail
+            );
+        }
+        $conn->commit();
+
+        if ($accountFailures >= LOGIN_ACCOUNT_FAILURE_LIMIT ||
+            $ipFailures >= LOGIN_IP_FAILURE_LIMIT) {
+            refuseRateLimitedLogin();
+        } else {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Invalid username or password.']);
+        }
+        return;
     }
 
-    // Regenerate the browser's session ID on every successful login.
     if (!session_regenerate_id(true)) {
-        throw new RuntimeException('Could not regenerate the PHP session ID.');
+        throw new RuntimeException('Could not regenerate PHP session ID.');
     }
 
-    // A new random token atomically replaces the previous device's token.
+    // Preserve single-active-session enforcement from the existing system.
     $token = bin2hex(random_bytes(32));
     $tokenHash = hash('sha256', $token);
-
+    $conn->beginTransaction();
     $update = $conn->prepare(
-        'UPDATE users
-         SET active_session_hash = :active_hash
-         WHERE user_id = :user_id'
+        'UPDATE users SET active_session_hash = :hash WHERE user_id = :user_id'
     );
     $update->execute([
-        ':active_hash' => $tokenHash,
+        ':hash' => $tokenHash,
         ':user_id' => (int) $user['user_id']
     ]);
-
     if ($update->rowCount() !== 1) {
         throw new RuntimeException('Could not register the new session.');
     }
+    recordLoginSecurityEvent(
+        $conn, (int) $user['user_id'], $username,
+        $usernameHash, $ipHash, 'login_success'
+    );
+    $conn->commit();
 
     $_SESSION = [
         'user_id' => (int) $user['user_id'],
@@ -89,9 +132,17 @@ try {
         ]
     ]);
 } catch (Throwable $e) {
-    http_response_code(500);
+    if ($conn instanceof PDO && $conn->inTransaction()) {
+        $conn->rollBack();
+    }
+    error_log('Login security request could not be completed.');
+    http_response_code(503);
     echo json_encode([
         'success' => false,
-        'error' => 'Unable to process login.'
+        'error' => 'Login service is temporarily unavailable. Please try again later.'
     ]);
+} finally {
+    if ($conn instanceof PDO && !empty($heldLocks)) {
+        releaseLoginLocks($conn, $heldLocks);
+    }
 }

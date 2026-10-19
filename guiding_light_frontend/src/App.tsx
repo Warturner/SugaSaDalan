@@ -28,7 +28,7 @@ import StoriesHeader from './components/public/StoriesHeader';
 
 // Admin Components
 import UserAccounts from './components/admin/UserAccounts';
-import AccountActivityLog from './components/admin/AccountActivityLog';
+import AccountSecurityTabs from './components/admin/AccountSecurityTabs';
 import Login from './components/admin/Login';
 import SettingsModule from './components/admin/SettingsModule';
 import Sidebar from './components/layout/Sidebar';
@@ -383,7 +383,7 @@ export default function App() {
             {activeAdminTab === 'Donations' && <DonationVerification currentUser={currentUser} />}
 
             {activeAdminTab === 'Accounts' && currentUser?.role === 'admin' && <UserAccounts currentUser={currentUser} />}
-            {activeAdminTab === 'AccountHistory' && currentUser?.role === 'admin' && <AccountActivityLog />}
+            {activeAdminTab === 'AccountHistory' && currentUser?.role === 'admin' && <AccountSecurityTabs />}
             {activeAdminTab === 'Settings' && <SettingsModule user={currentUser} onUpdateUser={setCurrentUser} />}
           </div>
         </main>
