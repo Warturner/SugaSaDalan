@@ -11,7 +11,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     echo json_encode(['success' => false, 'error' => 'Method not allowed.']);
     exit;
 }
-$admin = requireAdmin(); // Also enforces the existing trusted write-origin policy.
+$admin = requireAdmin();
 $heldLocks = [];
 try {
     $raw = file_get_contents('php://input');
