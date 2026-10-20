@@ -76,59 +76,81 @@ export default function DonationVerification({
     setReportGeneratedAt
   ] = useState(new Date());
 
+  // Keep donation polling independent from the 10-second session security check.
   useEffect(() => {
-    fetchDonations();
-  }, [currentUser]);
+    if (!currentUser?.id) return;
 
-  const fetchDonations = async () => {
+    let cancelled = false;
+    let requestInProgress = false;
+    let hasLoadedOnce = false;
+    const controller = new AbortController();
 
-    if (!currentUser?.id) {
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-
-      const response = await fetch(
-        '/guiding_light_backend/get_donations.php',
-        {
-          credentials: 'include'
-        }
-      );
-
-      const data =
-        await response.json();
-
+    const fetchDonations = async () => {
+      // Avoid overlapping requests and unnecessary polling in background tabs.
       if (
-        !response.ok ||
-        !data.success
-      ) {
+        requestInProgress ||
+        (hasLoadedOnce && document.visibilityState === 'hidden')
+      ) return;
 
-        throw new Error(
-          data.error ||
-          'Failed to load donations.'
-        );
+      requestInProgress = true;
+      const initialLoad = !hasLoadedOnce;
+
+      // Show the loading screen only on the first fetch, never on background refresh.
+      if (initialLoad) {
+        setIsLoading(true);
+        setError(null);
       }
 
-      setDonations(
-        data.data || []
-      );
+      try {
+        const response = await fetch(
+          '/guiding_light_backend/get_donations.php',
+          {
+            credentials: 'include',
+            cache: 'no-store',
+            signal: controller.signal
+          }
+        );
 
-    } catch (err) {
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Failed to load donations.');
+        }
 
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to connect to the server.'
-      );
+        if (!cancelled) {
+          setDonations(data.data || []);
+          setError(null);
+        }
+      } catch (err) {
+        if (cancelled) return;
 
-    } finally {
+        if (initialLoad) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Failed to connect to the server.'
+          );
+        } else {
+          // Preserve the visible records if a background refresh fails.
+          console.warn('Donation Ledger background refresh failed.', err);
+        }
+      } finally {
+        requestInProgress = false;
+        hasLoadedOnce = true;
+        if (initialLoad && !cancelled) setIsLoading(false);
+      }
+    };
 
-      setIsLoading(false);
-    }
-  };
+    void fetchDonations();
+    const intervalId = window.setInterval(() => {
+      void fetchDonations();
+    }, 60000);
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      window.clearInterval(intervalId);
+    };
+  }, [currentUser?.id]);
 
   const getPaymentMethodName = (
     method: number | string
